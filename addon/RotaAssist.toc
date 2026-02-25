@@ -1,0 +1,80 @@
+## Interface: 120000
+## Title: RotaAssist
+## Notes: AI-powered rotation assistant for WoW 12.0 Midnight | 智能循环助手 | ローテアシスト
+## Author: RotaAssist Team
+## Version: 1.0.0
+## SavedVariables: RotaAssistDB
+## OptionalDeps: Ace3
+## IconTexture: Interface\Icons\Ability_Mage_BrainFreeze
+## X-Website: https://github.com/yourname/rotaassist
+## X-License: MIT
+## X-Localizations: enUS, zhCN, jaJP
+## X-Category: Combat
+## X-Curse-Project-ID: 000000
+## X-Wago-ID: placeholder
+
+embeds.xml
+
+# Locales first
+Locales\enUS.lua
+Locales\zhCN.lua
+Locales\jaJP.lua
+
+# Core
+Core\Init.lua
+Core\SavedVars.lua
+Core\EventHandler.lua
+Core\AssistCapture.lua
+Core\CooldownTracker.lua
+
+# Data (MUST load before Engine)
+Data\SpecInfo.lua
+Data\WhitelistSpells.lua
+Data\APL\_Template.lua
+Data\APL\Warrior_Arms.lua
+Data\APL\Warrior_Fury.lua
+Data\APL\Mage_Fire.lua
+Data\APL\DemonHunter_Havoc.lua
+Data\APL\DemonHunter_Vengeance.lua
+Data\APL\DemonHunter_Devourer.lua
+# SpecEnhancements (CD/defensive/resource config per spec)
+Data\SpecEnhancements\DemonHunter.lua
+# DecisionTrees (auto-generated or hand-crafted)
+Data\DecisionTrees\DH_Havoc_DT.lua
+Data\DecisionTrees\DH_Vengeance_DT.lua
+Data\DecisionTrees\DH_Devourer_DT.lua
+# TransitionMatrices (auto-generated or hand-crafted)
+Data\TransitionMatrix\DH_Havoc_TM.lua
+Data\TransitionMatrix\DH_Vengeance_TM.lua
+Data\TransitionMatrix\DH_Devourer_TM.lua
+
+# Engine
+Engine\SpecDetector.lua
+Engine\AssistedCombatBridge.lua
+Engine\AccuracyTracker.lua
+Engine\AIInference.lua
+Engine\CastHistoryRecorder.lua
+Engine\PatternDetector.lua
+Engine\NeuralPredictor.lua
+Engine\APLEngine.lua
+Engine\RecommendationManager.lua
+Engine\SmartQueueManager.lua
+Engine\CooldownOverlay.lua
+Engine\InterruptAdvisor.lua
+Engine\DefensiveAdvisor.lua
+Engine\PrePullChecker.lua
+
+# UI last — Widgets must load before MainDisplay
+UI\Widgets\GlowWidget.lua
+UI\Widgets\IconWidget.lua
+UI\Widgets\ResourceBar.lua
+UI\Widgets\PhaseIndicator.lua
+UI\Widgets\AccuracyMeter.lua
+UI\Widgets\PrePullPanel.lua
+UI\Widgets\DefensiveAlert.lua
+UI\Widgets\CooldownBar.lua
+UI\Widgets.lua
+UI\MainDisplay.lua
+UI\CooldownPanel.lua
+UI\MinimapButton.lua
+UI\ConfigPanel.lua

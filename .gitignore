@@ -1,0 +1,49 @@
+# RotaAssist .gitignore
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# === Editor / IDE ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# === Backup Files ===
+*.bak
+*.orig
+*.tmp
+
+# === Third-Party Libraries (manually managed) ===
+addon/Libs/LibStub/
+addon/Libs/AceAddon-3.0/
+addon/Libs/AceConfig-3.0/
+addon/Libs/AceDB-3.0/
+addon/Libs/AceLocale-3.0/
+addon/Libs/LibDBIcon-1.0/
+addon/Libs/LibDataBroker-1.1/
+
+# === Companion App (Phase 4) ===
+companion/backend/__pycache__/
+companion/backend/**/__pycache__/
+companion/backend/*.pyc
+companion/backend/.env
+companion/backend/venv/
+companion/frontend/node_modules/
+companion/frontend/dist/
+companion/frontend/.svelte-kit/
+
+# === Build Artifacts ===
+*.zip
+*.tar.gz
+release/
+dist/
+
+# === Logs ===
+*.log
