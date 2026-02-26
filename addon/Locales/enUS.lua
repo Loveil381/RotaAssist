@@ -182,6 +182,48 @@ L["HINT_COLLAPSING_STAR"]     = "Collapsing Star when 30+ Souls"
 L["HINT_REAP_STACKS"]         = "Reap at 3 Voidfall stacks"
 
 ------------------------------------------------------------------------
+-- Rogue
+------------------------------------------------------------------------
+L["spec_subtlety"]            = "Subtlety"
+L["SHADOW_DANCE"]             = "Shadow Dance"
+L["SYMBOLS_OF_DEATH"]         = "Symbols of Death"
+L["SECRET_TECHNIQUE"]         = "Secret Technique"
+L["SHADOW_BLADES"]            = "Shadow Blades"
+L["SHADOWSTRIKE"]             = "Shadowstrike"
+L["BACKSTAB"]                 = "Backstab"
+L["EVISCERATE"]               = "Eviscerate"
+L["BLACK_POWDER"]             = "Black Powder"
+L["RUPTURE"]                  = "Rupture"
+
+------------------------------------------------------------------------
+-- Shaman
+------------------------------------------------------------------------
+L["spec_elemental"]           = "Elemental"
+L["STORMKEEPER"]              = "Stormkeeper"
+L["FIRE_ELEMENTAL"]           = "Fire Elemental"
+L["LAVA_BURST"]               = "Lava Burst"
+L["LIGHTNING_BOLT"]           = "Lightning Bolt"
+L["CHAIN_LIGHTNING"]          = "Chain Lightning"
+L["EARTH_SHOCK"]              = "Earth Shock"
+L["EARTHQUAKE"]               = "Earthquake"
+L["FLAME_SHOCK"]              = "Flame Shock"
+L["ICEFURY"]                  = "Icefury"
+
+------------------------------------------------------------------------
+-- Druid
+------------------------------------------------------------------------
+L["spec_balance"]             = "Balance"
+L["CELESTIAL_ALIGNMENT"]      = "Celestial Alignment"
+L["INCARNATION"]              = "Incarnation"
+L["STARSURGE"]                = "Starsurge"
+L["STARFALL"]                 = "Starfall"
+L["WRATH"]                    = "Wrath"
+L["STARFIRE"]                 = "Starfire"
+L["MOONFIRE"]                 = "Moonfire"
+L["SUNFIRE"]                  = "Sunfire"
+L["STELLAR_FLARE"]            = "Stellar Flare"
+
+------------------------------------------------------------------------
 -- Smart AI Inference Tips
 ------------------------------------------------------------------------
 L["BURST_SOON_POOL_RESOURCE"] = "Burst in %ds — Pool resource!"

@@ -40,6 +40,9 @@ RA.WhitelistSpells = {
     ---------- Rogue ----------
     [13750]  = { name = "Adrenaline Rush",      class = "ROGUE",        specID = 260,  cdSeconds = 180 },
     [121471] = { name = "Shadow Blades",        class = "ROGUE",        specID = 261,  cdSeconds = 180 },
+    [185313] = { name = "Shadow Dance",         class = "ROGUE",        specID = 261,  cdSeconds = 60  },
+    [212283] = { name = "Symbols of Death",     class = "ROGUE",        specID = 261,  cdSeconds = 30  },
+    [280719] = { name = "Secret Technique",     class = "ROGUE",        specID = 261,  cdSeconds = 60  },
     [79140]  = { name = "Vendetta",             class = "ROGUE",        specID = 259,  cdSeconds = 120 },
     [31224]  = { name = "Cloak of Shadows",     class = "ROGUE",        specID = nil,  cdSeconds = 120 },
 
@@ -84,6 +87,7 @@ RA.WhitelistSpells = {
 
     ---------- Druid ----------
     [194223] = { name = "Celestial Alignment",  class = "DRUID",        specID = 102,  cdSeconds = 180 },
+    [102560] = { name = "Incarnation: Chosen of Elune", class = "DRUID", specID = 102,  cdSeconds = 180 },
     [106951] = { name = "Berserk",              class = "DRUID",        specID = 103,  cdSeconds = 180 },
     [50334]  = { name = "Berserk (Guardian)",   class = "DRUID",        specID = 104,  cdSeconds = 180 },
     [740]    = { name = "Tranquility",          class = "DRUID",        specID = 105,  cdSeconds = 180 },
