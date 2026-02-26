@@ -1,5 +1,10 @@
 ------------------------------------------------------------------------
 -- RotaAssist - Recommendation Manager
+-- ⚠ DEPRECATED (Phase 0): This module has been superseded by
+-- SmartQueueManager, which provides a unified fusion layer combining
+-- Blizzard, APL, AI Inference, Cooldowns, and Defensives.
+-- This file is kept for reference only and is commented out in the TOC.
+------------------------------------------------------------------------
 -- Merges 3 data sources into the final display list:
 --   Slot 1: C_AssistedCombat (Bridge) — always position 1, confidence 1.0
 --   Slot 2-3: APLEngine:PredictNext() — look-ahead prediction

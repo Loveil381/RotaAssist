@@ -28,6 +28,10 @@ local isTracking = false
 ---@type number|nil
 local lastAlertSpellID = nil
 
+--- Last active alert data for GetActiveRecommendation()
+---@type table|nil  { spellID, name, urgency, texture }
+local lastActiveAlert = nil
+
 --- Last known HP ratio (avoid firing duplicate alerts)
 ---@type number
 local lastHpPct = 1.0
@@ -61,6 +65,15 @@ local function checkHealth()
 
             if ready and lastAlertSpellID ~= def.spellID then
                 lastAlertSpellID = def.spellID
+
+                -- Store for GetActiveRecommendation()
+                lastActiveAlert = {
+                    spellID = def.spellID,
+                    name    = def.name,
+                    urgency = 1.0 - hpPct,  -- lower HP = higher urgency
+                    texture = def.texture or 134400,
+                }
+
                 if eh and eh.Fire then
                     eh:Fire("ROTAASSIST_DEFENSIVE_ALERT", def.spellID, hpPct, def.hpThreshold)
                 end
@@ -71,6 +84,7 @@ local function checkHealth()
 
     -- HP recovered above all thresholds — reset alert state
     lastAlertSpellID = nil
+    lastActiveAlert = nil
 end
 
 local function onUpdate(_, dt)
@@ -113,6 +127,7 @@ function DefensiveAdvisor:LoadForSpec(specID)
     defensives = nil
     isTracking = false
     lastAlertSpellID = nil
+    lastActiveAlert = nil
 
     if not specID or not RA.SpecEnhancements then return end
 
@@ -161,4 +176,11 @@ end
 ---@return table[]|nil
 function DefensiveAdvisor:GetDefensives()
     return defensives
+end
+
+---Get the active defensive recommendation (if any).
+---Returns the last alert data when HP is below a threshold and a defensive is ready.
+---@return table|nil recommendation { spellID, name, urgency, texture }
+function DefensiveAdvisor:GetActiveRecommendation()
+    return lastActiveAlert
 end

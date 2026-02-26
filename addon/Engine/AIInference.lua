@@ -533,7 +533,9 @@ function AIInference:OnEnable()
         end)
     end
     
-    RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", OnSpellCastSucceeded)
+    if eh then
+        eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "AIInference", OnSpellCastSucceeded)
+    end
     
     if InCombatLockdown() then
         sessionStartTime = GetTime()
@@ -543,5 +545,6 @@ end
 
 function AIInference:OnDisable()
     uiFrame:Hide()
-    RA:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    local eh = RA:GetModule("EventHandler")
+    if eh then eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "AIInference") end
 end

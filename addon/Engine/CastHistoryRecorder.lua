@@ -31,6 +31,11 @@ local count = 0       -- 当前元素数 / current element count
 local sessionTotal   = 0
 local sessionMatches = 0
 
+-- Cached rotation spells from C_AssistedCombat (refreshed on spec change)
+-- These are the core rotational abilities that should be recorded in history.
+---@type table<number, boolean>|nil
+local cachedRotationSpells = nil
+
 ------------------------------------------------------------------------
 -- Ring Buffer Helpers (无 table.insert / no table.insert)
 ------------------------------------------------------------------------
@@ -82,13 +87,32 @@ end
 ---@param unit string
 ---@param _ any
 ---@param spellID number
+---Refresh the cached rotation spells from C_AssistedCombat.GetRotationSpells().
+---ローテーションスペルキャッシュを更新する。
+local function RefreshRotationSpellCache()
+    cachedRotationSpells = {}
+    local bridge = RA:GetModule("AssistedCombatBridge")
+    if bridge then
+        local spells = bridge:GetRotationSpells()
+        if spells then
+            for _, sid in ipairs(spells) do
+                cachedRotationSpells[sid] = true
+            end
+        end
+    end
+end
+
 local function OnSpellCastSucceeded(_, unit, _, spellID)
     if unit ~= "player" then return end
 
-    -- 过滤非战斗技能 / filter non-combat spells (only whitelist)
-    if RA.WhitelistSpells and not RA.WhitelistSpells[spellID] then return end
     -- 过滤自动攻击 / filter auto attack
     if spellID == 6603 then return end
+
+    -- 过滤非战斗技能 / filter non-combat spells
+    -- Record if spell is in the rotation pool OR in WhitelistSpells (major CDs)
+    local isRotation = cachedRotationSpells and cachedRotationSpells[spellID]
+    local isWhitelisted = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+    if not isRotation and not isWhitelisted then return end
 
     local now = GetTime()
 
@@ -267,10 +291,11 @@ function CastHistoryRecorder:OnInitialize()
 end
 
 function CastHistoryRecorder:OnEnable()
-    RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", OnSpellCastSucceeded)
-
     local eh = RA:GetModule("EventHandler")
     if eh then
+        eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "CastHistoryRecorder", OnSpellCastSucceeded)
+
+
         -- 战斗结束时重置精确度计数 / reset accuracy on combat end
         eh:Subscribe("PLAYER_REGEN_ENABLED", "CastHistoryRecorder", function()
             sessionTotal = 0
@@ -278,6 +303,7 @@ function CastHistoryRecorder:OnEnable()
         end)
         -- 专精切换时重新加载历史 / reload on spec change
         eh:Subscribe("ROTAASSIST_SPEC_CHANGED", "CastHistoryRecorder", function()
+            RefreshRotationSpellCache()
             self:LoadHistory()
         end)
         -- 登出时保存 / save on logout
@@ -286,10 +312,12 @@ function CastHistoryRecorder:OnEnable()
         end)
     end
 
+    RefreshRotationSpellCache()
     self:LoadHistory()
 end
 
 function CastHistoryRecorder:OnDisable()
     self:SaveHistory()
-    RA:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    local eh = RA:GetModule("EventHandler")
+    if eh then eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "CastHistoryRecorder") end
 end

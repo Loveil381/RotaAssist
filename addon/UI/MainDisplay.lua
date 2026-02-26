@@ -311,7 +311,7 @@ local function checkVisibility()
     
     if combatOnly and not inCombat then
         if not outOfCombatTimer then
-            outOfCombatTimer = C_Timer.After(3.0, function()
+            outOfCombatTimer = C_Timer.NewTimer(3.0, function()
                 if not inCombat then
                     mainFrame:Hide()
                     elements.prePull:Hide()

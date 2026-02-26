@@ -218,7 +218,13 @@ end
 ------------------------------------------------------------------------
 
 function EventHandler:OnEnable()
-    -- Subscriptions re-enabled automatically by modules calling Subscribe in OnEnable
+    -- Central dispatcher for UNIT_SPELLCAST_SUCCEEDED.
+    -- Multiple modules need this event (AIInference, CastHistoryRecorder, AccuracyTracker).
+    -- AceEvent replaces previous callbacks, so we register ONCE here and re-dispatch
+    -- as a custom ROTAASSIST_SPELLCAST_SUCCEEDED event that modules Subscribe to safely.
+    RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, castGUID, spellID)
+        EventHandler:Fire("ROTAASSIST_SPELLCAST_SUCCEEDED", unit, castGUID, spellID)
+    end)
 end
 
 function EventHandler:OnDisable()

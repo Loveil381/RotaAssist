@@ -216,7 +216,9 @@ function AccuracyTracker:OnEnable()
         end)
     end
 
-    RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", OnSpellCastSucceeded)
+    if eh then
+        eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "AccuracyTracker", OnSpellCastSucceeded)
+    end
 
     -- Slash command registration
     SLASH_RA_ACCURACY1 = "/ra accuracy"
@@ -238,7 +240,8 @@ function AccuracyTracker:OnEnable()
 end
 
 function AccuracyTracker:OnDisable()
-    RA:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    local eh = RA:GetModule("EventHandler")
+    if eh then eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "AccuracyTracker") end
     sessionActive = false
     SLASH_RA_ACCURACY1 = nil
     SlashCmdList["RA_ACCURACY"] = nil

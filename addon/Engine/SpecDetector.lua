@@ -130,7 +130,18 @@ function SpecDetector:OnEnable()
             RA:PrintDebug("SpecDetector: Specialization changed event")
             refreshSpec()
         end)
+
+        -- Subscribe to PLAYER_ENTERING_WORLD for initial login / reload detection
+        eh:Subscribe("PLAYER_ENTERING_WORLD", "SpecDetector", function()
+            RA:PrintDebug("SpecDetector: PLAYER_ENTERING_WORLD — scheduling delayed refresh")
+            C_Timer.After(0.5, function()
+                refreshSpec()
+            end)
+        end)
     end
+
+    -- Immediate fallback: try to detect spec right now in case events already fired
+    refreshSpec()
 end
 
 function SpecDetector:OnPlayerEnteringWorld(isInitialLogin, isReloadingUi)
@@ -162,4 +173,17 @@ end
 ---@return number|nil specID
 function SpecDetector:GetSpecID()
     return currentSpec and currentSpec.specID
+end
+
+---Get the primary power type for the current spec.
+---Reads from SpecEnhancements[specID].resource.type.
+---@return number|nil powerType  Enum.PowerType value, or nil if unknown
+function SpecDetector:GetPrimaryPowerType()
+    if not currentSpec then return nil end
+    if not RA.SpecEnhancements then return nil end
+    local enhData = RA.SpecEnhancements[currentSpec.specID]
+    if enhData and enhData.resource and enhData.resource.type then
+        return enhData.resource.type
+    end
+    return nil
 end

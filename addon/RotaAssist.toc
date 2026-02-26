@@ -57,7 +57,7 @@ Engine\CastHistoryRecorder.lua
 Engine\PatternDetector.lua
 Engine\NeuralPredictor.lua
 Engine\APLEngine.lua
-Engine\RecommendationManager.lua
+# Engine\RecommendationManager.lua  -- DEPRECATED: replaced by SmartQueueManager (Phase 0)
 Engine\SmartQueueManager.lua
 Engine\CooldownOverlay.lua
 Engine\InterruptAdvisor.lua

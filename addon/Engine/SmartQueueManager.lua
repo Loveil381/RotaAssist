@@ -155,11 +155,14 @@ local function AssembleQueue()
         local cds = mCooldownOverlay:GetCooldownStates()
         finalQueue.cooldowns = {}
         local cIdx = 1
-        for _, cd in ipairs(cds) do
-            if cd.isWhitelisted and cd.ready then
-                context.cdReadyList[cd.spellID] = true
+        -- GetCooldownStates() returns { [spellID] = {remaining, ready, texture, name} }
+        for spellID, cd in pairs(cds) do
+            local isWhitelisted = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+            if isWhitelisted and cd.ready then
+                context.cdReadyList[spellID] = true
             end
-            if cd.isWhitelisted and not cd.ready then
+            if isWhitelisted and not cd.ready then
+                cd.spellID = spellID  -- inject spellID for downstream consumers
                 finalQueue.cooldowns[cIdx] = cd
                 cIdx = cIdx + 1
             end
