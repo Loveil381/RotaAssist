@@ -48,7 +48,6 @@ local MODULE_ORDER = {
     "PatternDetector",
     "NeuralPredictor",
     "APLEngine",
-    "RecommendationManager",
     "SmartQueueManager",
     "CooldownOverlay",
     "DefensiveAdvisor",

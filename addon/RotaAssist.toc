@@ -6,7 +6,7 @@
 ## SavedVariables: RotaAssistDB
 ## OptionalDeps: Ace3
 ## IconTexture: Interface\Icons\Ability_Mage_BrainFreeze
-## X-Website: https://github.com/yourname/rotaassist
+## X-Website: https://github.com/Loveil381/RotaAssist
 ## X-License: MIT
 ## X-Localizations: enUS, zhCN, jaJP
 ## X-Category: Combat
@@ -30,7 +30,7 @@ Core\CooldownTracker.lua
 # Data (MUST load before Engine)
 Data\SpecInfo.lua
 Data\WhitelistSpells.lua
-Data\APL\_Template.lua
+Data\APL\APL_Template.lua
 Data\APL\Warrior_Arms.lua
 Data\APL\Warrior_Fury.lua
 Data\APL\Mage_Fire.lua

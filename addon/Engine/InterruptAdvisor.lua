@@ -71,19 +71,21 @@ end
 ---根据敌方施法事件更新状态。我们不比较任何 SECRET API 内容。
 local function EvaluateInterruptNeed(unitTarget)
     if not unitTarget or unitTarget == "player" then return end
-    
+
     if not currentInterruptConfig or not currentInterruptConfig.spellID then return end
-    
+
     if not RA.db or not RA.db.profile.interrupt or not RA.db.profile.interrupt.enabled then return end
 
     local isReady, cdRem = CheckInterruptCooldown()
     interruptState.available = isReady
     interruptState.cooldownRemaining = cdRem
-    
+
     -- Strongest signal: Blizzard explicitly recommends it.
+    -- 最强信号：暴雪明确推荐打断。
     local blizzSaysYes = IsBlizzRecommendingInterrupt()
-    
-    -- Heuristic signal: An enemy is casting, and our interrupt is ready.
+
+    -- Heuristic signal: An enemy is casting and our interrupt is ready.
+    -- 启发式信号：敌方正在施法且打断技能就绪。
     local enemyCasting = (UnitCastingInfo(unitTarget) ~= nil) or (UnitChannelInfo(unitTarget) ~= nil)
 
     if blizzSaysYes then
@@ -100,10 +102,25 @@ local function EvaluateInterruptNeed(unitTarget)
     if interruptState.shouldInterrupt then
         local eh = RA:GetModule("EventHandler")
         if eh then
-            eh:Fire("ROTAASSIST_INTERRUPT_ALERT", true, {
-                spellID = currentInterruptConfig.spellID,
-                urgency = interruptState.urgency
-            })
+            -- Fetch cooldown timing via the WoW 12.0 secret-value-safe wrapper.
+            -- 通过 WoW 12.0 安全封装获取冷却计时数据。
+            -- Returns: remaining, ready, cdStart, cdDuration  (nil on secret value)
+            local _, _, cdStart, cdDuration = RA:GetSpellCooldownSafe(currentInterruptConfig.spellID)
+
+            -- Build event payload; only include CD fields when the API returned
+            -- real values (non-nil means no secret-value violation).
+            -- 仅在 API 返回真实值时才附加冷却字段（nil 表示触发了 secret value 保护）。
+            local payload = {
+                spellID   = currentInterruptConfig.spellID,
+                urgency   = interruptState.urgency,
+                onCooldown = not isReady,  -- bool: interrupt is currently on CD / 打断技能当前是否在冷却
+            }
+            if cdStart ~= nil and cdDuration ~= nil then
+                payload.startTime = cdStart
+                payload.duration  = cdDuration
+            end
+
+            eh:Fire("ROTAASSIST_INTERRUPT_ALERT", true, payload)
         end
     end
 end
@@ -114,9 +131,28 @@ local function OnSpellCastSucceeded(_, unit, _, spellID)
         interruptState.available = false
         interruptState.shouldInterrupt = false
         interruptState.urgency = 0.0
-        
+
         local eh = RA:GetModule("EventHandler")
-        if eh then eh:Fire("ROTAASSIST_INTERRUPT_ALERT", false) end
+        if eh then
+            -- After a successful cast the spell is now on cooldown. Query the
+            -- freshly-started cooldown so MainDisplay can start the spinner.
+            -- 成功施法后技能进入冷却，立即查询以便 MainDisplay 启动转圈动画。
+            local _, _, cdStart, cdDuration = RA:GetSpellCooldownSafe(currentInterruptConfig.spellID)
+
+            local payload = {
+                spellID    = currentInterruptConfig.spellID,
+                urgency    = 0.0,
+                onCooldown = true,  -- just cast → definitely on CD / 刚施法完，必然在冷却中
+            }
+            if cdStart ~= nil and cdDuration ~= nil then
+                payload.startTime = cdStart
+                payload.duration  = cdDuration
+            end
+
+            -- Pass active=true so the icon stays visible and shows the CD sweep.
+            -- 传 active=true 使图标保持显示并展示冷却转圈效果。
+            eh:Fire("ROTAASSIST_INTERRUPT_ALERT", true, payload)
+        end
     end
 end
 

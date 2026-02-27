@@ -19,16 +19,16 @@ RA:RegisterModule("CooldownOverlay", CooldownOverlay)
 ---@type table[]|nil  array of { spellID, alertThreshold }
 local trackedCDs = nil
 
---- Current cooldown states: { [spellID] = { remaining, ready, texture, name } }
+--- Current cooldown states: { [spellID] = { remaining, ready, texture, name, startTime, duration } }
 --- Pre-allocated; reused each scan to avoid GC churn.
 ---@type table<number, table>
 local cdStates = {}
 
 --- OnUpdate throttle
 local UPDATE_INTERVAL = 0.2  -- 5 Hz
-local elapsed = 0
+local elapsed   = 0
 local updateFrame = nil
-local isTracking = false
+local isTracking  = false
 
 ------------------------------------------------------------------------
 -- Scan Logic
@@ -38,23 +38,33 @@ local isTracking = false
 local function scanCooldowns()
     if not trackedCDs then return end
 
-    local now = GetTime()
-    local eh  = RA:GetModule("EventHandler")
+    local eh = RA:GetModule("EventHandler")
 
     for _, cd in ipairs(trackedCDs) do
         local spellID = cd.spellID
         local state   = cdStates[spellID]
         if not state then
-            state = { remaining = 0, ready = false, texture = 134400, name = "" }
+            -- FIX (Bug3): Pre-allocate startTime and duration fields so
+            -- CooldownBar.lua can call cooldown:SetCooldown(startTime, duration).
+            -- 修复：预分配 startTime/duration，供 CooldownBar 调用 SetCooldown。
+            state = { remaining = 0, ready = false, texture = 134400, name = "", startTime = 0, duration = 0 }
             cdStates[spellID] = state
         end
 
         -- WOW 12.0 SECRET VALUE SAFE
+        -- FIX (Bug3): Capture all 4 return values including startTime and duration.
+        -- 修复：使用 4 返回值版本，同时获取 startTime 和 duration。
         local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(spellID)
         if remaining ~= nil then
             state.remaining = remaining
-            local wasReady = state.ready
-            state.ready = ready
+            local wasReady  = state.ready
+            state.ready     = ready
+
+            -- FIX (Bug3): Store startTime and duration in the state table
+            -- so downstream consumers (CooldownBar widget) can render the sweep.
+            -- 保存 startTime/duration 供 UI 的 SetCooldown() 调用。
+            state.startTime = cdStart or 0
+            state.duration  = cdDuration or 0
 
             if not wasReady and remaining > 0 and remaining <= (cd.alertThreshold or 5) then
                 if eh and eh.Fire then
@@ -63,6 +73,7 @@ local function scanCooldowns()
             end
         else
             -- Secret: preserve last known state, don't update
+            -- 获取失败（secret value）：保留上次已知状态，不更新
         end
 
         -- Cache texture/name on first pass
@@ -120,14 +131,14 @@ end
 function CooldownOverlay:LoadForSpec(specID)
     trackedCDs = nil
     cdStates   = {}
-    isTracking = false
+    isTracking  = false
 
     if not specID or not RA.SpecEnhancements then return end
 
     local enhData = RA.SpecEnhancements[specID]
     if enhData and enhData.majorCooldowns then
         trackedCDs = enhData.majorCooldowns
-        isTracking = true
+        isTracking  = true
         updateFrame:SetScript("OnUpdate", onUpdate)
         RA:PrintDebug(string.format("CooldownOverlay: Tracking %d major CDs for specID %d",
             #trackedCDs, specID))
@@ -141,7 +152,10 @@ end
 ------------------------------------------------------------------------
 
 ---Get current cooldown states for all tracked major CDs.
----@return table<number, table> states  { [spellID] = { remaining, ready, texture, name } }
+---Returns a table keyed by spellID. Each entry contains:
+---  remaining (number), ready (boolean), texture (number|string),
+---  name (string), startTime (number), duration (number).
+---@return table<number, table> states
 function CooldownOverlay:GetCooldownStates()
     return cdStates
 end

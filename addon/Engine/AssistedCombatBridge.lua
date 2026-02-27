@@ -18,6 +18,12 @@ RA:RegisterModule("AssistedCombatBridge", Bridge)
 ---@type table|nil
 local cachedRec = nil
 
+-- FIX (Bug2): Cache the *previous* recommendation so AccuracyTracker
+-- can compare against what was shown before the cast succeeded.
+-- 修复：缓存上一帧推荐，供 AccuracyTracker 施法成功后比对。
+---@type table|nil
+local previousRec = nil
+
 --- Callbacks registered for ASSISTED_COMBAT_ACTION_SPELL_CAST
 ---@type function[]
 local castCallbacks = {}
@@ -54,7 +60,8 @@ end
 
 ---Get the current recommended spell from Blizzard.
 ---Returns cached result if within throttle window.
----Blizzard が推薦する現在のスペルを取得する。
+---When the recommendation changes, the old value is saved as previousRec.
+---Blizzard が推薦する現在のスペルを取得する。推薦が変わる前の値を previousRec に保存する。
 ---@return table|nil recommendation { spellID, texture, name }
 function Bridge:GetCurrentRecommendation()
     if not C_AssistedCombat or not C_AssistedCombat.GetNextCastSpell then
@@ -69,9 +76,20 @@ function Bridge:GetCurrentRecommendation()
 
     local ok, spellID = pcall(C_AssistedCombat.GetNextCastSpell, true)
     if not ok or not spellID then
-        cachedRec = nil
-        lastRefresh = now
+        -- FIX (Bug2): Save previous before clearing
+        -- 获取失败时保留上一次推荐
+        previousRec  = cachedRec
+        cachedRec    = nil
+        lastRefresh  = now
         return nil
+    end
+
+    -- FIX (Bug2): Only update previousRec when the spell actually changes
+    -- 仅在推荐技能发生变化时更新 previousRec，避免无意义覆盖
+    if cachedRec and cachedRec.spellID ~= spellID then
+        previousRec = cachedRec
+    elseif not cachedRec then
+        previousRec = nil
     end
 
     -- Fetch texture and name safely
@@ -89,6 +107,14 @@ function Bridge:GetCurrentRecommendation()
     }
     lastRefresh = now
     return cachedRec
+end
+
+---Get the recommendation that was active before the most recent change.
+---Returns nil if there has been no prior recommendation yet.
+---获取上一帧的 Blizzard 推荐（切换前），供准确度比对使用。
+---@return table|nil recommendation { spellID, texture, name }
+function Bridge:GetPreviousRecommendation()
+    return previousRec
 end
 
 ---Get the full rotation spell list from Blizzard.
@@ -149,8 +175,10 @@ function Bridge:OnEnable()
     local eh = RA:GetModule("EventHandler")
     if eh then
         eh:Subscribe("ASSISTED_COMBAT_ACTION_SPELL_CAST", "AssistedCombatBridge", function(_, spellID)
-            -- Invalidate cache so next query is fresh
-            cachedRec = nil
+            -- FIX (Bug2): Save current as previous before invalidating cache
+            -- 在失效缓存前先把当前推荐存为 previousRec
+            previousRec = cachedRec
+            cachedRec   = nil
             -- Fire all registered callbacks
             for _, cb in ipairs(castCallbacks) do
                 local ok, err = pcall(cb, spellID)

@@ -119,11 +119,7 @@ function ResourceBar:UpdateSecretSafe(powerType)
 
     -- WOW 12.0 SECRET VALUE SAFE: Use string.format with secrets (produces secret string)
     -- FontString:SetText() accepts secret strings since Alpha 3
-    if issecretvalue and issecretvalue(currentPower) then
-        self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
-    else
-        self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
-    end
+    self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
 
     -- Set color based on power type (non-secret color choice)
     if self.lastPowerType ~= powerType then
