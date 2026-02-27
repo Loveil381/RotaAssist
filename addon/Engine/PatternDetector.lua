@@ -271,17 +271,17 @@ local function DetectPhase()
             end
         end
     end
-    -- 白名单CD就绪检测 / whitelisted CD readiness
+    -- WOW 12.0 SECRET VALUE SAFE: 白名单CD就绪検出
     if specData and specData.burstCooldownSpell then
-        local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, specData.burstCooldownSpell)
-        if ok and cdInfo and type(cdInfo) == "table" then
-            local remaining = cdInfo.duration - (GetTime() - cdInfo.startTime)
-            if remaining <= 0 then
+        local remaining, ready = RA:GetSpellCooldownSafe(specData.burstCooldownSpell)
+        if remaining ~= nil then
+            if ready or remaining <= 0 then
                 scores["BURST_PREPARE"] = scores["BURST_PREPARE"] + 0.3
             elseif remaining < 5 then
                 scores["BURST_PREPARE"] = scores["BURST_PREPARE"] + 0.2
             end
         end
+        -- If nil (secret), skip scoring
     end
 
     -- EXECUTE (斩杀 — 从推荐推断)

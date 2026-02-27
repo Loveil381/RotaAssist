@@ -126,6 +126,61 @@ function RA:PrintDebug(msg)
 end
 
 ------------------------------------------------------------------------
+-- WOW 12.0 SECRET VALUE SAFE: 全局工具函数
+------------------------------------------------------------------------
+
+--- 安全获取法术冷却剩余时间
+--- @param spellID number
+--- @return number|nil remaining 剩余秒数，nil=無法読取
+--- @return boolean|nil ready 是否就绪，nil=無法判断
+--- @return number|nil start CD 开始时间，nil=secret
+--- @return number|nil duration CD 总时长，nil=secret
+function RA:GetSpellCooldownSafe(spellID)
+    local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
+    if not ok or type(cdInfo) ~= "table" then
+        return nil, nil, nil, nil
+    end
+
+    local dur = cdInfo.duration
+    local st  = cdInfo.startTime
+
+    if not dur or not st then
+        return nil, nil, nil, nil
+    end
+
+    -- WOW 12.0 SECRET VALUE SAFE
+    if issecretvalue(dur) or issecretvalue(st) then
+        return nil, nil, nil, nil  -- secret: cannot read
+    end
+
+    if dur <= 0 then
+        return 0, true, 0, 0
+    end
+
+    local now = GetTime()
+    local remaining = (st + dur) - now
+    if remaining <= 0 then
+        return 0, true, st, dur
+    end
+
+    return remaining, false, st, dur
+end
+
+--- 安全获取玩家生命百分比
+--- @return number|nil hpPct 0.0-1.0，nil=secret 无法读取
+function RA:GetPlayerHealthPercentSafe()
+    local hp = UnitHealth("player")
+    local hpMax = UnitHealthMax("player")
+    if issecretvalue(hp) or issecretvalue(hpMax) then
+        return nil
+    end
+    if not hp or not hpMax or hpMax <= 0 then
+        return nil
+    end
+    return hp / hpMax
+end
+
+------------------------------------------------------------------------
 -- Helpers
 ------------------------------------------------------------------------
 

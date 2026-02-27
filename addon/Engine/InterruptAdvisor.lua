@@ -34,24 +34,21 @@ local lastInterruptCastTime = 0
 local function CheckInterruptCooldown()
     if not currentInterruptConfig or not currentInterruptConfig.spellID then return false, 0 end
     local spellID = currentInterruptConfig.spellID
-    local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
-    
-    -- If API gives useful non-secret data:
-    if ok and type(cdInfo) == "table" then
-        if cdInfo.duration > 1.5 then
-            local rem = cdInfo.duration - (GetTime() - cdInfo.startTime)
-            if rem > 0 then return false, rem end
-        end
+
+    -- WOW 12.0 SECRET VALUE SAFE
+    local remaining, ready = RA:GetSpellCooldownSafe(spellID)
+    if remaining ~= nil then
+        if remaining > 0 then return false, remaining end
         return true, 0
     end
-    
-    -- Fallback: Estimate from cast history
+
+    -- Fallback: 通过施法历史估算
     local cooldown = currentInterruptConfig.cooldown or 15
     local elapsed = GetTime() - lastInterruptCastTime
     if elapsed < cooldown then
         return false, cooldown - elapsed
     end
-    
+
     return true, 0
 end
 

@@ -210,27 +210,27 @@ local function InferBurstState(state, rules)
         return
     end
     
-    -- 1. Check native Cooldown data 
-    local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, burstSpell)
-    if ok and type(cdInfo) == "table" and cdInfo.duration then
-        local elapsed = GetTime() - cdInfo.startTime
-        local remaining = cdInfo.duration - elapsed
-        
-        if remaining > 0 and cdInfo.duration > 10 then 
-            -- We are on cooldown for a major burst skill
-            if elapsed < rules.burstDuration then
-                -- Still within the burst window duration
+    -- 1. Check native Cooldown data (SECRET VALUE SAFE)
+    local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(burstSpell)
+    if remaining ~= nil then
+        -- 可以读取 CD
+        if remaining > 0 and cdDuration and cdDuration > 10 then
+            local elapsed = cdDuration - remaining
+            if elapsed < (rules.burstDuration or 24) then
                 score = score + 0.95
             else
-                -- Burst is over, we are waiting for CD
                 if remaining < 5 then
                     state.inferred.nextBurstIn = remaining
-                    -- We are NOT bursting yet, but we will soon
                     score = 0.0
                 end
             end
-        elseif remaining <= 0 then
+        elseif ready then
             state.inferred.nextBurstIn = 0
+        end
+    else
+        -- CD 信息不可读（secret），用推荐技能推断
+        if ArrayContains(rules.burstIndicatorSpells, state.blizzardRecommendation) then
+            score = score + 0.5
         end
     end
     

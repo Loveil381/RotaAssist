@@ -49,29 +49,20 @@ local function scanCooldowns()
             cdStates[spellID] = state
         end
 
-        local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
-        if ok and cdInfo then
-            local startTime = cdInfo.startTime or 0
-            local duration  = cdInfo.duration  or 0
-            if duration > 1.5 then
-                state.remaining = math.max(0, (startTime + duration) - now)
-                local wasReady  = state.ready
-                state.ready     = (state.remaining <= 0)
+        -- WOW 12.0 SECRET VALUE SAFE
+        local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(spellID)
+        if remaining ~= nil then
+            state.remaining = remaining
+            local wasReady = state.ready
+            state.ready = ready
 
-                -- Alert when CD drops below threshold
-                local threshold = cd.alertThreshold or 5
-                if not wasReady and state.remaining > 0 and state.remaining <= threshold then
-                    if eh and eh.Fire then
-                        eh:Fire("ROTAASSIST_CD_ALERT", spellID, state.remaining)
-                    end
+            if not wasReady and remaining > 0 and remaining <= (cd.alertThreshold or 5) then
+                if eh and eh.Fire then
+                    eh:Fire("ROTAASSIST_CD_ALERT", spellID, remaining)
                 end
-            else
-                state.remaining = 0
-                state.ready     = true
             end
         else
-            state.remaining = 0
-            state.ready     = true
+            -- Secret: preserve last known state, don't update
         end
 
         -- Cache texture/name on first pass

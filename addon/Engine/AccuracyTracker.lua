@@ -35,7 +35,10 @@ local sessionStartTime = 0
 ---@return boolean
 local function IsGCDSpell(spellID)
     local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
-    if not ok or type(cdInfo) ~= "table" then return false end
+    if not ok or not cdInfo then return false end
+    if type(cdInfo) ~= "table" then return false end
+    -- WOW 12.0 SECRET VALUE SAFE: isOnGCD is NeverSecret, safe to read
+    if cdInfo.isOnGCD ~= nil then return true end
     if spellID == 6603 then return false end -- Filter auto-attack
     return true
 end

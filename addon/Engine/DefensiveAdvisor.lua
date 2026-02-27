@@ -83,101 +83,56 @@ local function CreateProbeFrame(parent, index)
 end
 
 ------------------------------------------------------------------------
--- HP Check Logic (dual-path: out-of-combat arithmetic, in-combat curves)
+-- HP Check Logic (issecretvalue-based: arithmetic when readable, curves when secret)
 ------------------------------------------------------------------------
 
 local function checkHealth()
     if not defensives then return end
-
     local eh = RA:GetModule("EventHandler")
-    local inCombat = InCombatLockdown()
 
-    if not inCombat then
-        -- WOW 12.0 SECRET VALUE SAFE: Out of combat, UnitHealth is readable
-        local hp    = UnitHealth("player") or 0
-        local hpMax = UnitHealthMax("player") or 1
-        if hpMax <= 0 then hpMax = 1 end
+    -- WOW 12.0 SECRET VALUE SAFE
+    local hpPct = RA:GetPlayerHealthPercentSafe()
 
-        local hpPct = hp / hpMax
+    if hpPct then
+        -- 可以读取：完整阈值判断
         lastHpPct = hpPct
 
         for _, def in ipairs(defensives) do
             if hpPct <= def.hpThreshold then
-                -- Check if the defensive is actually off CD
-                local ready = true
-                local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, def.spellID)
-                if cdOk and cdInfo and cdInfo.duration and cdInfo.duration > 1.5 then
-                    local remaining = (cdInfo.startTime + cdInfo.duration) - GetTime()
-                    if remaining > 0 then ready = false end
-                end
-
-                if ready and lastAlertSpellID ~= def.spellID then
-                    lastAlertSpellID = def.spellID
-                    lastActiveAlert = {
-                        spellID = def.spellID,
-                        name    = def.name,
-                        urgency = 1.0 - hpPct,
-                        texture = def.texture or 134400,
-                    }
-                    if eh and eh.Fire then
-                        eh:Fire("ROTAASSIST_DEFENSIVE_ALERT", def.spellID, hpPct, def.hpThreshold)
+                local remaining, ready = RA:GetSpellCooldownSafe(def.spellID)
+                -- remaining==nil 表示 secret，假设可用（宁可多提醒）
+                if remaining == nil or ready then
+                    if lastAlertSpellID ~= def.spellID then
+                        lastAlertSpellID = def.spellID
+                        lastActiveAlert = {
+                            spellID = def.spellID,
+                            name    = def.name,
+                            urgency = 1.0 - hpPct,
+                            texture = def.texture or 134400,
+                        }
+                        if eh and eh.Fire then
+                            eh:Fire("ROTAASSIST_DEFENSIVE_ALERT", def.spellID, hpPct, def.hpThreshold)
+                        end
                     end
                 end
                 return
             end
         end
-
-        -- HP recovered above all thresholds
         lastAlertSpellID = nil
         lastActiveAlert = nil
     else
-        -- WOW 12.0 SECRET VALUE SAFE: In combat, drive visual alerts via curves
-        -- We cannot read the actual HP number, but we CAN:
-        -- 1. Pass secret color alpha to probe frames (visual layer)
-        -- 2. Check CD readiness (C_Spell.GetSpellCooldown is NOT secret)
-        -- 3. Fire alerts based on UNIT_HEALTH event arrival as a heuristic
-
+        -- HP 不可读（secret）：用 curve 驱动视觉层
         for _, def in ipairs(defensives) do
             if def.thresholdCurve and def.probeFrame then
-                -- WOW 12.0 SECRET VALUE SAFE
-                -- UnitHealthPercent + curve returns secret ColorMixin
-                -- pcall both calls to avoid tainted arithmetic crash
                 local ok, color = pcall(UnitHealthPercent, "player", true, def.thresholdCurve)
                 if ok and color then
                     local ok2, r, g, b, a = pcall(color.GetRGBA, color)
-                    if ok2 then
-                        def.probeFrame:SetAlpha(a)  -- secret alpha accepted by SetAlpha
+                    if ok2 and a then
+                        def.probeFrame:SetAlpha(a)
                     end
                 end
             end
-
-            -- CD readiness is NOT secret — we can always check this
-            local ready = true
-            local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, def.spellID)
-            if cdOk and cdInfo and cdInfo.duration and cdInfo.duration > 1.5 then
-                local remaining = (cdInfo.startTime + cdInfo.duration) - GetTime()
-                if remaining > 0 then ready = false end
-            end
-
-            -- In combat we maintain the last known alert for GetActiveRecommendation()
-            -- The visual alert is driven by the curve; the Lua-side alert is best-effort
-            if ready and lastAlertSpellID ~= def.spellID then
-                -- We can't KNOW HP crossed the threshold from Lua, but we fire
-                -- defensive data so SmartQueueManager can include it in the queue.
-                -- The visual urgency is driven by the probe frame's alpha (curve-based).
-                lastAlertSpellID = def.spellID
-                lastActiveAlert = {
-                    spellID = def.spellID,
-                    name    = def.name,
-                    urgency = 0.5,  -- unknown urgency in combat (can't read HP)
-                    texture = def.texture or 134400,
-                }
-                if eh and eh.Fire then
-                    eh:Fire("ROTAASSIST_DEFENSIVE_ALERT", def.spellID, lastHpPct, def.hpThreshold)
-                end
-            end
         end
-        -- Notify MainDisplay to sync probe frame alpha to visual layer
         if eh and eh.Fire then
             eh:Fire("ROTAASSIST_DEFENSIVE_UPDATE", probeFrames, defensives)
         end
@@ -211,10 +166,9 @@ function DefensiveAdvisor:OnEnable()
 
         -- Reset alert state when leaving combat
         eh:Subscribe("PLAYER_REGEN_ENABLED", "DefensiveAdvisor", function()
-            -- Refresh HP cache now that we can read it
-            local hp    = UnitHealth("player") or 0
-            local hpMax = UnitHealthMax("player") or 1
-            if hpMax > 0 then lastHpPct = hp / hpMax end
+            -- WOW 12.0 SECRET VALUE SAFE: may remain secret in M+/PvP
+            local pct = RA:GetPlayerHealthPercentSafe()
+            if pct then lastHpPct = pct end
             lastAlertSpellID = nil
             lastActiveAlert = nil
         end)
@@ -287,10 +241,12 @@ end
 -- Public API
 ------------------------------------------------------------------------
 
----Get the current HP percentage (cached; may be stale during combat).
+---Get the current HP percentage. Attempts live read, falls back to cache.
 --- WOW 12.0 SECRET VALUE SAFE: Returns last known non-secret value.
 ---@return number hpPct 0.0–1.0
 function DefensiveAdvisor:GetHealthPercent()
+    local pct = RA:GetPlayerHealthPercentSafe()
+    if pct then lastHpPct = pct end
     return lastHpPct
 end
 

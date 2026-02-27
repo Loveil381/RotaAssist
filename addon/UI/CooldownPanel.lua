@@ -5,7 +5,7 @@
 -- Independently draggable from the main display.
 ------------------------------------------------------------------------
 
-local _, NS = ...\
+local _, NS = ...
 local RA = NS.RA
 local CooldownPanel = {}
 RA:RegisterModule("CooldownPanel", CooldownPanel)
