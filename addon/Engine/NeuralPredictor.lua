@@ -239,7 +239,7 @@ function NeuralPredictor:BuildFeatures()
         f.blizzardRecommendation = rec and rec.spellID or 0
     end
 
-    -- Secondary resource (non-SECRET)
+    -- WOW 12.0 SECRET VALUE SAFE: Secondary resource (should be non-secret, but guarded)
     local specDetector = RA:GetModule("SpecDetector")
     if specDetector then
         local spec = specDetector:GetCurrentSpec()
@@ -249,8 +249,14 @@ function NeuralPredictor:BuildFeatures()
             if enh.secondaryPowerType then
                 local ok1, cur = pcall(UnitPower, "player", enh.secondaryPowerType)
                 local ok2, mx  = pcall(UnitPowerMax, "player", enh.secondaryPowerType)
-                f.secondaryResource = (ok1 and cur) or 0
-                f.secondaryResourceMax = (ok2 and mx and mx > 0 and mx) or 1
+                cur = (ok1 and cur) or 0
+                mx  = (ok2 and mx and mx > 0 and mx) or 1
+                -- WOW 12.0 SECRET VALUE SAFE: guard against unexpected secret values
+                if issecretvalue and (issecretvalue(cur) or issecretvalue(mx)) then
+                    cur, mx = 0, 1
+                end
+                f.secondaryResource = cur
+                f.secondaryResourceMax = mx
             end
         end
     end

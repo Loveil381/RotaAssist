@@ -1,6 +1,8 @@
 ------------------------------------------------------------------------
 -- RotaAssist - Resource Bar Widget
 -- A compact bar displaying current resource percentage and value.
+-- WOW 12.0 SECRET VALUE SAFE: Uses StatusBar widget for in-combat
+-- updates — StatusBar:SetValue() accepts secret values natively.
 ------------------------------------------------------------------------
 
 local _, NS = ...
@@ -18,94 +20,115 @@ ResourceBar.__index = ResourceBar
 ---@return table widget
 function ResourceBar:Create(parent, width, height)
     local obj = setmetatable({}, self)
-    
+
     width = width or 48
     height = height or 8
-    
+
     -- Background Bar
     obj.bg = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     obj.bg:SetSize(width, height)
     obj.bg:SetBackdrop({ bgFile = "Interface\\ChatFrame\\ChatFrameBackground" })
     obj.bg:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
-    
-    -- Fill Bar
-    obj.fill = obj.bg:CreateTexture(nil, "ARTWORK")
-    obj.fill:SetTexture("Interface\\ChatFrame\\ChatFrameBackground")
-    obj.fill:SetPoint("TOPLEFT", obj.bg, "TOPLEFT")
-    obj.fill:SetPoint("BOTTOMLEFT", obj.bg, "BOTTOMLEFT")
-    obj.fill:SetWidth(0.1) -- initial
-    
+
+    -- StatusBar (WOW 12.0 SECRET VALUE SAFE: SetValue accepts secrets)
+    obj.statusBar = CreateFrame("StatusBar", nil, obj.bg)
+    obj.statusBar:SetAllPoints(obj.bg)
+    obj.statusBar:SetStatusBarTexture("Interface\\ChatFrame\\ChatFrameBackground")
+    obj.statusBar:SetMinMaxValues(0, 1)
+    obj.statusBar:SetValue(0)
+
     -- Text Overlay
     obj.text = obj.bg:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     obj.text:SetPoint("CENTER", obj.bg, "CENTER", 0, 7) -- slightly above the bar
     obj.text:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
-    
+
     obj.width = width
-    obj.currentColor = {r = 0.5, g = 0.5, b = 0.5} -- default gray
-    
+    obj.lastPowerType = nil
+
     return obj
 end
 
 ---Get color scheme for power type.
 ---@param powerType number Enum.PowerType
----@return table {r, g, b}
-local function getPowerTypeBaseColor(powerType)
+---@return number r, number g, number b
+local function getPowerTypeColor(powerType)
     if powerType == 17 then -- Fury
-        return {r=0.6, g=0.2, b=0.8}
+        return 0.6, 0.2, 0.8
     elseif powerType == 0 then -- Mana
-        return {r=0.2, g=0.4, b=1.0}
+        return 0.2, 0.4, 1.0
     elseif powerType == 1 then -- Rage
-        return {r=1.0, g=0.2, b=0.2}
+        return 1.0, 0.2, 0.2
     elseif powerType == 3 then -- Energy
-        return {r=1.0, g=0.9, b=0.2}
+        return 1.0, 0.9, 0.2
+    elseif powerType == 8 then -- LunarPower (Astral Power)
+        return 0.3, 0.5, 1.0
+    elseif powerType == 11 then -- Maelstrom
+        return 0.0, 0.5, 1.0
+    elseif powerType == 4 then -- Combo Points
+        return 1.0, 0.6, 0.0
     else
-        return {r=0.5, g=0.5, b=0.5}
+        return 0.5, 0.5, 0.5
     end
 end
 
----Update the resource bar display.
+---Update the resource bar for non-secret values (out of combat).
 ---@param current number
 ---@param max number
 ---@param powerType number|nil Enum.PowerType
 function ResourceBar:Update(current, max, powerType)
     if not current or not max or max <= 0 then
-        self.fill:SetWidth(0.1)
+        self.statusBar:SetValue(0)
         self.text:SetText("")
         return
     end
-    
+
     local pct = current / max
     if pct > 1 then pct = 1 end
     if pct < 0 then pct = 0 end
-    
-    -- Set width based on percentage
-    local fillWidth = math.max(1, self.width * pct)
-    self.fill:SetWidth(fillWidth)
-    
+
+    self.statusBar:SetMinMaxValues(0, max)
+    self.statusBar:SetValue(current)
+
     -- Text "current/max"
     self.text:SetText(string.format("%.0f/%.0f", current, max))
-    
-    -- Determine color based on thresholds
-    local r, g, b = 0, 0, 0
-    if pct < 0.3 then
-        -- Low (Red)
-        r, g, b = 0.9, 0.2, 0.2
-    elseif pct < 0.6 then
-        -- Med (Yellow)
-        r, g, b = 0.9, 0.8, 0.1
+
+    -- Set color based on power type
+    local r, g, b = getPowerTypeColor(powerType or -1)
+    self.statusBar:SetStatusBarColor(r, g, b)
+end
+
+---WOW 12.0 SECRET VALUE SAFE: Update using secret-safe widget APIs.
+---StatusBar:SetValue() and SetMinMaxValues() accept secret values natively.
+---@param powerType number Enum.PowerType
+function ResourceBar:UpdateSecretSafe(powerType)
+    if not powerType then
+        self.statusBar:SetValue(0)
+        self.text:SetText("")
+        return
+    end
+
+    -- UnitPowerMax is NOT secret for player units (confirmed in 12.0 Alpha 6)
+    local maxPower = UnitPowerMax("player", powerType)
+    if not maxPower or maxPower <= 0 then maxPower = 1 end
+
+    -- UnitPower returns a SECRET value in combat — pass directly to StatusBar
+    local currentPower = UnitPower("player", powerType)
+
+    self.statusBar:SetMinMaxValues(0, maxPower)
+    self.statusBar:SetValue(currentPower)  -- SECRET VALUE OK: StatusBar accepts secrets
+
+    -- WOW 12.0 SECRET VALUE SAFE: Use string.format with secrets (produces secret string)
+    -- FontString:SetText() accepts secret strings since Alpha 3
+    if issecretvalue and issecretvalue(currentPower) then
+        self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
     else
-        -- High (Green)
-        r, g, b = 0.2, 0.8, 0.2
+        self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
     end
-    
-    -- Special case: base color override if not purely percentage-based
-    if powerType == 17 then
-        -- Fury: Purple-ish base, intensity varies
-        r, g, b = 0.6 + (0.4 * pct), 0.2, 0.8
-    elseif powerType == 0 then
-        -- Mana: always blue
-        r, g, b = 0.2, 0.4 + (0.4 * pct), 1.0
+
+    -- Set color based on power type (non-secret color choice)
+    if self.lastPowerType ~= powerType then
+        local r, g, b = getPowerTypeColor(powerType)
+        self.statusBar:SetStatusBarColor(r, g, b)
+        self.lastPowerType = powerType
     end
-    
-    self.fill:SetVertexColor(r, g, b)
 end

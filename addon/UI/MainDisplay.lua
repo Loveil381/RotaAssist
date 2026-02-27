@@ -208,15 +208,13 @@ local function UpdateDisplay()
     end
     
     -- 5. Resource Bar
-    -- Needs to fetch from current player state since SmartQueue doesn't hold raw resource data usually (or does it?)
-    -- We'll poll it quickly here
+    -- WOW 12.0 SECRET VALUE SAFE: Use UpdateSecretSafe which passes
+    -- secret UnitPower values directly to StatusBar:SetValue() (allowed)
     local specDetector = RA:GetModule("SpecDetector")
     if specDetector then
         local powerType = specDetector:GetPrimaryPowerType()
         if powerType then
-            local current = UnitPower("player", powerType)
-            local max = UnitPowerMax("player", powerType)
-            elements.resource:Update(current, max, powerType)
+            elements.resource:UpdateSecretSafe(powerType)
         end
     end
     

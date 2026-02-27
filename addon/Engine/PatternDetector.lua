@@ -107,14 +107,21 @@ local function GetBlizzardRecommendation()
     return rec and rec.spellID or nil
 end
 
----Get secondary resource value (non-secret).
----获取次要资源值（非 SECRET）。
----@return number current, number max
+---Get secondary resource value (non-secret in 12.0, guarded defensively).
+---获取次要资源值（12.0中为非SECRET，但防御性检查）。
+--- WOW 12.0 SECRET VALUE SAFE
+---@return number|nil current, number|nil max
 local function GetSecondaryResource()
     if not specData or not specData.secondaryPowerType then return 0, 1 end
     local ok1, cur = pcall(UnitPower, "player", specData.secondaryPowerType)
     local ok2, mx  = pcall(UnitPowerMax, "player", specData.secondaryPowerType)
-    return (ok1 and cur) or 0, (ok2 and mx and mx > 0 and mx) or 1
+    cur = (ok1 and cur) or 0
+    mx  = (ok2 and mx and mx > 0 and mx) or 1
+    -- WOW 12.0 SECRET VALUE SAFE: guard against unexpected secret values
+    if issecretvalue and (issecretvalue(cur) or issecretvalue(mx)) then
+        return nil, nil
+    end
+    return cur, mx
 end
 
 ---Get last N spellIDs from CastHistoryRecorder.
@@ -147,13 +154,15 @@ end
 ---记录一次次要资源样本。
 local function RecordResourceSample()
     local cur, mx = GetSecondaryResource()
+    -- WOW 12.0 SECRET VALUE SAFE: skip sample if resource is secret/nil
+    if not cur or not mx or mx <= 0 then return end
     resourceSampleHead = resourceSampleHead + 1
     if resourceSampleHead > RESOURCE_SAMPLE_CAP then resourceSampleHead = 1 end
     if not resourceSamples[resourceSampleHead] then
         resourceSamples[resourceSampleHead] = { 0, 0 }
     end
     resourceSamples[resourceSampleHead][1] = GetTime()
-    resourceSamples[resourceSampleHead][2] = mx > 0 and (cur / mx) or 0
+    resourceSamples[resourceSampleHead][2] = cur / mx
     resourceSampleCount = math.min(resourceSampleCount + 1, RESOURCE_SAMPLE_CAP)
 end
 
@@ -200,7 +209,11 @@ local function DetectPhase()
     local npCount     = PatternDetector:GetNameplateCount()
     local blizzRec    = GetBlizzardRecommendation()
     local resCur, resMax = GetSecondaryResource()
-    local resPct      = resMax > 0 and (resCur / resMax) or 0
+    -- WOW 12.0 SECRET VALUE SAFE: default to 0 if resource is secret/nil
+    local resPct = 0
+    if resCur and resMax and resMax > 0 then
+        resPct = resCur / resMax
+    end
     local recentCasts = GetRecentCastIDs(5)
 
     -- 权重桶 / weight buckets
