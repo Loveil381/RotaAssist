@@ -40,6 +40,9 @@ local lastHpPct = 1.0
 --- Threshold curve cache: threshold(0-1) -> curve object
 local THRESHOLD_CURVES = {}
 
+--- Probe frames for in-combat secret value detection: spellID -> frame
+local probeFrames = {}
+
 ------------------------------------------------------------------------
 -- WOW 12.0 SECRET VALUE SAFE: Curve-Based Threshold Detection
 ------------------------------------------------------------------------
@@ -136,12 +139,15 @@ local function checkHealth()
 
         for _, def in ipairs(defensives) do
             if def.thresholdCurve and def.probeFrame then
-                -- Drive the probe frame alpha with the secret health percentage
-                -- UnitHealthPercent returns a secret color when given a curve
-                local secretColor = UnitHealthPercent("player", true, def.thresholdCurve)
-                if secretColor then
-                    -- Pass secret alpha directly to widget — this is allowed in 12.0
-                    def.probeFrame:SetAlpha(select(4, secretColor:GetRGBA()))
+                -- WOW 12.0 SECRET VALUE SAFE
+                -- UnitHealthPercent + curve returns secret ColorMixin
+                -- pcall both calls to avoid tainted arithmetic crash
+                local ok, color = pcall(UnitHealthPercent, "player", true, def.thresholdCurve)
+                if ok and color then
+                    local ok2, r, g, b, a = pcall(color.GetRGBA, color)
+                    if ok2 then
+                        def.probeFrame:SetAlpha(a)  -- secret alpha accepted by SetAlpha
+                    end
                 end
             end
 
@@ -170,6 +176,10 @@ local function checkHealth()
                     eh:Fire("ROTAASSIST_DEFENSIVE_ALERT", def.spellID, lastHpPct, def.hpThreshold)
                 end
             end
+        end
+        -- Notify MainDisplay to sync probe frame alpha to visual layer
+        if eh and eh.Fire then
+            eh:Fire("ROTAASSIST_DEFENSIVE_UPDATE", probeFrames, defensives)
         end
     end
 end
@@ -226,6 +236,14 @@ function DefensiveAdvisor:LoadForSpec(specID)
     lastAlertSpellID = nil
     lastActiveAlert = nil
 
+    -- Clean up old probe frames from previous spec
+    for sid, f in pairs(probeFrames) do
+        f:Hide()
+        f:SetParent(nil)
+    end
+    wipe(probeFrames)
+    wipe(THRESHOLD_CURVES)
+
     if not specID or not RA.SpecEnhancements then return end
 
     local enhData = RA.SpecEnhancements[specID]
@@ -249,6 +267,7 @@ function DefensiveAdvisor:LoadForSpec(specID)
             -- WOW 12.0 SECRET VALUE SAFE: Pre-build curve for in-combat use
             entry.thresholdCurve = GetOrCreateThresholdCurve(entry.hpThreshold)
             entry.probeFrame = CreateProbeFrame(updateFrame, i)
+            probeFrames[entry.spellID] = entry.probeFrame
 
             defensives[#defensives + 1] = entry
         end

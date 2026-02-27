@@ -119,7 +119,7 @@ local function GetSecondaryResource()
     mx  = (ok2 and mx and mx > 0 and mx) or 1
     -- WOW 12.0 SECRET VALUE SAFE: guard against unexpected secret values
     if issecretvalue and (issecretvalue(cur) or issecretvalue(mx)) then
-        return nil, nil
+        return 0, 1  -- fallback: cannot read, return safe defaults
     end
     return cur, mx
 end
