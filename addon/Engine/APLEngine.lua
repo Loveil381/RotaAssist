@@ -183,21 +183,34 @@ end
 ---Predict the next N steps from a given starting spell.
 ---Slot 1 is always the Blizzard recommendation (not produced here).
 ---This returns steps 2..depth+1 for the UI.
----@param currentSpellID number  The spell Blizzard is recommending NOW
----@param limitedState   table   Observable state: { resource, cooldowns, inMeta, targetCount }
----@param depth          number  How many steps ahead to predict (default 2)
+---@param currentSpellID number|nil  The spell Blizzard is recommending NOW
+---@param limitedState   table|nil   Observable state: { resource, cooldowns, inMeta, targetCount }
+---@param depth          number      How many steps ahead to predict (default 2)
 ---@return table[] predictions  Array of { spellID, confidence, source, note }
 function APLEngine:PredictNext(currentSpellID, limitedState, depth)
     depth = depth or 2
+
+    -- FIX (P0-Bug2): Nil guard — return early if we have no current spell or
+    -- no state to simulate against. Prevents "attempt to index a nil value"
+    -- when callers (e.g. SmartQueueManager) pass nil arguments.
+    if not currentSpellID or not limitedState then return {} end
+
     if not currentAPL then return {} end
+
+    -- FIX (P0-Bug2): Default-value protection for limitedState fields.
+    -- Even when limitedState is provided, individual fields may be nil.
+    limitedState.resource    = limitedState.resource or 0
+    limitedState.cooldowns   = limitedState.cooldowns or {}
+    limitedState.inMeta      = limitedState.inMeta or false
+    limitedState.targetCount = limitedState.targetCount or 1
 
     -- Build simulation state from the limited observable state
     local simState = {
         cooldowns   = {},
-        resource    = limitedState.resource or 0,
+        resource    = limitedState.resource,
         inMeta      = limitedState.inMeta or metaActive,
         lastCast    = nil,
-        targetCount = limitedState.targetCount or 1,
+        targetCount = limitedState.targetCount,
     }
     -- Copy cooldown data into simState
     if limitedState.cooldowns then

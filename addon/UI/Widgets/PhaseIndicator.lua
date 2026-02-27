@@ -70,7 +70,7 @@ function RA_PhaseIndicator:Create(parent)
     local text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     text:SetPoint("LEFT", icon, "RIGHT", 4, 0)
     text:SetTextColor(1, 1, 1)
-    text:SetText("Unknown")
+    text:SetText(RA.L and RA.L["UNKNOWN"] or "Unknown")
     widget.text = text
 
     -- Fade animations
@@ -108,11 +108,11 @@ function RA_PhaseIndicator:Update(phase, confidence)
     if self.currentPhase ~= phase then
         self.currentPhase = phase
         
-        -- Localization
-        local displayStr = RA.L and RA.L[phase] or phase
+        -- Localization / 本地化支持
+        local displayStr = (RA.L and RA.L[phase]) or phase
         self.text:SetText(displayStr)
         
-        -- Resize to fit
+        -- Resize to fit / 自动调整宽度
         local textWidth = self.text:GetStringWidth()
         self.frame:SetWidth(textWidth + 26) -- 4 + 14 + 4 + text + 4
 

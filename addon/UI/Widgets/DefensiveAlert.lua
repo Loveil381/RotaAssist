@@ -21,12 +21,12 @@ function DefensiveAlert:Create(parent)
     obj.iconWidget = RA.UI.IconWidget:Create(parent, 28)
     obj.iconWidget.frame:Hide()
     
-    -- Extra "USE!" text above the icon
+    -- Extra text above the icon / 图标上方额外文本
     obj.useText = obj.iconWidget.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     obj.useText:SetPoint("BOTTOM", obj.iconWidget.frame, "TOP", 0, 2)
     obj.useText:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
     obj.useText:SetTextColor(1, 0.2, 0.2)
-    obj.useText:SetText("USE!")
+    obj.useText:SetText(RA.L and RA.L["USE_DEFENSIVE"] or "USE!")
     
     obj.activeSpell = nil
     obj.fadeTimer = nil
@@ -45,9 +45,12 @@ function DefensiveAlert:Trigger(spellID, texture, name)
     
     self.activeSpell = spellID
     self.iconWidget:SetSpell(spellID, texture)
-    self.iconWidget:SetAlert(true) -- enable the red pulsating border
+    self.iconWidget:SetAlert(true) -- enable the red pulsating border / 启用红色脉冲边框
     
-    -- Optional: Play a sound
+    local defaultUseText = RA.L and RA.L["USE_DEFENSIVE"] or "USE!"
+    self.useText:SetText(name or defaultUseText)
+    
+    -- Optional: Play a sound / 播放警告音效
     PlaySoundFile("Sound\\Interface\\RaidWarning.ogg", "Master")
     
     self.iconWidget.frame:SetAlpha(0)

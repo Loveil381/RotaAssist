@@ -133,7 +133,50 @@ local function AssembleQueue()
     end
 
     if mAPLEngine then
-        context.aplPred = mAPLEngine:PredictNext(nil, nil)
+        -- FIX (P0-Bug2): Build a valid limitedState table from context before calling
+        -- PredictNext(). Previously nil was passed, causing an "index nil value" error
+        -- inside PredictNext() when it tried to read limitedState.resource.
+        local limitedState = {
+            resource   = 0,
+            cooldowns  = {},
+            inMeta     = false,
+            targetCount = 1,
+        }
+
+        -- FIX (P0-Bug2): Populate resource from UnitPower if available
+        local powerType = 0  -- default to mana
+        local specDetector = RA:GetModule("SpecDetector")
+        if specDetector then
+            local spec = specDetector:GetCurrentSpec()
+            if spec and RA.SpecEnhancements and RA.SpecEnhancements[spec.specID] then
+                local resConfig = RA.SpecEnhancements[spec.specID].resource
+                if resConfig and resConfig.powerType then
+                    powerType = resConfig.powerType
+                end
+            end
+        end
+        limitedState.resource = UnitPower("player", powerType) or 0
+
+        -- FIX (P0-Bug2): Populate cooldowns from CooldownOverlay states
+        if mCooldownOverlay then
+            local cds = mCooldownOverlay:GetCooldownStates()
+            for sid, cd in pairs(cds) do
+                limitedState.cooldowns[sid] = cd.remaining or 0
+            end
+        end
+
+        -- FIX (P0-Bug2): Populate inMeta from APLEngine state
+        limitedState.inMeta = mAPLEngine:IsMetaActive()
+
+        -- FIX (P0-Bug2): Populate targetCount from AIInference if available
+        if mAIInference then
+            local aiCtx = mAIInference:GetContext()
+            if aiCtx and aiCtx.targetCount then
+                limitedState.targetCount = aiCtx.targetCount
+            end
+        end
+
+        context.aplPred = mAPLEngine:PredictNext(context.blizzSpell, limitedState)
     end
 
     if mAIInference then

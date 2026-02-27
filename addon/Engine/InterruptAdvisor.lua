@@ -120,6 +120,9 @@ local function OnSpellCastSucceeded(_, unit, _, spellID)
     end
 end
 
+-- FIX (P0-Bug1): Event handlers now receive custom event names from EventHandler
+-- instead of raw WoW events. The first arg is the custom event name; the second
+-- is the unit token forwarded by the central dispatcher.
 local function OnSpellCastStart(_, unitTarget)
     -- Fire and forget evaluate. We cannot read the secret spellID here.
     EvaluateInterruptNeed(unitTarget)
@@ -177,15 +180,25 @@ function InterruptAdvisor:OnEnable()
     local eh = RA:GetModule("EventHandler")
     if eh then
         eh:Subscribe("ROTAASSIST_SPEC_CHANGED", "InterruptAdvisor", UpdateConfig)
-    end
 
-    RA:RegisterEvent("UNIT_SPELLCAST_START", OnSpellCastStart)
-    RA:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START", OnSpellCastStart)
-    RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", OnSpellCastSucceeded)
+        -- FIX (P0-Bug1): Subscribe to centrally-dispatched custom events instead of
+        -- calling RA:RegisterEvent() directly, which would OVERWRITE EventHandler's
+        -- central dispatchers registered in EventHandler:OnEnable().
+        eh:Subscribe("ROTAASSIST_SPELLCAST_START", "InterruptAdvisor", OnSpellCastStart)
+        eh:Subscribe("ROTAASSIST_CHANNEL_START", "InterruptAdvisor", OnSpellCastStart)
+        eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "InterruptAdvisor", OnSpellCastSucceeded)
+    end
 end
 
 function InterruptAdvisor:OnDisable()
-    RA:UnregisterEvent("UNIT_SPELLCAST_START")
-    RA:UnregisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-    RA:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    -- FIX (P0-Bug1): Unsubscribe from EventHandler's custom events instead of
+    -- calling RA:UnregisterEvent() which would tear down EventHandler's central
+    -- dispatchers and break other subscribers.
+    local eh = RA:GetModule("EventHandler")
+    if eh then
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_START", "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_CHANNEL_START", "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPEC_CHANGED", "InterruptAdvisor")
+    end
 end

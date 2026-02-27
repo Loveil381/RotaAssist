@@ -225,6 +225,20 @@ function EventHandler:OnEnable()
     RA:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, castGUID, spellID)
         EventHandler:Fire("ROTAASSIST_SPELLCAST_SUCCEEDED", unit, castGUID, spellID)
     end)
+
+    -- FIX (P0-Bug1): Central dispatcher for UNIT_SPELLCAST_START.
+    -- InterruptAdvisor (and potentially other modules) need this event.
+    -- Register ONCE here and re-dispatch as ROTAASSIST_SPELLCAST_START to avoid
+    -- individual modules calling RA:RegisterEvent() which overwrites this central handler.
+    RA:RegisterEvent("UNIT_SPELLCAST_START", function(_, unit)
+        EventHandler:Fire("ROTAASSIST_SPELLCAST_START", unit)
+    end)
+
+    -- FIX (P0-Bug1): Central dispatcher for UNIT_SPELLCAST_CHANNEL_START.
+    -- Same pattern as above — re-dispatch as ROTAASSIST_CHANNEL_START.
+    RA:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START", function(_, unit)
+        EventHandler:Fire("ROTAASSIST_CHANNEL_START", unit)
+    end)
 end
 
 function EventHandler:OnDisable()

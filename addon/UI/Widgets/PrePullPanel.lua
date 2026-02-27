@@ -33,16 +33,13 @@ function PrePullPanel:Create(parent)
     obj.title:SetPoint("TOP", obj.frame, "TOP", 0, -5)
     
     -- Localized Title
-    local titleStr = "Pre-Pull Checklist"
-    if RA.L and RA.L["PREPULL_CHECKLIST"] then
-        titleStr = RA.L["PREPULL_CHECKLIST"]
-    end
+    local titleStr = RA.L and RA.L["PREPULL_CHECKLIST"] or "Pre-Pull Checklist"
     obj.title:SetText(titleStr)
     
     -- Rows storage
     obj.rows = {}
     
-    -- Status text at bottom
+    -- Status text at bottom / 底部状态文本
     obj.statusText = obj.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     obj.statusText:SetPoint("BOTTOM", obj.frame, "BOTTOM", 0, 5)
     
@@ -96,7 +93,8 @@ function PrePullPanel:Update(checkResults)
         
         -- Text and Icon
         row.icon:SetTexture(res.icon or 134400)
-        row.text:SetText(res.name or "Unknown")
+        local rowName = res.name or (RA.L and RA.L["UNKNOWN"] or "Unknown")
+        row.text:SetText(rowName)
         
         -- Status
         if res.passed then
@@ -121,20 +119,18 @@ function PrePullPanel:Update(checkResults)
         self.rows[i]:Hide()
     end
     
-    -- Update overall status
+    -- Update overall status / 更新总体状态
     if allPassed then
-        self.statusText:SetText("✓ Ready!")
+        local readyText = RA.L and RA.L["READY_STATUS"] or "✓ Ready!"
+        self.statusText:SetText(readyText)
         self.statusText:SetTextColor(0.2, 0.9, 0.2)
     else
-        if RA.L and RA.L["MISSING_ITEMS"] then
-            self.statusText:SetText(string.format(RA.L["MISSING_ITEMS"], failCount))
-        else
-            self.statusText:SetText(string.format("Missing %d items", failCount))
-        end
+        local missingFormat = RA.L and RA.L["MISSING_ITEMS"] or "Missing %d items"
+        self.statusText:SetText(string.format(missingFormat, failCount))
         self.statusText:SetTextColor(1, 0.8, 0.2)
     end
     
-    -- Adjust frame height based on rows + padding
+    -- Adjust frame height based on rows + padding / 根据行数和边距调整框架高度
     local totalHeight = 15 + (#checkResults * 18) + 15
     self.frame:SetHeight(totalHeight)
 end
