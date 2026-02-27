@@ -91,7 +91,7 @@ local function buildLayout()
     elements.interruptAlert.kickText = elements.interruptAlert.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     elements.interruptAlert.kickText:SetPoint("CENTER", elements.interruptAlert.frame, "CENTER", 0, 0)
     elements.interruptAlert.kickText:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-    elements.interruptAlert.kickText:SetText("KICK!")
+    elements.interruptAlert.kickText:SetText(RA.L and RA.L["INTERRUPT_ALERT"] or "KICK!")
     elements.interruptAlert.kickText:SetTextColor(1, 0.2, 0.2)
     elements.interruptAlert.frame:Hide()
     
@@ -376,7 +376,7 @@ local function applySettings()
     UpdateDisplay()
 end
 
-local function buildMenu(rootDescription)
+local function buildMenu(ownerFrame, rootDescription)
     -- Lock/Unlock
     local lockedText = (RA.L and RA.L["UNLOCK_POSITION"] or "Unlock Position")
     if RA.db and not RA.db.profile.display.locked then

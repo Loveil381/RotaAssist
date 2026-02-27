@@ -68,7 +68,7 @@ function MinimapButton:OnEnable()
             end
         end,
         OnTooltipShow = function(tooltip)
-            tooltip:AddLine("RotaAssist", 0, 0.8, 1)
+            tooltip:AddLine(L["MINIMAP_TOOLTIP_TITLE"] or "RotaAssist", 0, 0.8, 1)
             tooltip:AddLine(L["TOOLTIP_MINIMAP_LEFT"], 0.8, 0.8, 0.8)
             tooltip:AddLine(L["TOOLTIP_MINIMAP_RIGHT"], 0.8, 0.8, 0.8)
         end,

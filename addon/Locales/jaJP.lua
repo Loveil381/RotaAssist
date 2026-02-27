@@ -246,9 +246,19 @@ L["BLIZZARD_ACCURACY"]        = "Blizzard推奨精度"
 L["SMART_ACCURACY"]           = "スマート精度"
 
 ------------------------------------------------------------------------
-L["BURST_SOON_POOL_RESOURCE"] = "%d秒後にバースト — リソースを温存！"
-L["BURST_READY"]              = "バースト準備完了！"
-L["AOE_DETECTED"]             = "%d ターゲット — AoE モード"
-L["DEATH_SWEEP_NOTE"]         = "デススウィープ = メタ版ブレードダンス"
-L["RESOURCE_CAPPING"]         = "リソースが溢れます！消費して！"
+-- Missing Keys (Fix AceLocale strict mode errors)
+------------------------------------------------------------------------
+L["UNKNOWN"]                  = "不明"
+L["USE_DEFENSIVE"]            = "防御使用！"
+L["READY_STATUS"]             = "✓ 準備完了！"
+L["COMBAT_ENDED"]             = "戦闘終了"
+L["ICON_SIZE_TOOLTIP"]        = "スケール"
+L["PHASE_UNKNOWN"]            = "不明"
+L["ACCURACY_LABEL"]           = "精度"
+L["COMBAT_ONLY_MODE"]         = "戦闘のみモード"
+L["MINIMAP_TOOLTIP_TITLE"]    = "RotaAssist"
+L["DISPLAY_MODE"]             = "表示モード"
+L["INTERRUPT_ALERT"]          = "遮り！"
+L["COOLDOWN_READY_ALERT"]     = "CD準備完了！"
+L["AOE_MODE"]                 = "範囲モード"
 

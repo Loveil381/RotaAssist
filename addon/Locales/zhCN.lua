@@ -246,3 +246,20 @@ L["SHOW_PHASE_INDICATOR"]     = "显示阶段指示器"
 L["ACCURACY"]                 = "准确率"
 L["BLIZZARD_ACCURACY"]        = "暴雪推荐准确率"
 L["SMART_ACCURACY"]           = "智能融合准确率"
+
+------------------------------------------------------------------------
+-- Missing Keys (Fix AceLocale strict mode errors)
+------------------------------------------------------------------------
+L["UNKNOWN"]                  = "未知"
+L["USE_DEFENSIVE"]            = "使用防御！"
+L["READY_STATUS"]             = "✓ 准备就绪！"
+L["COMBAT_ENDED"]             = "战斗结束"
+L["ICON_SIZE_TOOLTIP"]        = "缩放"
+L["PHASE_UNKNOWN"]            = "未知"
+L["ACCURACY_LABEL"]           = "准确度"
+L["COMBAT_ONLY_MODE"]         = "仅战斗模式"
+L["MINIMAP_TOOLTIP_TITLE"]    = "RotaAssist"
+L["DISPLAY_MODE"]             = "显示模式"
+L["INTERRUPT_ALERT"]          = "打断！"
+L["COOLDOWN_READY_ALERT"]     = "冷却就绪！"
+L["AOE_MODE"]                 = "群体模式"

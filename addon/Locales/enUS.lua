@@ -251,3 +251,20 @@ L["SHOW_PHASE_INDICATOR"]     = "Show Phase Indicator"
 L["ACCURACY"]                 = "Accuracy"
 L["BLIZZARD_ACCURACY"]        = "Blizzard Accuracy"
 L["SMART_ACCURACY"]           = "Smart Accuracy"
+
+------------------------------------------------------------------------
+-- Missing Keys (Fix AceLocale strict mode errors)
+------------------------------------------------------------------------
+L["UNKNOWN"]                  = "Unknown"
+L["USE_DEFENSIVE"]            = "USE!"
+L["READY_STATUS"]             = "✓ Ready!"
+L["COMBAT_ENDED"]             = "COMBAT_ENDED"
+L["ICON_SIZE_TOOLTIP"]        = "Scale"
+L["PHASE_UNKNOWN"]            = "Unknown"
+L["ACCURACY_LABEL"]           = "Accuracy"
+L["COMBAT_ONLY_MODE"]         = "Combat Only Mode"
+L["MINIMAP_TOOLTIP_TITLE"]    = "RotaAssist"
+L["DISPLAY_MODE"]             = "Display Mode"
+L["INTERRUPT_ALERT"]          = "INTERRUPT!"
+L["COOLDOWN_READY_ALERT"]     = "CD Ready!"
+L["AOE_MODE"]                 = "AoE Mode"
