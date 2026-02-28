@@ -232,6 +232,37 @@ function RA:IsSpellPassive(spellID)
     return false
 end
 
+--- Check if a spell is safe to display as a recommendation.
+--- Multi-layer runtime filter (MaxDps CheckSpellUsable pattern):
+---   1. Reject nil / 0 / auto-attack (6603)
+---   2. Reject passive spells via RA:IsSpellPassive
+---   3. Reject unlearned spells via IsPlayerSpell
+---   4. Reject unusable spells via C_Spell.IsSpellUsable (pcall-protected)
+--- 推荐可用性の総合チェック（被動/未習得/使用不可を排除）
+---@param spellID number
+---@return boolean isRecommendable
+function RA:IsSpellRecommendable(spellID)
+    -- 1. Nil / 0 / auto-attack
+    if not spellID or spellID == 0 or spellID == 6603 then return false end
+
+    -- 2. Passive spell check
+    if self:IsSpellPassive(spellID) then return false end
+
+    -- 3. Unlearned spell check
+    if IsPlayerSpell then
+        local okK, known = pcall(IsPlayerSpell, spellID)
+        if okK and not known then return false end
+    end
+
+    -- 4. C_Spell.IsSpellUsable runtime gate (catches talent-replacement passives)
+    if C_Spell and C_Spell.IsSpellUsable then
+        local okU, usable = pcall(C_Spell.IsSpellUsable, spellID)
+        if okU and usable == false then return false end
+    end
+
+    return true
+end
+
 --- 安全获取玩家生命百分比
 
 --- @return number|nil hpPct 0.0-1.0，nil=secret 无法读取

@@ -71,6 +71,13 @@ function Bridge:GetCurrentRecommendation()
     -- Throttle: do not re-query faster than CVar rate
     local now = GetTime()
     if cachedRec and (now - lastRefresh) < updateInterval then
+        -- FIX: If cached rec is passive, clear it immediately — stale passive cache is the root bug.
+        -- 修复：如果缓存推荐是被动技能，立刻清除（防止被动推荐永久卡住）
+        if RA:IsSpellPassive(cachedRec.spellID) then
+            previousRec = cachedRec
+            cachedRec = nil
+            return nil
+        end
         return cachedRec
     end
 
@@ -87,9 +94,24 @@ function Bridge:GetCurrentRecommendation()
     -- 【新增】过滤被动技能：Blizzard API 偶尔会返回被动技能（如 Demon Blades 203555）
     -- Filter passive spells: Blizzard API occasionally returns passives
     if RA:IsSpellPassive(spellID) then
-        -- 不更新缓存，保留上一个有效推荐
+        -- FIX: Clear cache to prevent stale passive from sticking permanently
+        -- 修复：清除缓存而非保留旧推荐，防止被动推荐永久粘滞
+        previousRec = cachedRec
+        cachedRec = nil
         lastRefresh = now
-        return cachedRec
+        return nil
+    end
+
+    -- 【新增】运行时可用性检查：C_Spell.IsSpellUsable 拦截天赋替换型被动
+    -- Runtime usability gate: catches talent-replacement passives that IsSpellPassive misses
+    if C_Spell and C_Spell.IsSpellUsable then
+        local usableOk, usable = pcall(C_Spell.IsSpellUsable, spellID)
+        if usableOk and usable == false then
+            previousRec = cachedRec
+            cachedRec = nil
+            lastRefresh = now
+            return nil
+        end
     end
 
     -- FIX (Bug2): Only update previousRec when the spell actually changes
@@ -146,7 +168,15 @@ function Bridge:GetRotationSpells()
     if not ok or type(result) ~= "table" then
         return {}
     end
-    return result
+    -- 【新增】过滤被动技能，只返回非被动 spell ID
+    -- Filter passive spells from the rotation list
+    local filtered = {}
+    for _, sid in ipairs(result) do
+        if not RA:IsSpellPassive(sid) then
+            filtered[#filtered + 1] = sid
+        end
+    end
+    return filtered
 end
 
 ---Get the action spell from Blizzard.

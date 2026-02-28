@@ -194,6 +194,19 @@ local function UpdateDisplay()
     
     local data = smartQ:GetFinalQueue()
     if not data then return end
+
+    -- 【新增】UI 安全网：过滤被动技能，防止被动技能显示在推荐栏中
+    -- UI safety net: filter passive spells before display
+    if data.main and RA:IsSpellPassive(data.main.spellID) then
+        data.main = nil
+    end
+    if data.next then
+        for i = #data.next, 1, -1 do
+            if data.next[i] and RA:IsSpellPassive(data.next[i].spellID) then
+                table.remove(data.next, i)
+            end
+        end
+    end
     
     -- 1. Main Icon
     if data.main then

@@ -17,6 +17,7 @@ RA:RegisterModule("APLEngine", APLEngine)
 local PASSIVE_BLACKLIST = {
     [203555] = true,  -- Demon Blades (Havoc DH passive)
     [290271] = true,  -- Demon Blades AI Passive variant
+    [412713] = true,  -- Interwoven Threads / 丝缕交织 (Evoker Aug passive)
     -- 后续如有更多可在此添加
 }
 

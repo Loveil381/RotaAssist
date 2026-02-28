@@ -548,6 +548,15 @@ local function AssembleQueue()
     end
     table.sort(scored, function(a, b) return a.score > b.score end)
 
+    -- 【新增】最终安全网：对 scored 列表做 IsSpellRecommendable 验证
+    -- Final safety net: validate scored entries with RA:IsSpellRecommendable
+    -- 倒序遍历以安全移除不通过的条目
+    for i = #scored, 1, -1 do
+        if not RA:IsSpellRecommendable(scored[i].spellID) then
+            table.remove(scored, i)
+        end
+    end
+
     -- 4. Populate Final Queue
     if #scored > 0 then
         local topScore = scored[1].score
