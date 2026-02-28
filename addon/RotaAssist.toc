@@ -37,11 +37,15 @@ Data\APL\Mage_Fire.lua
 Data\APL\DemonHunter_Havoc.lua
 Data\APL\DemonHunter_Vengeance.lua
 Data\APL\DemonHunter_Devourer.lua
+Data\APL\Evoker_Augmentation.lua
+Data\APL\Evoker_Devastation.lua
+Data\APL\Evoker_Preservation.lua
 Data\APL\Rogue_Subtlety.lua
 Data\APL\Shaman_Elemental.lua
 Data\APL\Druid_Balance.lua
 # SpecEnhancements (CD/defensive/resource config per spec)
 Data\SpecEnhancements\DemonHunter.lua
+Data\SpecEnhancements\Evoker.lua
 Data\SpecEnhancements\Rogue.lua
 Data\SpecEnhancements\Shaman.lua
 Data\SpecEnhancements\Druid.lua
@@ -49,6 +53,7 @@ Data\SpecEnhancements\Druid.lua
 Data\DecisionTrees\DH_Havoc_DT.lua
 Data\DecisionTrees\DH_Vengeance_DT.lua
 Data\DecisionTrees\DH_Devourer_DT.lua
+Data\DecisionTrees\EVO_Devastation_DT.lua
 Data\DecisionTrees\ROG_Subtlety_DT.lua
 Data\DecisionTrees\SHA_Elemental_DT.lua
 Data\DecisionTrees\DRU_Balance_DT.lua
@@ -56,6 +61,7 @@ Data\DecisionTrees\DRU_Balance_DT.lua
 Data\TransitionMatrix\DH_Havoc_TM.lua
 Data\TransitionMatrix\DH_Vengeance_TM.lua
 Data\TransitionMatrix\DH_Devourer_TM.lua
+Data\TransitionMatrix\EVO_Devastation_TM.lua
 Data\TransitionMatrix\ROG_Subtlety_TM.lua
 Data\TransitionMatrix\SHA_Elemental_TM.lua
 Data\TransitionMatrix\DRU_Balance_TM.lua

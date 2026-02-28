@@ -313,7 +313,7 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- 跳过未学习的天赋技能 / Skip unlearned talent spells
                 local notKnown = IsPlayerSpell and not IsPlayerSpell(rule.spellID)
                 -- Step 1 only: real-time CD guard — if CooldownOverlay says this spell has
-                -- > 1.5s remaining, skip it even if simState thinks it's ready.
+                -- > 1.0s remaining, skip it even if simState thinks it's ready.
                 -- 仅第一步：实时 CD 检查，对 simState 的 CD 估算做最终安全网
                 local realCD = false
                 if step == 1 and not skipCurrent and not notKnown then
@@ -322,7 +322,7 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                         local cds = cdOverlay:GetCooldownStates()
                         local cdState = cds[rule.spellID]
                         if cdState and not cdState.ready
-                           and cdState.remaining and cdState.remaining > 1.5 then
+                           and cdState.remaining and cdState.remaining > 1.0 then
                             realCD = true
                         end
                     end
@@ -420,7 +420,12 @@ function APLEngine:IsMetaActive()
 end
 
 -- Havoc Metamorphosis (191427) and Devourer Void Eruption (198013) active durations
-local META_SPELL_IDS = { [191427] = 24, [198013] = 8 }
+local META_SPELL_IDS = {
+    [191427] = 24,
+    [198013] = 8,
+    [187827] = 15,  -- Vengeance Metamorphosis
+    [442508] = 20,  -- Devourer Void Metamorphosis
+}
 
 ---Auto-activate meta state when the player casts a meta-trigger spell,
 ---then deactivate after the spell duration elapses.

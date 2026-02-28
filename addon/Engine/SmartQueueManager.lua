@@ -32,8 +32,8 @@ local PASSIVE_BLACKLIST = {
     -- 后续如有更多可在此添加
 }
 
---- Check if a spell is currently on significant cooldown (> 1.5s remaining).
---- 检查技能是否在有效 CD 中（超过 1.5秒），用于过滤 next[] 中的预测。
+--- Check if a spell is currently on significant cooldown (> 1.0s remaining).
+--- 检查技能是否在有效 CD 中（超过 1.0秒），用于过滤 next[] 中的预测。
 local function IsSpellOnCooldown(spellID)
     if not spellID then return false end
     -- Primary: check CooldownOverlay tracked states
@@ -41,7 +41,7 @@ local function IsSpellOnCooldown(spellID)
         local cds = mCooldownOverlay:GetCooldownStates()
         local cdState = cds[spellID]
         if cdState then
-            if not cdState.ready and cdState.remaining and cdState.remaining > 1.5 then
+            if not cdState.ready and cdState.remaining and cdState.remaining > 1.0 then
                 return true
             end
             return false
@@ -49,7 +49,7 @@ local function IsSpellOnCooldown(spellID)
     end
     -- Fallback: direct API query for spells not tracked by CooldownOverlay
     local remaining = RA:GetSpellCooldownSafe(spellID)
-    if remaining and remaining > 1.5 then
+    if remaining and remaining > 1.0 then
         return true
     end
     return false
@@ -112,6 +112,9 @@ local channelNextSpell = nil
 local context_reuse = { blizzSpell=nil, aplPred=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
 local candidates_reuse = {}
 local scored_reuse = {}
+local toRemove_reuse = {}
+local passiveRemove_reuse = {}
+local sbRemove_reuse = {}
 -- 最近一帧的 APL 预测结果（模块级，供 CHANNEL_START 闭包读取）
 -- Most-recent APL predictions at module level so the CHANNEL_START closure can read them.
 local aplPredictions = {}
@@ -421,15 +424,16 @@ local function AssembleQueue()
     for sid, _ in pairs(context.blindSpotCandidates) do candidates[sid] = true end
 
     -- 安全网：过滤掉已知在 CD 中的候选（除 Blizzard 推荐和 defensive 以外）
-    -- Safety net: drop candidates known to be on cooldown (> 1.5s remaining).
+    -- Safety net: drop candidates known to be on cooldown (> 1.0s remaining).
     -- Blizzard rec and defensive are exempt (may have charge/proc info we lack).
     if mCooldownOverlay then
         local cds = mCooldownOverlay:GetCooldownStates()
-        local toRemove = {}
+        wipe(toRemove_reuse)
+        local toRemove = toRemove_reuse
         for sid, _ in pairs(candidates) do
             local cdState = cds[sid]
             if cdState and not cdState.ready
-               and cdState.remaining and cdState.remaining > 1.5 then
+               and cdState.remaining and cdState.remaining > 1.0 then
                 -- Only exempt defensive spell (Blizzard's API never recommends CD spells;
                 -- if the Bridge cache is stale, we want it filtered out too)
                 -- 仅排除防御技能，移除 Blizzard 推荐幼呢权（防止缓存旧幼呢 CD 技能）
@@ -447,7 +451,8 @@ local function AssembleQueue()
     -- 过滤被动技能（不可施放的技能不应成为推荐候选）
     -- Filter passive spells (non-castable spells must not appear as candidates)
     do
-        local passiveToRemove = {}
+        wipe(passiveRemove_reuse)
+        local passiveToRemove = passiveRemove_reuse
         for sid, _ in pairs(candidates) do
             if RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid] then
                 passiveToRemove[#passiveToRemove + 1] = sid
@@ -464,7 +469,8 @@ local function AssembleQueue()
     -- Exempts Blizzard rec and defensive spell in case of charges / procs.
     do
         local now = GetTime()
-        local sbToRemove = {}
+        wipe(sbRemove_reuse)
+        local sbToRemove = sbRemove_reuse
         for sid, expiry in pairs(softBlockedSpells) do
             if now < expiry then
                 if sid ~= context.blizzSpell and sid ~= context.defSpell then

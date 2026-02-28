@@ -36,13 +36,6 @@ local sessionStartTime = 0
 local function IsGCDSpell(spellID)
     local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
     if not ok or not cdInfo then return false end
-    if type(cdInfo) ~= "table" then return false end
-    
-    -- WOW 12.0 SECRET VALUE SAFE: check if isOnGCD is secret
-    if cdInfo.isOnGCD ~= nil then 
-        if issecretvalue(cdInfo.isOnGCD) then return true end -- 保守估计为 GCD 技能
-        return true 
-    end
     
     if spellID == 6603 then return false end -- Filter auto-attack
     return true

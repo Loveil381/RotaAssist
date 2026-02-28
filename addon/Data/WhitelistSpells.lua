@@ -137,5 +137,31 @@ RA.WhitelistSpells = {
     [363534] = { name = "Rewind",               class = "EVOKER",       specID = 1468, cdSeconds = 240 },
     [395152] = { name = "Ebon Might",           class = "EVOKER",       specID = 1473, cdSeconds = 30  },
     [370452] = { name = "Shattering Star",      class = "EVOKER",       specID = 1467, cdSeconds = 20  },
+
+    -- DEVASTATION (specID 1467)
+    [357208] = { name = "Fire Breath",      class = "EVOKER", specID = 1467, cdSeconds = 30, charges = 2, note = "Flameshaper has 2 charges" },
+    [359073] = { name = "Eternity Surge",   class = "EVOKER", specID = 1467, cdSeconds = 30 },
+    [356995] = { name = "Disintegrate",     class = "EVOKER", specID = 1467, cdSeconds = 0, note = "Channel, no CD, Essence cost" },
+    [357210] = { name = "Deep Breath",      class = "EVOKER", specID = nil,  cdSeconds = 120, note = "Scalecommander; shared" },
+    [370553] = { name = "Tip the Scales",   class = "EVOKER", specID = nil,  cdSeconds = 120 },
+    [436335] = { name = "Mass Disintegrate", class = "EVOKER", specID = 1467, cdSeconds = 0, note = "Granted after Empower cast" },
+    [357211] = { name = "Pyre",             class = "EVOKER", specID = 1467, cdSeconds = 0 },
+    [363916] = { name = "Obsidian Scales",  class = "EVOKER", specID = nil,  cdSeconds = 90 },
+    [374227] = { name = "Zephyr",           class = "EVOKER", specID = nil,  cdSeconds = 120 },
+    [351338] = { name = "Quell",            class = "EVOKER", specID = nil,  cdSeconds = 40 },
+
+    -- AUGMENTATION (specID 1473)
+    [395160] = { name = "Eruption",          class = "EVOKER", specID = 1473, cdSeconds = 0 },
+    [396286] = { name = "Upheaval",          class = "EVOKER", specID = 1473, cdSeconds = 40 },
+    [409311] = { name = "Prescience",        class = "EVOKER", specID = 1473, cdSeconds = 12 },
+    [403631] = { name = "Breath of Eons",    class = "EVOKER", specID = 1473, cdSeconds = 120 },
+    [404977] = { name = "Time Skip",         class = "EVOKER", specID = 1473, cdSeconds = 180 },
+    [360827] = { name = "Blistering Scales", class = "EVOKER", specID = 1473, cdSeconds = 30 },
+
+    -- PRESERVATION (specID 1468)
+    [355913] = { name = "Emerald Blossom",   class = "EVOKER", specID = 1468, cdSeconds = 0 },
+    [366155] = { name = "Reversion",         class = "EVOKER", specID = 1468, cdSeconds = 9 },
+    [382614] = { name = "Dream Breath",      class = "EVOKER", specID = 1468, cdSeconds = 25 },
+    [382731] = { name = "Temporal Anomaly",  class = "EVOKER", specID = 1468, cdSeconds = 15 },
 }
 
