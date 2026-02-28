@@ -24,6 +24,14 @@ local defaultWeights = {
     defWeight      = 0.8
 }
 
+-- 已知的被动/不可施放技能黑名单（API 查询的快速路径备份）
+-- Known passive/non-castable spell blacklist (fast-path backup for API queries)
+local PASSIVE_BLACKLIST = {
+    [203555] = true,  -- Demon Blades (Havoc DH passive)
+    [290271] = true,  -- Demon Blades AI Passive variant
+    -- 后续如有更多可在此添加
+}
+
 ------------------------------------------------------------------------
 -- Internal State
 ------------------------------------------------------------------------
@@ -327,6 +335,43 @@ local function AssembleQueue()
 
     for sid, _ in pairs(context.blindSpotCandidates) do candidates[sid] = true end
 
+    -- 安全网：过滤掉已知在 CD 中的候选（除 Blizzard 推荐和 defensive 以外）
+    -- Safety net: drop candidates known to be on cooldown (> 1.5s remaining).
+    -- Blizzard rec and defensive are exempt (may have charge/proc info we lack).
+    if mCooldownOverlay then
+        local cds = mCooldownOverlay:GetCooldownStates()
+        local toRemove = {}
+        for sid, _ in pairs(candidates) do
+            local cdState = cds[sid]
+            if cdState and not cdState.ready
+               and cdState.remaining and cdState.remaining > 1.5 then
+                -- Exempt Blizzard rec and defensive spell
+                if sid ~= context.blizzSpell and sid ~= context.defSpell then
+                    toRemove[#toRemove + 1] = sid
+                end
+            end
+        end
+        for _, sid in ipairs(toRemove) do
+            candidates[sid] = nil
+            context.blindSpotCandidates[sid] = nil
+        end
+    end
+
+    -- 过滤被动技能（不可施放的技能不应成为推荐候选）
+    -- Filter passive spells (non-castable spells must not appear as candidates)
+    do
+        local passiveToRemove = {}
+        for sid, _ in pairs(candidates) do
+            if RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid] then
+                passiveToRemove[#passiveToRemove + 1] = sid
+            end
+        end
+        for _, sid in ipairs(passiveToRemove) do
+            candidates[sid] = nil
+            context.blindSpotCandidates[sid] = nil
+        end
+    end
+
     -- 3. Score & Rank
     local scored = {}
     for sid, _ in pairs(candidates) do
@@ -369,11 +414,13 @@ local function AssembleQueue()
         -- Priority 1: APL predictions (steps 1 to 3)
         for i = 1, #aplPredictions do
             if nIdx > 5 then break end
-            finalQueue.next[nIdx] = {
-                spellID    = aplPredictions[i].spellID,
-                confidence = aplPredictions[i].confidence or 0.7
-            }
-            nIdx = nIdx + 1
+            if not (RA:IsSpellPassive(aplPredictions[i].spellID) or PASSIVE_BLACKLIST[aplPredictions[i].spellID]) then
+                finalQueue.next[nIdx] = {
+                    spellID    = aplPredictions[i].spellID,
+                    confidence = aplPredictions[i].confidence or 0.7
+                }
+                nIdx = nIdx + 1
+            end
         end
 
         -- Priority 2: scored candidates rank 2+ (deduplicate against APL predictions)
@@ -403,44 +450,48 @@ local function AssembleQueue()
                 -- 先尝试 primary（如果不在队列中）
                 local npPrimary = npResult.primary
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
-                    local dominated = false
-                    if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
-                        dominated = true
-                    end
-                    for _, existing in ipairs(finalQueue.next) do
-                        if existing and existing.spellID == npPrimary.spellID then
+                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) then
+                        local dominated = false
+                        if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
                             dominated = true
-                            break
                         end
-                    end
-                    if not dominated and nIdx <= 5 then
-                        finalQueue.next[nIdx] = {
-                            spellID    = npPrimary.spellID,
-                            confidence = npPrimary.confidence or 0.5
-                        }
-                        nIdx = nIdx + 1
+                        for _, existing in ipairs(finalQueue.next) do
+                            if existing and existing.spellID == npPrimary.spellID then
+                                dominated = true
+                                break
+                            end
+                        end
+                        if not dominated and nIdx <= 5 then
+                            finalQueue.next[nIdx] = {
+                                spellID    = npPrimary.spellID,
+                                confidence = npPrimary.confidence or 0.5
+                            }
+                            nIdx = nIdx + 1
+                        end
                     end
                 end
                 -- 再添加 alternatives
                 if npResult.alternatives then
                     for _, alt in ipairs(npResult.alternatives) do
                         if nIdx > 5 then break end
-                        local dominated = false
-                        if finalQueue.main and finalQueue.main.spellID == alt.spellID then
-                            dominated = true
-                        end
-                        for _, existing in ipairs(finalQueue.next) do
-                            if existing and existing.spellID == alt.spellID then
+                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) then
+                            local dominated = false
+                            if finalQueue.main and finalQueue.main.spellID == alt.spellID then
                                 dominated = true
-                                break
                             end
-                        end
-                        if not dominated then
-                            finalQueue.next[nIdx] = {
-                                spellID    = alt.spellID,
-                                confidence = alt.confidence or 0.4
-                            }
-                            nIdx = nIdx + 1
+                            for _, existing in ipairs(finalQueue.next) do
+                                if existing and existing.spellID == alt.spellID then
+                                    dominated = true
+                                    break
+                                end
+                            end
+                            if not dominated then
+                                finalQueue.next[nIdx] = {
+                                    spellID    = alt.spellID,
+                                    confidence = alt.confidence or 0.4
+                                }
+                                nIdx = nIdx + 1
+                            end
                         end
                     end
                 end
@@ -543,14 +594,43 @@ function SmartQueueManager:OnEnable()
     updateFrame:SetScript("OnUpdate", onUpdate)
     updateFrame:Show()
 
-    -- Drive APLEngine meta-state from actual spell casts
-    -- 通过施法成功事件自动更新 APL变身状态
+    -- Drive APLEngine meta-state from actual spell casts; also force-refresh CD
+    -- state immediately after each cast so the recommendation never lags behind.
+    -- 施法成功后：更新变身状态、立刻刷新 CD、失效 Bridge 缓存、重建队列
     local eh = RA:GetModule("EventHandler")
     if eh then
         eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "SmartQueueManager", function(_, unit, _, spellID)
-            if unit == "player" and mAPLEngine and mAPLEngine.SetMetaStateFromCast then
+            if unit ~= "player" then return end
+
+            -- 1. Update Metamorphosis state in APLEngine
+            if mAPLEngine and mAPLEngine.SetMetaStateFromCast then
                 mAPLEngine:SetMetaStateFromCast(spellID)
             end
+
+            -- 2. Immediately mark the just-cast spell as on-cooldown in CooldownOverlay,
+            --    so the next AssembleQueue call sees ready=false without waiting 0.2s.
+            --    立刻将刚施放的技能标记为 CD 中，不等 0.2s 的定时扫描
+            if mCooldownOverlay and mCooldownOverlay.RefreshSpellCooldown then
+                mCooldownOverlay:RefreshSpellCooldown(spellID)
+            end
+
+            -- 3. Invalidate the Bridge recommendation cache so the next call to
+            --    GetCurrentRecommendation() fetches a fresh Blizzard spell.
+            --    失效 Bridge 缓存，下次立刻拿到最新推荐
+            if mBridge and mBridge.InvalidateCache then
+                mBridge:InvalidateCache()
+            end
+
+            -- 4. Clear sticky Blizzard spell if we just cast it (prevents stale lock-on).
+            --    清除 sticky 记忆，避免刚施放的技能继续"粘住"推荐位
+            if lastKnownBlizzSpell and lastKnownBlizzSpell == spellID then
+                lastKnownBlizzSpell = nil
+            end
+
+            -- 5. Trigger an immediate queue rebuild (resets the 0.15s throttle timer).
+            --    立刻重建队列，重置节流计时器
+            lastUpdate = THROTTLE_UPDATE  -- saturate timer so next OnUpdate triggers immediately
+            AssembleQueue()
         end)
     end
 end

@@ -165,7 +165,30 @@ function RA:GetSpellCooldownSafe(spellID)
     return remaining, false, st, dur
 end
 
+--- Check if a spell is a passive (non-castable) ability.
+--- 检测技能是否为被动技能（不可施放）。
+--- WoW 12.0: C_Spell.IsSpellPassive or fallback to IsPassiveSpell
+---@param spellID number
+---@return boolean isPassive
+function RA:IsSpellPassive(spellID)
+    if not spellID then return false end
+    -- Primary: WoW 12.0 API
+    if C_Spell and C_Spell.IsSpellPassive then
+        local ok, result = pcall(C_Spell.IsSpellPassive, spellID)
+        if ok then return result == true end
+    end
+    -- Fallback: legacy API
+    if IsPassiveSpell then
+        local ok, result = pcall(IsPassiveSpell, spellID)
+        if ok then return result == true end
+    end
+    -- Last resort: check if spell has no cast time AND is not on GCD
+    -- (heuristic, not 100% reliable)
+    return false
+end
+
 --- 安全获取玩家生命百分比
+
 --- @return number|nil hpPct 0.0-1.0，nil=secret 无法读取
 function RA:GetPlayerHealthPercentSafe()
     local hp = UnitHealth("player")

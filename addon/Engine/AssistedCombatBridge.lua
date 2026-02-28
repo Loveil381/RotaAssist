@@ -84,6 +84,14 @@ function Bridge:GetCurrentRecommendation()
         return nil
     end
 
+    -- 【新增】过滤被动技能：Blizzard API 偶尔会返回被动技能（如 Demon Blades 203555）
+    -- Filter passive spells: Blizzard API occasionally returns passives
+    if RA:IsSpellPassive(spellID) then
+        -- 不更新缓存，保留上一个有效推荐
+        lastRefresh = now
+        return cachedRec
+    end
+
     -- FIX (Bug2): Only update previousRec when the spell actually changes
     -- 仅在推荐技能发生变化时更新 previousRec，避免无意义覆盖
     if cachedRec and cachedRec.spellID ~= spellID then
@@ -115,6 +123,16 @@ end
 ---@return table|nil recommendation { spellID, texture, name }
 function Bridge:GetPreviousRecommendation()
     return previousRec
+end
+
+---Force-invalidate the cached recommendation.
+---Call after a spell cast so the next GetCurrentRecommendation() skips the throttle
+---and immediately returns a fresh value from C_AssistedCombat.
+---施法后调用以立刻失效缓存，下次 GetCurrentRecommendation 不受节流限制。
+function Bridge:InvalidateCache()
+    previousRec = cachedRec
+    cachedRec   = nil
+    lastRefresh = 0
 end
 
 ---Get the full rotation spell list from Blizzard.

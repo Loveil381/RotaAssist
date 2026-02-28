@@ -260,6 +260,42 @@ function CooldownOverlay:GetCooldownStates()
     return cdStates
 end
 
+---Force-refresh cooldown state for a specific spell immediately after it is cast.
+---Avoids the 0.2s polling delay. On secret-value responses, sets ready=false using
+---WhitelistSpells.cdSeconds as the estimated cooldown duration.
+---施法后立刻刷新单个技能的 CD 状态；secret value 时用 WhitelistSpells.cdSeconds 估算。
+---@param spellID number
+function CooldownOverlay:RefreshSpellCooldown(spellID)
+    if not spellID then return end
+    -- Ensure there is a state slot to write into
+    local state = cdStates[spellID]
+    if not state then
+        state = { remaining = 0, ready = false, texture = 134400, name = "", startTime = 0, duration = 0 }
+        cdStates[spellID] = state
+    end
+
+    local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(spellID)
+    if remaining ~= nil then
+        -- CD data readable: use it directly
+        state.remaining = remaining
+        state.ready     = ready
+        state.startTime = cdStart or 0
+        state.duration  = cdDuration or 0
+    else
+        -- Secret value: spell was just cast, so mark it on-cooldown using WhitelistSpells baseline.
+        -- Secret value：刚施放过，用 WhitelistSpells.cdSeconds 直接标记为 CD 中
+        local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+        if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 0 then
+            local now = GetTime()
+            state.remaining = wsInfo.cdSeconds
+            state.ready     = false
+            state.startTime = now
+            state.duration  = wsInfo.cdSeconds
+        end
+        -- No cdSeconds info: leave state unchanged
+    end
+end
+
 ---Get an array of CDs that are currently ready.
 ---@return table[]
 function CooldownOverlay:GetReadyCooldowns()

@@ -309,7 +309,23 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
                 -- 跳过未学习的天赋技能 / Skip unlearned talent spells
                 local notKnown = IsPlayerSpell and not IsPlayerSpell(rule.spellID)
-                if not skipCurrent and not notKnown and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
+                -- Step 1 only: real-time CD guard — if CooldownOverlay says this spell has
+                -- > 1.5s remaining, skip it even if simState thinks it's ready.
+                -- 仅第一步：实时 CD 检查，对 simState 的 CD 估算做最终安全网
+                local realCD = false
+                if step == 1 and not skipCurrent and not notKnown then
+                    local cdOverlay = RA:GetModule("CooldownOverlay")
+                    if cdOverlay then
+                        local cds = cdOverlay:GetCooldownStates()
+                        local cdState = cds[rule.spellID]
+                        if cdState and not cdState.ready
+                           and cdState.remaining and cdState.remaining > 1.5 then
+                            realCD = true
+                        end
+                    end
+                end
+                if not skipCurrent and not notKnown and not realCD
+                   and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                     -- Confidence degrades with depth
                     local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
 
