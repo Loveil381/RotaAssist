@@ -29,6 +29,7 @@ local defaultWeights = {
 local PASSIVE_BLACKLIST = {
     [203555] = true,  -- Demon Blades (Havoc DH passive)
     [290271] = true,  -- Demon Blades AI Passive variant
+    [412713] = true,  -- Interwoven Threads / 丝缕交织 (Evoker Aug passive)
     -- 后续如有更多可在此添加
 }
 
@@ -396,7 +397,9 @@ local function AssembleQueue()
     -- 2. Build Candidates Map
     local candidates = candidates_reuse
     wipe(candidates)
-    if context.blizzSpell then candidates[context.blizzSpell] = true end
+    if context.blizzSpell and not PASSIVE_BLACKLIST[context.blizzSpell] and not RA:IsSpellPassive(context.blizzSpell) then
+        candidates[context.blizzSpell] = true
+    end
     if context.aplPred and context.aplPred.spellID then
         candidates[context.aplPred.spellID] = true
     end

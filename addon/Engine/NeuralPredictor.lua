@@ -300,6 +300,7 @@ function NeuralPredictor:GetCombinedPrediction()
         local SQM_BLACKLIST = {
             [203555] = true,  -- Demon Blades
             [290271] = true,  -- Demon Blades AI
+            [412713] = true,  -- Interwoven Threads / 丝缕交织
         }
         if SQM_BLACKLIST[spellID] then return end
 

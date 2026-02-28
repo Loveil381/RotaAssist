@@ -207,6 +207,16 @@ end
 ---@return boolean isPassive
 function RA:IsSpellPassive(spellID)
     if not spellID then return false end
+
+    -- 硬编码已知被动天赋：12.0 API 对部分天赋系统被动返回 false，必须手动补充
+    -- Hardcoded passives: WoW 12.0 API misidentifies some talent-system passives
+    local KNOWN_PASSIVES = {
+        [412713] = true,  -- Interwoven Threads / 丝缕交织 (Evoker Augmentation)
+        [203555] = true,  -- Demon Blades (Havoc DH)
+        [290271] = true,  -- Demon Blades AI variant
+    }
+    if KNOWN_PASSIVES[spellID] then return true end
+
     -- Primary: WoW 12.0 API
     if C_Spell and C_Spell.IsSpellPassive then
         local ok, result = pcall(C_Spell.IsSpellPassive, spellID)
