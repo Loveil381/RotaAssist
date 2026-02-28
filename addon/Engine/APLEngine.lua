@@ -38,6 +38,7 @@ local currentProfileName = "default"
 
 ---@type boolean  Metamorphosis / Void Meta state estimate
 local metaActive = false
+local metaExpireTime = 0
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -428,8 +429,16 @@ function APLEngine:SetMetaStateFromCast(spellID)
     local duration = META_SPELL_IDS[spellID]
     if not duration then return end
     metaActive = true
+    local newExpiry = GetTime() + duration
+    -- Only update if this extends the current meta window
+    if newExpiry > metaExpireTime then
+        metaExpireTime = newExpiry
+    end
     C_Timer.After(duration, function()
-        metaActive = false
+        -- Only deactivate if no newer meta has extended the window
+        if GetTime() >= metaExpireTime then
+            metaActive = false
+        end
     end)
 end
 

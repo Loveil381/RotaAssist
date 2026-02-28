@@ -232,9 +232,11 @@ function NeuralPredictor:BuildFeatures()
     -- Nameplate count + combat duration
     local patDet = RA:GetModule("PatternDetector")
     if patDet then
-        f.nameplateCount = patDet:GetNameplateCount() or 1
-        local phase = patDet:GetPhase()
-        if phase and phase.signals then
+        local npOk, npCount = pcall(patDet.GetNameplateCount, patDet)
+        f.nameplateCount = (npOk and npCount) or 1
+
+        local phaseOk, phase = pcall(patDet.GetPhase, patDet)
+        if phaseOk and phase and phase.signals then
             f.combatDuration = phase.signals.combatDur or 0
         end
     end
@@ -290,6 +292,7 @@ function NeuralPredictor:GetCombinedPrediction()
     wipe(reuseSources)
     local function AddCandidate(spellID, score, source)
         if not spellID or spellID == 0 then return end
+        if spellID == 6603 then return end  -- auto-attack
         if RA:IsSpellPassive(spellID) then return end
         reuseCandidates[spellID] = (reuseCandidates[spellID] or 0) + score
         if not reuseSources[spellID] or score > (reuseSources[spellID].score or 0) then

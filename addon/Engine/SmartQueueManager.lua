@@ -35,11 +35,21 @@ local PASSIVE_BLACKLIST = {
 --- Check if a spell is currently on significant cooldown (> 1.5s remaining).
 --- 检查技能是否在有效 CD 中（超过 1.5秒），用于过滤 next[] 中的预测。
 local function IsSpellOnCooldown(spellID)
-    if not mCooldownOverlay then return false end
-    local cds = mCooldownOverlay:GetCooldownStates()
-    local cdState = cds[spellID]
-    if cdState and not cdState.ready
-       and cdState.remaining and cdState.remaining > 1.5 then
+    if not spellID then return false end
+    -- Primary: check CooldownOverlay tracked states
+    if mCooldownOverlay then
+        local cds = mCooldownOverlay:GetCooldownStates()
+        local cdState = cds[spellID]
+        if cdState then
+            if not cdState.ready and cdState.remaining and cdState.remaining > 1.5 then
+                return true
+            end
+            return false
+        end
+    end
+    -- Fallback: direct API query for spells not tracked by CooldownOverlay
+    local remaining = RA:GetSpellCooldownSafe(spellID)
+    if remaining and remaining > 1.5 then
         return true
     end
     return false
@@ -263,7 +273,12 @@ local function AssembleQueue()
                 end
             end
         end
-        limitedState.resource = UnitPower("player", powerType) or 0
+        local rawPower = UnitPower("player", powerType)
+        if rawPower and not issecretvalue(rawPower) then
+            limitedState.resource = rawPower
+        else
+            limitedState.resource = 0
+        end
 
         -- Populate cooldowns from CooldownOverlay states
         if mCooldownOverlay then
@@ -320,7 +335,8 @@ local function AssembleQueue()
 
     if mCooldownOverlay then
         local cds = mCooldownOverlay:GetCooldownStates()
-        finalQueue.cooldowns = {}
+        finalQueue.cooldowns = finalQueue.cooldowns or {}
+        wipe(finalQueue.cooldowns)
         local cIdx = 1
         -- GetCooldownStates() returns { [spellID] = {remaining, ready, texture, name, startTime, duration} }
         for spellID, cd in pairs(cds) do
@@ -506,7 +522,6 @@ local function AssembleQueue()
         -- FIX (Bug1): Populate next[] using APL predictions (steps 2+) first,
         -- then fill remaining slots from scored candidates (rank 2+).
         -- 修复：优先用 APL 预测第 2、3步 填充 next[]，再补充 scored 排名第 2+ 的候选。
-        for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
         local nIdx = 1
 
         -- Priority 1: APL predictions (steps 1 to 3)
@@ -514,10 +529,11 @@ local function AssembleQueue()
             if nIdx > 5 then break end
             local sid = aplPredictions[i].spellID
             if not (RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid]) and not IsSpellOnCooldown(sid) then
-                finalQueue.next[nIdx] = {
-                    spellID    = sid,
-                    confidence = aplPredictions[i].confidence or 0.7
-                }
+                if not finalQueue.next[nIdx] then
+                    finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
+                end
+                finalQueue.next[nIdx].spellID    = sid
+                finalQueue.next[nIdx].confidence = aplPredictions[i].confidence or 0.7
                 nIdx = nIdx + 1
             end
         end
@@ -533,10 +549,11 @@ local function AssembleQueue()
                 end
             end
             if not dominated then
-                finalQueue.next[nIdx] = {
-                    spellID    = scored[i].spellID,
-                    confidence = math.min(1.0, scored[i].score / 1.5)
-                }
+                if not finalQueue.next[nIdx] then
+                    finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
+                end
+                finalQueue.next[nIdx].spellID    = scored[i].spellID
+                finalQueue.next[nIdx].confidence = math.min(1.0, scored[i].score / 1.5)
                 nIdx = nIdx + 1
             end
         end
@@ -561,10 +578,11 @@ local function AssembleQueue()
                             end
                         end
                         if not dominated and nIdx <= 5 then
-                            finalQueue.next[nIdx] = {
-                                spellID    = npPrimary.spellID,
-                                confidence = npPrimary.confidence or 0.5
-                            }
+                            if not finalQueue.next[nIdx] then
+                                finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
+                            end
+                            finalQueue.next[nIdx].spellID    = npPrimary.spellID
+                            finalQueue.next[nIdx].confidence = npPrimary.confidence or 0.5
                             nIdx = nIdx + 1
                         end
                     end
@@ -585,16 +603,21 @@ local function AssembleQueue()
                                 end
                             end
                             if not dominated then
-                                finalQueue.next[nIdx] = {
-                                    spellID    = alt.spellID,
-                                    confidence = alt.confidence or 0.4
-                                }
+                                if not finalQueue.next[nIdx] then
+                                    finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
+                                end
+                                finalQueue.next[nIdx].spellID    = alt.spellID
+                                finalQueue.next[nIdx].confidence = alt.confidence or 0.4
                                 nIdx = nIdx + 1
                             end
                         end
                     end
                 end
             end
+        end
+
+        for i = nIdx, #finalQueue.next do
+            finalQueue.next[i] = nil
         end
 
         -- 每次 AssembleQueue 都通知 UI 更新（放在填充 next[] 之后）

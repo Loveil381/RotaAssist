@@ -107,19 +107,19 @@ function ResourceBar:UpdateSecretSafe(powerType)
         return
     end
 
-    -- UnitPowerMax is NOT secret for player units (confirmed in 12.0 Alpha 6)
-    local maxPower = UnitPowerMax("player", powerType)
-    if not maxPower or maxPower <= 0 then maxPower = 1 end
+    local okCur, curPowerRaw = pcall(UnitPower, "player", powerType)
+    local okMax, maxPowerRaw = pcall(UnitPowerMax, "player", powerType)
 
-    -- UnitPower returns a SECRET value in combat — pass directly to StatusBar
-    local currentPower = UnitPower("player", powerType)
+    local curPower = (okCur and curPowerRaw and not issecretvalue(curPowerRaw)) and curPowerRaw or 0
+    local maxPower = (okMax and maxPowerRaw and not issecretvalue(maxPowerRaw) and maxPowerRaw > 0) and maxPowerRaw or 1
+
+    local displayCur = (okCur and curPowerRaw) and curPowerRaw or 0
 
     self.statusBar:SetMinMaxValues(0, maxPower)
-    self.statusBar:SetValue(currentPower)  -- SECRET VALUE OK: StatusBar accepts secrets
+    self.statusBar:SetValue(displayCur)
 
     -- WOW 12.0 SECRET VALUE SAFE: Use string.format with secrets (produces secret string)
-    -- FontString:SetText() accepts secret strings since Alpha 3
-    self.text:SetText(string.format("%.0f/%.0f", currentPower, maxPower))
+    self.text:SetText(string.format("%.0f/%.0f", displayCur, maxPower))
 
     -- Set color based on power type (non-secret color choice)
     if self.lastPowerType ~= powerType then

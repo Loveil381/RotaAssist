@@ -226,8 +226,11 @@ end
 
 --- @return number|nil hpPct 0.0-1.0，nil=secret 无法读取
 function RA:GetPlayerHealthPercentSafe()
-    local hp = UnitHealth("player")
-    local hpMax = UnitHealthMax("player")
+    local ok1, hp = pcall(UnitHealth, "player")
+    local ok2, hpMax = pcall(UnitHealthMax, "player")
+    if not ok1 then hp = nil end
+    if not ok2 then hpMax = nil end
+
     if issecretvalue(hp) or issecretvalue(hpMax) then
         return nil
     end

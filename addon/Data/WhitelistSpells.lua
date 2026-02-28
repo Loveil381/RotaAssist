@@ -97,6 +97,8 @@ RA.WhitelistSpells = {
     -- HAVOC (specID 577)
     [198013] = { name = "Eye Beam",           class = "DEMONHUNTER", specID = 577,  cdSeconds = 40  },
     [188499] = { name = "Blade Dance",        class = "DEMONHUNTER", specID = 577,  cdSeconds = 9   },
+    [210152] = { name = "Death Sweep",       class = "DEMONHUNTER", specID = 577,  cdSeconds = 9,  note = "Blade Dance during Metamorphosis" },
+    [201427] = { name = "Annihilation",      class = "DEMONHUNTER", specID = 577,  cdSeconds = 0,  note = "Chaos Strike during Metamorphosis - no CD, filler" },
     [191427] = { name = "Metamorphosis",      class = "DEMONHUNTER", specID = 577,  cdSeconds = 240 },
     [370965] = { name = "The Hunt",           class = "DEMONHUNTER", specID = nil,  cdSeconds = 90  }, -- shared Havoc+Vengeance+Devourer
     [258860] = { name = "Essence Break",      class = "DEMONHUNTER", specID = 577,  cdSeconds = 40  },

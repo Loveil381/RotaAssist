@@ -77,7 +77,8 @@ end
 ---@param spellID number
 ---@return string
 local function getSpellName(spellID)
-    local info = C_Spell.GetSpellInfo(spellID)
+    local ok, info = pcall(C_Spell.GetSpellInfo, spellID)
+    if not ok then info = nil end
     if info then
         return info.name
     end
