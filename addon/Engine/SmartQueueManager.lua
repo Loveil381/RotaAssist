@@ -74,9 +74,24 @@ local lastKnownBlizzSpell = nil
 local softBlockedSpells = {}
 local SOFT_BLOCK_DURATION = 0.6  -- seconds until soft-block auto-expires
 
+-- 引导技能：施法成功后不清除 lastKnownBlizzSpell，保持引导结束后下一步推荐稳定
+-- Channeled spells: don't clear sticky on success — keep showing next-spell during channel.
+local CHANNELED_SPELL_IDS = {
+    [198013] = true,  -- Eye Beam (Havoc)
+    [212084] = true,  -- Fel Devastation (Vengeance)
+    [258920] = true,  -- Immolation Aura (channel phase)
+}
+
+-- 引导期间捕获的「引导结束后下一步」spellID，用于 sticky fallback
+-- Captured next-spell spellID during a channel, used as sticky fallback.
+local channelNextSpell = nil
+
 local context_reuse = { blizzSpell=nil, aplPred=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
 local candidates_reuse = {}
 local scored_reuse = {}
+-- 最近一帧的 APL 预测结果（模块级，供 CHANNEL_START 闭包读取）
+-- Most-recent APL predictions at module level so the CHANNEL_START closure can read them.
+local aplPredictions = {}
 
 ------------------------------------------------------------------------
 -- Helper Functions
@@ -87,8 +102,9 @@ local scored_reuse = {}
 ---@param spellID number
 ---@param context table
 ---@param weights table
+---@param aplPredictions table  Full APL prediction array for tiered scoring
 ---@return number score, string source
-local function CalculateScore(spellID, context, weights)
+local function CalculateScore(spellID, context, weights, aplPredictions)
     local score = 0
     local primarySource = "UNKNOWN"
 
@@ -98,14 +114,21 @@ local function CalculateScore(spellID, context, weights)
         primarySource = "BLIZZARD"
     end
 
-    -- 2. APL Engine Prediction
-    -- Only score here if not already handled as a blind-spot to avoid double counting
-    -- 仅在不是盲区技能时进行 APL 评分，避免双重计分
-    if context.aplPred and context.aplPred.spellID == spellID 
-       and not (context.blindSpotCandidates and context.blindSpotCandidates[spellID]) then
-        score = score + (context.aplPred.confidence * weights.aplWeight)
-        if score > (1.0 * weights.blizzardWeight) then
-            primarySource = "APL"
+    -- 2. APL Engine Tiered Prediction Scoring
+    -- Step-1 gets full APL weight, step-2 gets 0.5×, step-3 gets 0.3×.
+    -- Skip if already scored as a blind-spot to avoid double-counting.
+    -- APL 分层评分：第1步全权重，第2步0.5×，第3步0.3×；盲区技能跳过避免双重计分
+    if aplPredictions and not (context.blindSpotCandidates and context.blindSpotCandidates[spellID]) then
+        local APL_TIER = { 1.0, 0.5, 0.3 }
+        for i, pred in ipairs(aplPredictions) do
+            if pred.spellID == spellID then
+                local tier = APL_TIER[i] or 0
+                score = score + (pred.confidence * weights.aplWeight * tier)
+                if score > (1.0 * weights.blizzardWeight) then
+                    primarySource = "APL"
+                end
+                break  -- a spell only appears once in aplPredictions
+            end
         end
     end
 
@@ -165,10 +188,15 @@ local function AssembleQueue()
     if mBridge then
         local rec = mBridge:GetCurrentRecommendation()
         context.blizzSpell = rec and rec.spellID or nil
-        
-        -- Apply sticky logic: if current is nil, use last known
+
+        -- Sticky fallback priority:
+        -- 1. Real Blizzard recommendation (always wins)
+        -- 2. channelNextSpell  — captured at channel start (引导中：显示引导后的下一个技能)
+        -- 3. lastKnownBlizzSpell — normal inter-GCD sticky
         if context.blizzSpell then
             lastKnownBlizzSpell = context.blizzSpell
+        elseif channelNextSpell then
+            context.blizzSpell = channelNextSpell
         elseif lastKnownBlizzSpell then
             context.blizzSpell = lastKnownBlizzSpell
         end
@@ -187,6 +215,8 @@ local function AssembleQueue()
     -- FIX (Bug1): PredictNext returns an ARRAY of predictions.
     -- Parse it correctly; the first element joins scoring, rest go to next[].
     -- 修复：PredictNext 返回数组，第一个元素参与评分，其余填充 next[]。
+    -- Reset APL predictions array (module-level, reused across frames)
+    -- 重置 APL 预测数组（模块级，跨帧复用）
     local currentTargetCount = 1
     if mAIInference then
         local aiCtx = mAIInference:GetContext()
@@ -194,7 +224,7 @@ local function AssembleQueue()
             currentTargetCount = aiCtx.targetCount
         end
     end
-    local aplPredictions = {}
+    wipe(aplPredictions)  -- reset module-level table each frame
     if mAPLEngine and mAPLEngine.HasAPL and mAPLEngine:HasAPL() then
         -- FIX (P0-Bug2): Build a valid limitedState table from context
         local limitedState = {
@@ -421,7 +451,7 @@ local function AssembleQueue()
     local scored = scored_reuse
     local nScored = 0
     for sid, _ in pairs(candidates) do
-        local score, src = CalculateScore(sid, context, weights)
+        local score, src = CalculateScore(sid, context, weights, aplPredictions)
         if score > 0 then
             nScored = nScored + 1
             if not scored[nScored] then scored[nScored] = {} end
@@ -675,10 +705,13 @@ function SmartQueueManager:OnEnable()
                 mBridge:InvalidateCache()
             end
 
-            -- 4. Clear sticky Blizzard spell if we just cast it (prevents stale lock-on).
-            --    清除 sticky 记忆，避免刚施放的技能继续"粘住"推荐位
+            -- 4. Clear sticky Blizzard spell if we just cast it — unless it's a channeled
+            --    spell. During a channel the sticky should keep showing what comes AFTER.
+            --    引导技能施法后不清除 sticky，让引导期间继续显示下一步技能
             if lastKnownBlizzSpell and lastKnownBlizzSpell == spellID then
-                lastKnownBlizzSpell = nil
+                if not CHANNELED_SPELL_IDS[spellID] then
+                    lastKnownBlizzSpell = nil
+                end
             end
 
             -- 5. Trigger an immediate queue rebuild.
@@ -696,6 +729,22 @@ function SmartQueueManager:OnEnable()
                 AssembleQueue()
             end
         end)
+
+        -- 引导开始：快照当前 APL 预测 step-1 的 spellID，作为引导期 sticky fallback
+        -- Channel start: capture APL step-1 spellID so UI shows next-spell during channel.
+        eh:Subscribe("ROTAASSIST_CHANNEL_START", "SmartQueueManager", function(_, unit)
+            if unit ~= "player" then return end
+            channelNextSpell = aplPredictions and aplPredictions[1]
+                and aplPredictions[1].spellID or nil
+        end)
+
+        -- 引导结束或被打断时清除 channelNextSpell，恢复常规推荐逻辑
+        -- Clear channelNextSpell on channel end or interrupt to resume normal logic.
+        local function onChannelEnd()
+            channelNextSpell = nil
+        end
+        eh:Subscribe("ROTAASSIST_SPELLCAST_STOP",        "SmartQueueManager_Chan", onChannelEnd)
+        eh:Subscribe("ROTAASSIST_SPELLCAST_INTERRUPTED", "SmartQueueManager_Chan", onChannelEnd)
     end
 end
 

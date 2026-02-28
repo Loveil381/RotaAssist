@@ -27,7 +27,6 @@ RA.SpecEnhancements[577] = {
     defensives = {
         { spellID = 196718, hpThreshold = 0.35, name = "Darkness" },
         { spellID = 198589, hpThreshold = 0.50, name = "Blur" },
-        { spellID = 104773, hpThreshold = 0.40, name = "Unending Resolve (Warlock PvP)" }, -- Kept if used, else remove
     },
 
     --- Resource info for simulation and UI
@@ -37,6 +36,7 @@ RA.SpecEnhancements[577] = {
         spellCosts = {
             [162794] = { cost = 40  },  -- Chaos Strike / Annihilation
             [162243] = { gen  = 40  },  -- Demon's Bite (Only if NOT using Demon Blades)
+            [370965] = { cost = 0   },  -- The Hunt
             [188499] = { cost = 35  },  -- Blade Dance
             [198013] = { cost = 30  },  -- Eye Beam
             [258920] = { gen  = 20  },  -- Immolation Aura
@@ -59,8 +59,8 @@ RA.SpecEnhancements[577] = {
 
     inferenceRules = {
         aoeSpells = { 188499, 198013, 342817, 258920 },
-        singleTargetSpells = { 162794, 162243, 232893 },
-        generatorSpells = { 162243, 232893 },
+        singleTargetSpells = { 162794, 232893 }, -- [162243] Demon's Bite (当天赋 Demon Blades 时此技能不存在)
+        generatorSpells = { 232893 },           -- [162243] Demon's Bite (当天赋 Demon Blades 时此技能不存在)
         spenderSpells = { 162794, 188499, 258860 },
         burstIndicatorSpells = { 210152, 201427 },
         burstCooldownSpell = 191427,  -- Meta

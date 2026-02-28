@@ -68,6 +68,12 @@ local featureReuse = {
     specID = 0,
 }
 
+--- 零分配复用表 / wipe & reuse tables
+local reuseTemp = {}
+local reuseCandidates = {}
+local reuseSources = {}
+local reuseSorted = {}
+
 ------------------------------------------------------------------------
 -- Normalization & Blending
 ------------------------------------------------------------------------
@@ -172,14 +178,14 @@ function NeuralPredictor:PredictFromMarkov(lastSpellID, topN)
         return result
     end
 
-    local temp = {}
+    wipe(reuseTemp)
     for sid, prob in pairs(row) do
-        temp[#temp + 1] = { spellID = sid, probability = prob }
+        reuseTemp[#reuseTemp + 1] = { spellID = sid, probability = prob }
     end
-    table.sort(temp, function(a, b) return a.probability > b.probability end)
+    table.sort(reuseTemp, function(a, b) return a.probability > b.probability end)
 
-    for i = 1, math.min(topN, #temp) do
-        result[i] = temp[i]
+    for i = 1, math.min(topN, #reuseTemp) do
+        result[i] = reuseTemp[i]
     end
     return result
 end
@@ -190,6 +196,7 @@ end
 ---@param toSpellID number
 function NeuralPredictor:UpdateMarkovMatrix(fromSpellID, toSpellID)
     if not fromSpellID or fromSpellID == 0 or not toSpellID or toSpellID == 0 then return end
+    if toSpellID == 6603 or RA:IsSpellPassive(toSpellID) then return end
     if not personalCounts[fromSpellID] then
         personalCounts[fromSpellID] = {}
     end
@@ -216,7 +223,7 @@ function NeuralPredictor:BuildFeatures()
         f.thirdLastSpellID  = recorder:GetNthLastSpellID(3) or 0
         local lastCasts = recorder:GetRecentCasts(1)
         if lastCasts and lastCasts[1] then
-            f.timeSinceLastCast = GetTime() - (lastCasts[1][2] or GetTime())
+            f.timeSinceLastCast = GetTime() - (lastCasts[1].timestamp or GetTime())
         else
             f.timeSinceLastCast = 0
         end
@@ -279,13 +286,14 @@ function NeuralPredictor:GetCombinedPrediction()
     local blizzSpell = features.blizzardRecommendation
 
     -- 候选评分表 / candidate score map
-    local candidates = {}
-    local sources = {}
+    wipe(reuseCandidates)
+    wipe(reuseSources)
     local function AddCandidate(spellID, score, source)
         if not spellID or spellID == 0 then return end
-        candidates[spellID] = (candidates[spellID] or 0) + score
-        if not sources[spellID] or score > (sources[spellID].score or 0) then
-            sources[spellID] = { source = source, score = score }
+        if RA:IsSpellPassive(spellID) then return end
+        reuseCandidates[spellID] = (reuseCandidates[spellID] or 0) + score
+        if not reuseSources[spellID] or score > (reuseSources[spellID].score or 0) then
+            reuseSources[spellID] = { source = source, score = score }
         end
     end
 
@@ -307,20 +315,20 @@ function NeuralPredictor:GetCombinedPrediction()
     end
 
     -- Sort candidates
-    local sorted = {}
-    for sid, score in pairs(candidates) do
-        sorted[#sorted + 1] = {
+    wipe(reuseSorted)
+    for sid, score in pairs(reuseCandidates) do
+        reuseSorted[#reuseSorted + 1] = {
             spellID = sid,
             confidence = math.min(1.0, score),
-            source = sources[sid] and sources[sid].source or "UNKNOWN"
+            source = reuseSources[sid] and reuseSources[sid].source or "UNKNOWN"
         }
     end
-    table.sort(sorted, function(a, b) return a.confidence > b.confidence end)
+    table.sort(reuseSorted, function(a, b) return a.confidence > b.confidence end)
 
-    local primary = sorted[1] or { spellID = blizzSpell or 0, confidence = 0.3, source = "BLIZZARD" }
+    local primary = reuseSorted[1] or { spellID = blizzSpell or 0, confidence = 0.3, source = "BLIZZARD" }
     local alts = {}
-    for i = 2, math.min(#sorted, 4) do
-        alts[#alts + 1] = sorted[i]
+    for i = 2, math.min(#reuseSorted, 4) do
+        alts[#alts + 1] = reuseSorted[i]
     end
 
     return {

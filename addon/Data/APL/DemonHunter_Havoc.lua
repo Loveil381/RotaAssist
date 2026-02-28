@@ -306,7 +306,7 @@ if defaultProfile and defaultProfile.singleTarget then
             spellID   = entry.spellID,
             name      = entry.note or ("Spell#" .. entry.spellID),
             priority  = entry.priority,
-            condition = (entry.condition == "cd_ready" or entry.condition:find("cd_ready")) and "ready" or "always",
+            condition = entry.condition or "always",
             reason    = entry.note or "",
         }
     end
