@@ -21,7 +21,8 @@
 -- 12.0.1 — last updated 2026-02-25
 ------------------------------------------------------------------------
 
-local _, RA = ...
+local _, NS = ...
+local RA = NS.RA
 
 if not RA.APLData then
     RA.APLData = {}

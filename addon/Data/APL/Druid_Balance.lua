@@ -2,7 +2,8 @@
 -- RotaAssist - APL: Druid / Balance (specID 102)
 ------------------------------------------------------------------------
 
-local _, RA = ...
+local _, NS = ...
+local RA = NS.RA
 
 if not RA.APLData then
     RA.APLData = {}

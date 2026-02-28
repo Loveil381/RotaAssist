@@ -63,6 +63,7 @@ function CooldownBar:Update(cooldownStates)
                 icon:SetCooldown(nil, nil)
                 icon:SetDesaturated(false)
                 icon:SetAlert(false)
+                icon:SetKeybind("")
             else
                 icon:SetDesaturated(true)
                 local start = GetTime() - (state.duration and (state.duration - state.remaining) or 0)
@@ -78,6 +79,19 @@ function CooldownBar:Update(cooldownStates)
                     -- Approximate if only remaining is given
                     local approxDur = state.remaining > 0 and state.remaining or 1
                     icon:SetCooldown(GetTime() - (approxDur - state.remaining), approxDur)
+                end
+                
+                -- 显示冷却剩余秒数文字
+                -- Display remaining cooldown time text
+                local remaining = state.remaining or 0
+                if remaining > 0 then
+                    if remaining >= 60 then
+                        icon:SetKeybind(string.format("%dm", math.floor(remaining / 60)))
+                    else
+                        icon:SetKeybind(string.format("%d", math.ceil(remaining)))
+                    end
+                else
+                    icon:SetKeybind("")
                 end
                 
                 if state.remaining > 0 and state.remaining <= 5 then

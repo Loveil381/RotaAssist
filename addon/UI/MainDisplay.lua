@@ -45,6 +45,54 @@ local lastDisplayed = {
 }
 
 ------------------------------------------------------------------------
+-- Keybind Cache
+------------------------------------------------------------------------
+
+local keybindCache = {}
+local keybindCacheDirty = true
+
+local function FindKeybindForSpell(spellID)
+    if not spellID then return nil end
+    -- 检查缓存
+    if keybindCache[spellID] and not keybindCacheDirty then
+        return keybindCache[spellID]
+    end
+    -- 遍历所有动作条槽位 (1-180)
+    for slot = 1, 180 do
+        local actionType, id = GetActionInfo(slot)
+        if actionType == "spell" and id == spellID then
+            local key = GetBindingKey("ACTIONBUTTON" .. slot)
+            if not key and slot > 12 and slot <= 24 then
+                key = GetBindingKey("MULTIACTIONBAR3BUTTON" .. (slot - 12))
+            elseif not key and slot > 24 and slot <= 36 then
+                key = GetBindingKey("MULTIACTIONBAR4BUTTON" .. (slot - 24))
+            elseif not key and slot > 36 and slot <= 48 then
+                key = GetBindingKey("MULTIACTIONBAR2BUTTON" .. (slot - 36))
+            elseif not key and slot > 48 and slot <= 60 then
+                key = GetBindingKey("MULTIACTIONBAR1BUTTON" .. (slot - 48))
+            elseif not key and slot > 60 and slot <= 72 then
+                key = GetBindingKey("MULTIACTIONBAR5BUTTON" .. (slot - 60))
+            elseif not key and slot > 72 and slot <= 84 then
+                key = GetBindingKey("MULTIACTIONBAR6BUTTON" .. (slot - 72))
+            elseif not key and slot > 84 and slot <= 96 then
+                key = GetBindingKey("MULTIACTIONBAR7BUTTON" .. (slot - 84))
+            end
+            if key then
+                -- 简化显示：SHIFT-F → S-F, CTRL-1 → C-1, ALT-Q → A-Q
+                key = key:gsub("SHIFT%-", "S-")
+                key = key:gsub("CTRL%-", "C-")
+                key = key:gsub("ALT%-", "A-")
+                key = key:gsub("NUMPAD", "N")
+                keybindCache[spellID] = key
+                return key
+            end
+        end
+    end
+    keybindCache[spellID] = false  -- 标记为"查过了但没找到"
+    return nil
+end
+
+------------------------------------------------------------------------
 -- Layout Engine
 ------------------------------------------------------------------------
 
@@ -158,9 +206,14 @@ local function UpdateDisplay()
         
         -- Flash boundary if requested (handled in Interrupt but we can glow normally here)
         elements.mainIcon:SetGlow(true) 
+        
+        local mainKey = FindKeybindForSpell(data.main.spellID)
+        elements.mainIcon:SetKeybind(mainKey or "")
+        
         elements.mainIcon.frame:Show()
     else
         elements.mainIcon:Clear()
+        elements.mainIcon:SetKeybind("")
         elements.mainIcon.frame:Hide()
         lastDisplayed.mainSpell = nil
     end
@@ -178,9 +231,14 @@ local function UpdateDisplay()
                 lastDisplayed.predSpells[i] = predData.spellID
             end
             widget:SetConfidence(predData.confidence or 1.0)
+            
+            local predKey = FindKeybindForSpell(predData.spellID)
+            widget:SetKeybind(predKey or "")
+            
             widget.frame:Show()
         else
             widget:Clear()
+            widget:SetKeybind("")
             widget.frame:Hide()
             lastDisplayed.predSpells[i] = nil
         end
@@ -259,7 +317,7 @@ end
 -- Interrupt Alert Handler
 ------------------------------------------------------------------------
 
-local function UpdateInterrupt(active, data)
+local function UpdateInterrupt(_, active, data)
     if active and data then
         -- Optional sound alert for high urgency
         if data.urgency and data.urgency >= 0.8 then
@@ -481,7 +539,18 @@ function MainDisplay:OnEnable()
     
     eh:Subscribe("ROTAASSIST_INTERRUPT_ALERT", "MainDisplay", UpdateInterrupt)
     eh:Subscribe("ROTAASSIST_SETTINGS_RESET", "MainDisplay", applySettings)
-    eh:Subscribe("ACTIONBAR_SLOT_CHANGED", "MainDisplay", UpdateDisplay)
+    
+    eh:Subscribe("ACTIONBAR_SLOT_CHANGED", "MainDisplay", function()
+        keybindCacheDirty = true
+        keybindCache = {}
+        UpdateDisplay()
+    end)
+    
+    eh:Subscribe("UPDATE_BINDINGS", "MainDisplay", function()
+        keybindCacheDirty = true
+        keybindCache = {}
+        UpdateDisplay()
+    end)
     
     eh:Subscribe("PLAYER_REGEN_DISABLED", "MainDisplay", function()
         inCombat = true

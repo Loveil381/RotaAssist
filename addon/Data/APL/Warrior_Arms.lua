@@ -4,7 +4,8 @@
 -- Phase 1: Simple priority based on cooldown readiness.
 ------------------------------------------------------------------------
 
-local _, RA = ...
+local _, NS = ...
+local RA = NS.RA
 
 if not RA.APLData then
     RA.APLData = {}

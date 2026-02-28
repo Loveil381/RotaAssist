@@ -36,7 +36,8 @@
 --   { spellID = 85288, name = "Raging Blow", priority = 2, condition = "ready", reason = "Core filler" },
 ------------------------------------------------------------------------
 
-local _, RA = ...
+local _, NS = ...
+local RA = NS.RA
 
 -- Initialize the APL data registry if it doesn't exist
 if not RA.APLData then

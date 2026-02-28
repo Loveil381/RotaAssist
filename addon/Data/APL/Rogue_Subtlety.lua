@@ -3,7 +3,8 @@
 -- Rotation priority for Subtlety Rogue in WoW 12.0 Midnight.
 ------------------------------------------------------------------------
 
-local _, RA = ...
+local _, NS = ...
+local RA = NS.RA
 
 if not RA.APLData then
     RA.APLData = {}
