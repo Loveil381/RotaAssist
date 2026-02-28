@@ -135,16 +135,26 @@ local function checkHealth()
         end
         -- HP secret: check probe frame alpha to populate lastActiveAlert
         -- 针对 HP secret 模式：检查探针 Frame 通道透明度来更新推荐状态
+        local foundDefAlert = false
         for _, def in ipairs(defensives) do
-            if def.probeFrame and def.probeFrame:GetAlpha() > 0.5 then
-                lastActiveAlert = {
-                    spellID = def.spellID,
-                    name    = def.name,
-                    urgency = 0.8,
-                    texture = def.texture or 134400,
-                }
-                break -- Highest priority (first in list) wins
+            if def.probeFrame then
+                local okAlpha, isBelow = pcall(function()
+                    return def.probeFrame:GetAlpha() > 0.5
+                end)
+                if okAlpha and isBelow then
+                    lastActiveAlert = {
+                        spellID = def.spellID,
+                        name    = def.name,
+                        urgency = 0.8,
+                        texture = def.texture or 134400,
+                    }
+                    foundDefAlert = true
+                    break
+                end
             end
+        end
+        if not foundDefAlert then
+            lastActiveAlert = nil
         end
 
         if eh and eh.Fire then

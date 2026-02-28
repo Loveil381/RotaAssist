@@ -48,9 +48,44 @@ SPELL_MAP: Dict[str, int] = {
     "bulk_extraction": 320341,
     "disrupt": 183752,
     "fel_devastation": 212084,
+    # ---- Evoker: Devastation ----
+    "fire_breath":        357208,
+    "eternity_surge":     359073,
+    "disintegrate":       356995,
+    "living_flame":       361469,
+    "pyre":               357211,
+    "dragonrage":         375087,
+    "shattering_star":    370452,
+    "azure_strike":       362969,
+    "mass_disintegrate":  436335,
+    "tip_the_scales":     370553,
+    "deep_breath":        357210,
+    # ---- Evoker: Augmentation ----
+    "eruption":           395160,
+    "upheaval":           396286,
+    "breath_of_eons":     403631,
+    "prescience":         409311,
+    "ebon_might":         395152,
+    "time_skip":          404977,
+    "blistering_scales":  360827,
+    # ---- Evoker: Preservation ----
+    "reversion":          366155,
+    "dream_breath":       382614,
+    "spiritbloom":        367226,
+    "emerald_blossom":    355913,
+    "temporal_anomaly":   382731,
+    "echo":               364343,
+    "verdant_embrace":    360995,
 }
 
-SPEC_IDS = {"havoc": 577, "vengeance": 581, "devourer": 1473}
+SPEC_IDS = {
+    "havoc": 577,
+    "vengeance": 581,
+    "devourer": 1480,
+    "devastation": 1467,
+    "augmentation": 1473,
+    "preservation": 1468,
+}
 
 SPEC_SPELLS: Dict[str, List[str]] = {
     "havoc": [
@@ -65,6 +100,20 @@ SPEC_SPELLS: Dict[str, List[str]] = {
         "bulk_extraction", "fel_devastation",
     ],
     "devourer": [],  # placeholder
+    "devastation": [
+        "fire_breath", "eternity_surge", "disintegrate", "living_flame",
+        "pyre", "dragonrage", "shattering_star", "azure_strike",
+        "deep_breath", "mass_disintegrate", "tip_the_scales",
+    ],
+    "augmentation": [
+        "prescience", "ebon_might", "breath_of_eons", "tip_the_scales",
+        "fire_breath", "upheaval", "time_skip", "eruption", "living_flame",
+    ],
+    "preservation": [
+        "fire_breath", "living_flame", "azure_strike", "dream_breath",
+        "spiritbloom", "reversion", "emerald_blossom", "temporal_anomaly",
+        "echo", "verdant_embrace",
+    ],
 }
 
 # -----------------------------------------------------------------------
@@ -98,6 +147,43 @@ actions+=/fracture
 actions+=/immolation_aura
 actions+=/bulk_extraction,if=active_enemies>=5
 actions+=/throw_glaive
+""",
+    "devastation": """
+actions+=/dragonrage,if=!buff.dragonrage.up
+actions+=/tip_the_scales,if=!buff.tip_the_scales.up
+actions+=/fire_breath
+actions+=/eternity_surge
+actions+=/shattering_star
+actions+=/mass_disintegrate,if=active_enemies>=3
+actions+=/disintegrate
+actions+=/deep_breath,if=active_enemies>=3
+actions+=/pyre,if=active_enemies>=3
+actions+=/azure_strike,if=active_enemies>=2
+actions+=/living_flame
+""",
+    "augmentation": """
+actions+=/prescience
+actions+=/ebon_might,if=!buff.ebon_might.up
+actions+=/breath_of_eons
+actions+=/tip_the_scales
+actions+=/fire_breath
+actions+=/upheaval
+actions+=/time_skip
+actions+=/eruption
+actions+=/azure_strike,if=active_enemies>=2
+actions+=/living_flame
+""",
+    "preservation": """
+actions+=/reversion
+actions+=/dream_breath
+actions+=/spiritbloom
+actions+=/temporal_anomaly,if=active_enemies>=3
+actions+=/echo
+actions+=/emerald_blossom,if=active_enemies>=3
+actions+=/verdant_embrace
+actions+=/fire_breath
+actions+=/azure_strike,if=active_enemies>=2
+actions+=/living_flame
 """,
 }
 
@@ -159,6 +245,18 @@ def apply_constraint(cond: Optional[str]) -> Dict[str, object]:
 
     # metamorphosis
     if "buff.metamorphosis.up" in cond:
+        overrides["meta_active"] = True
+
+    # dragonrage
+    if "buff.dragonrage.up" in cond:
+        overrides["meta_active"] = True
+
+    # tip_the_scales
+    if "buff.tip_the_scales.up" in cond:
+        overrides["meta_active"] = True
+
+    # ebon_might
+    if "buff.ebon_might.up" in cond:
         overrides["meta_active"] = True
 
     return overrides

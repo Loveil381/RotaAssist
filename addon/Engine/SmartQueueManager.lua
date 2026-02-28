@@ -484,6 +484,24 @@ local function AssembleQueue()
         end
     end
 
+    -- 过滤未学习的技能：动态检查玩家当前天赋，只推荐已学技能
+    -- Filter unlearned spells: dynamically check current talents, only recommend known spells
+    do
+        local unlearnedRemove = {}
+        for sid, _ in pairs(candidates) do
+            if IsPlayerSpell then
+                local okK, isK = pcall(IsPlayerSpell, sid)
+                if okK and not isK then
+                    unlearnedRemove[#unlearnedRemove + 1] = sid
+                end
+            end
+        end
+        for _, sid in ipairs(unlearnedRemove) do
+            candidates[sid] = nil
+            context.blindSpotCandidates[sid] = nil
+        end
+    end
+
     -- 3. Score & Rank
     local scored = scored_reuse
     local nScored = 0
@@ -534,7 +552,8 @@ local function AssembleQueue()
         for i = 1, #aplPredictions do
             if nIdx > 5 then break end
             local sid = aplPredictions[i].spellID
-            if not (RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid]) and not IsSpellOnCooldown(sid) then
+            local okK1, isK1 = pcall(IsPlayerSpell, sid)
+            if not (RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid]) and not IsSpellOnCooldown(sid) and (not okK1 or isK1) then
                 if not finalQueue.next[nIdx] then
                     finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
                 end
@@ -572,7 +591,8 @@ local function AssembleQueue()
                 -- 先尝试 primary（如果不在队列中）
                 local npPrimary = npResult.primary
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
-                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) and not IsSpellOnCooldown(npPrimary.spellID) then
+                    local okKnp, isKnp = pcall(IsPlayerSpell, npPrimary.spellID)
+                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) and not IsSpellOnCooldown(npPrimary.spellID) and (not okKnp or isKnp) then
                         local dominated = false
                         if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
                             dominated = true
@@ -597,7 +617,8 @@ local function AssembleQueue()
                 if npResult.alternatives then
                     for _, alt in ipairs(npResult.alternatives) do
                         if nIdx > 5 then break end
-                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) and not IsSpellOnCooldown(alt.spellID) then
+                        local okKalt, isKalt = pcall(IsPlayerSpell, alt.spellID)
+                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) and not IsSpellOnCooldown(alt.spellID) and (not okKalt or isKalt) then
                             local dominated = false
                             if finalQueue.main and finalQueue.main.spellID == alt.spellID then
                                 dominated = true
