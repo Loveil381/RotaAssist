@@ -55,6 +55,31 @@ local function IsSpellOnCooldown(spellID)
     return false
 end
 
+--- Unified castability gate: checks passive, unlearned, unusable, and cooldown.
+--- 统一可施放性检查：被动、未学习、不可施放、冷却中四重过滤。
+--- @param spellID number
+--- @return boolean castable
+local function IsSpellCastable(spellID)
+    if not spellID or spellID == 0 then return false end
+    -- 1. 被动黑名单快速路径
+    if PASSIVE_BLACKLIST[spellID] then return false end
+    -- 2. RA 被动检测
+    if RA.IsSpellPassive and RA:IsSpellPassive(spellID) then return false end
+    -- 3. 未学习检测
+    if IsPlayerSpell then
+        local okL, known = pcall(IsPlayerSpell, spellID)
+        if okL and not known then return false end
+    end
+    -- 4. 不可施放检测（覆盖 Hero Talent 增强型被动等 IsSpellPassive 漏判的情况）
+    if C_Spell and C_Spell.IsSpellUsable then
+        local okU, usable = pcall(C_Spell.IsSpellUsable, spellID)
+        if okU and usable == false then return false end
+    end
+    -- 5. 冷却中（>1.0秒）
+    if IsSpellOnCooldown(spellID) then return false end
+    return true
+end
+
 ------------------------------------------------------------------------
 -- Internal State
 ------------------------------------------------------------------------
@@ -552,8 +577,7 @@ local function AssembleQueue()
         for i = 1, #aplPredictions do
             if nIdx > 5 then break end
             local sid = aplPredictions[i].spellID
-            local okK1, isK1 = pcall(IsPlayerSpell, sid)
-            if not (RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid]) and not IsSpellOnCooldown(sid) and (not okK1 or isK1) then
+            if IsSpellCastable(sid) then
                 if not finalQueue.next[nIdx] then
                     finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
                 end
@@ -591,8 +615,7 @@ local function AssembleQueue()
                 -- 先尝试 primary（如果不在队列中）
                 local npPrimary = npResult.primary
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
-                    local okKnp, isKnp = pcall(IsPlayerSpell, npPrimary.spellID)
-                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) and not IsSpellOnCooldown(npPrimary.spellID) and (not okKnp or isKnp) then
+                    if IsSpellCastable(npPrimary.spellID) then
                         local dominated = false
                         if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
                             dominated = true
@@ -617,8 +640,7 @@ local function AssembleQueue()
                 if npResult.alternatives then
                     for _, alt in ipairs(npResult.alternatives) do
                         if nIdx > 5 then break end
-                        local okKalt, isKalt = pcall(IsPlayerSpell, alt.spellID)
-                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) and not IsSpellOnCooldown(alt.spellID) and (not okKalt or isKalt) then
+                        if IsSpellCastable(alt.spellID) then
                             local dominated = false
                             if finalQueue.main and finalQueue.main.spellID == alt.spellID then
                                 dominated = true

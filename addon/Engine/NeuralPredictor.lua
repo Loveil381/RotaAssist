@@ -293,7 +293,35 @@ function NeuralPredictor:GetCombinedPrediction()
     local function AddCandidate(spellID, score, source)
         if not spellID or spellID == 0 then return end
         if spellID == 6603 then return end  -- auto-attack
+
+        -- 1. 被动技能过滤（API + 黑名单）
+        -- Filter passive spells (API + hardcoded blacklist)
         if RA:IsSpellPassive(spellID) then return end
+        local SQM_BLACKLIST = {
+            [203555] = true,  -- Demon Blades
+            [290271] = true,  -- Demon Blades AI
+        }
+        if SQM_BLACKLIST[spellID] then return end
+
+        -- 2. 未学习技能过滤：玩家未点的天赋不推荐
+        -- Filter unlearned spells: skip talents the player hasn't selected
+        if IsPlayerSpell then
+            local okK, isK = pcall(IsPlayerSpell, spellID)
+            if okK and not isK then return end
+        end
+
+        -- 3. 不可施放检查：覆盖 IsSpellPassive 漏判的"增强型被动"技能（如思缕交织）
+        -- Usability check: catches "enhanced passive" spells that IsSpellPassive misses
+        if C_Spell and C_Spell.IsSpellUsable then
+            local okU, usable = pcall(C_Spell.IsSpellUsable, spellID)
+            if okU and usable == false then return end
+        end
+
+        -- 4. CD 过滤：正在冷却中（>1.5秒）的技能不进入候选
+        -- Cooldown filter: skip spells with >1.5s remaining cooldown
+        local remaining = RA:GetSpellCooldownSafe(spellID)
+        if remaining and remaining > 1.5 then return end
+
         reuseCandidates[spellID] = (reuseCandidates[spellID] or 0) + score
         if not reuseSources[spellID] or score > (reuseSources[spellID].score or 0) then
             reuseSources[spellID] = { source = source, score = score }
