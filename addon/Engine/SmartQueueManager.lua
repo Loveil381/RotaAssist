@@ -37,6 +37,7 @@ local mAIInference
 local mAPLEngine
 local mCooldownOverlay
 local mDefensiveAdvisor
+local mNeuralPredictor
 
 -- Outputs (zero-allocation recycle)
 local finalQueue = {
@@ -81,7 +82,10 @@ local function CalculateScore(spellID, context, weights)
     end
 
     -- 2. APL Engine Prediction
-    if context.aplPred and context.aplPred.spellID == spellID then
+    -- Only score here if not already handled as a blind-spot to avoid double counting
+    -- 仅在不是盲区技能时进行 APL 评分，避免双重计分
+    if context.aplPred and context.aplPred.spellID == spellID 
+       and not (context.blindSpotCandidates and context.blindSpotCandidates[spellID]) then
         score = score + (context.aplPred.confidence * weights.aplWeight)
         if score > (1.0 * weights.blizzardWeight) then
             primarySource = "APL"
@@ -91,8 +95,8 @@ local function CalculateScore(spellID, context, weights)
     -- 3. Blind-spot bonus: APL-prioritised CD that Blizzard's rotation omits.
     -- 盲区加分：APL 优先级较高且 Blizzard 循环中缺少的就绪 CD，得分 >= 1.0 超越 Blizzard
     if context.blindSpotCandidates and context.blindSpotCandidates[spellID] then
-        score = score + (1.2 * weights.aplWeight)
-        if score > 0 then primarySource = "APL_BLINDSPOT" end
+        score = score + 1.2  -- 必须超过 Blizzard 的 1.0，使盲区技能可以成为主推荐
+        primarySource = "APL_BLINDSPOT"
     end
 
     -- 4. AI Inference Tip Bonus
@@ -171,10 +175,11 @@ local function AssembleQueue()
     if mAPLEngine and mAPLEngine.HasAPL and mAPLEngine:HasAPL() then
         -- FIX (P0-Bug2): Build a valid limitedState table from context
         local limitedState = {
-            resource    = 0,
-            cooldowns   = {},
-            inMeta      = false,
-            targetCount = 1,
+            resource        = 0,
+            cooldowns       = {},
+            inMeta          = false,
+            targetCount     = 1,
+            combatDuration  = 0,   -- 传递战斗时长给 APLEngine 用于 opener 检测
         }
 
         -- FIX (Bug4): Support both `type` and `powerType` field names in
@@ -204,11 +209,16 @@ local function AssembleQueue()
         -- Populate inMeta from APLEngine state
         limitedState.inMeta = mAPLEngine:IsMetaActive()
 
-        -- Populate targetCount from AIInference if available
+        -- Populate targetCount and combatDuration from AIInference if available
+        -- 同时读取 targetCount 和 timeSincePull，避免重复调用 GetContext()
         if mAIInference then
             local aiCtx = mAIInference:GetContext()
-            if aiCtx and aiCtx.targetCount then
-                limitedState.targetCount = aiCtx.targetCount
+            if aiCtx then
+                if aiCtx.targetCount then
+                    limitedState.targetCount = aiCtx.targetCount
+                end
+                -- 传递战斗时长给 APLEngine 用于 opener 检测
+                limitedState.combatDuration = aiCtx.timeSincePull or 0
             end
         end
 
@@ -380,6 +390,58 @@ local function AssembleQueue()
             end
         end
 
+        -- Priority 3: NeuralPredictor 补充预测（当 APL + scored 不足时）
+        -- NeuralPredictor 融合了决策树、Markov链和 Blizzard 推荐，作为兜底预测源
+        if nIdx <= 3 and mNeuralPredictor then
+            local npOk, npResult = pcall(mNeuralPredictor.GetCombinedPrediction, mNeuralPredictor)
+            if npOk and npResult then
+                -- 先尝试 primary（如果不在队列中）
+                local npPrimary = npResult.primary
+                if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
+                    local dominated = false
+                    if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
+                        dominated = true
+                    end
+                    for _, existing in ipairs(finalQueue.next) do
+                        if existing and existing.spellID == npPrimary.spellID then
+                            dominated = true
+                            break
+                        end
+                    end
+                    if not dominated and nIdx <= 5 then
+                        finalQueue.next[nIdx] = {
+                            spellID    = npPrimary.spellID,
+                            confidence = npPrimary.confidence or 0.5
+                        }
+                        nIdx = nIdx + 1
+                    end
+                end
+                -- 再添加 alternatives
+                if npResult.alternatives then
+                    for _, alt in ipairs(npResult.alternatives) do
+                        if nIdx > 5 then break end
+                        local dominated = false
+                        if finalQueue.main and finalQueue.main.spellID == alt.spellID then
+                            dominated = true
+                        end
+                        for _, existing in ipairs(finalQueue.next) do
+                            if existing and existing.spellID == alt.spellID then
+                                dominated = true
+                                break
+                            end
+                        end
+                        if not dominated then
+                            finalQueue.next[nIdx] = {
+                                spellID    = alt.spellID,
+                                confidence = alt.confidence or 0.4
+                            }
+                            nIdx = nIdx + 1
+                        end
+                    end
+                end
+            end
+        end
+
         -- 每次 AssembleQueue 都通知 UI 更新（放在填充 next[] 之后）
         -- Always fire AFTER filling next[] so the UI sees the complete data.
         local eh = RA:GetModule("EventHandler")
@@ -471,6 +533,7 @@ function SmartQueueManager:OnEnable()
     mAPLEngine        = RA:GetModule("APLEngine")
     mCooldownOverlay  = RA:GetModule("CooldownOverlay")
     mDefensiveAdvisor = RA:GetModule("DefensiveAdvisor")
+    mNeuralPredictor  = RA:GetModule("NeuralPredictor")
 
     updateFrame:SetScript("OnUpdate", onUpdate)
     updateFrame:Show()
@@ -494,6 +557,7 @@ function SmartQueueManager:OnDisable()
     end
     prevMainSpellID        = nil
     lastRecommendedSpellID = nil
+    mNeuralPredictor       = nil
     for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
     finalQueue.main = nil
 end

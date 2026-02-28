@@ -152,17 +152,17 @@ function CooldownOverlay:LoadForSpec(specID)
     -- 2. Supplement with class-wide WhitelistSpells (for blind-spot CD detection)
     -- 使用 WhitelistSpells 补充追踪列表，使 APLEngine 能获得所有技能的真实 CD 状态
     if RA.WhitelistSpells then
-        -- Determine current classID for matching
-        local classID = nil
+        -- Determine current classFile for matching
+        local classFile = nil
         local sd = RA:GetModule("SpecDetector")
         if sd then
             local spec = sd:GetCurrentSpec()
-            classID = spec and spec.classID
+            classFile = spec and spec.classFile  -- 字符串 "DEMONHUNTER"
         end
 
         for sid, ws in pairs(RA.WhitelistSpells) do
             if not seen[sid] then
-                local classMatch = (not ws.class) or (classID and ws.class == classID)
+                local classMatch = (not ws.class) or (classFile and ws.class == classFile)
                 local specMatch  = (not ws.specID) or (ws.specID == specID)
                 if classMatch and specMatch and ws.cdSeconds and ws.cdSeconds >= 3 then
                     combined[#combined + 1] = { spellID = sid, alertThreshold = 5 }

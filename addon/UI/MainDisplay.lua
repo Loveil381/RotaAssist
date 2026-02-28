@@ -203,12 +203,22 @@ local function UpdateDisplay()
             elements.mainIcon:SetSpell(data.main.spellID, tex)
             lastDisplayed.mainSpell = data.main.spellID
         end
-        
-        -- Flash boundary if requested (handled in Interrupt but we can glow normally here)
-        elements.mainIcon:SetGlow(true) 
+        -- 如果正在显示中断提醒，不覆盖其视觉效果
+        if not elements.interruptAlert.frame:IsShown() then
+            elements.mainIcon:SetGlow(data.main.source ~= "DEFENSIVE")
+        else
+            elements.mainIcon:SetGlow(false)
+        end
         
         local mainKey = FindKeybindForSpell(data.main.spellID)
         elements.mainIcon:SetKeybind(mainKey or "")
+        
+        -- 盲区技能标识：显示来源标签
+        if data.main.source == "APL_BLINDSPOT" then
+            elements.mainIcon:SetConfidence(0.9)  -- 用高置信星标表示"这是我们的补充推荐"
+        else
+            elements.mainIcon:SetConfidence(0)    -- 清除星标
+        end
         
         elements.mainIcon.frame:Show()
     else

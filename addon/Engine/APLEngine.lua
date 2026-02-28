@@ -234,43 +234,98 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
     -- Now walk the APL to find the next `depth` spells
     local predictions = {}
 
-    for step = 1, depth do
-        local actionList = getActionList(simState)
-        if not actionList then break end
-
-        -- Sort by priority
-        local sorted = {}
-        for _, rule in ipairs(actionList) do sorted[#sorted + 1] = rule end
-        table.sort(sorted, function(a, b) return (a.priority or 999) < (b.priority or 999) end)
-
-        -- FIX (Perf): build the step-note string ONCE per outer loop iteration,
-        -- not once per rule in the inner loop, to avoid repeated string allocation.
-        local stepNote = "APL prediction step " .. step
-
-        local found = false
-        for _, rule in ipairs(sorted) do
-            -- Step 1: skip the spell Blizzard is already showing in slot 1 (only when a recommendation exists).
-            -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
-            -- currentSpellID が nil の場合はスキップしない
-            local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
-            if not skipCurrent and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
-                -- Confidence degrades with depth
-                local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
-
-                predictions[#predictions + 1] = {
-                    spellID    = rule.spellID,
-                    confidence = rule.confidence and math.min(rule.confidence, conf) or conf,
-                    source     = "apl_predict",
-                    note       = rule.note or stepNote,
-                }
-
-                -- Advance the simulation state
-                self:SimulateSpellCast(simState, rule.spellID)
-                found = true
-                break
+    -- Opener mode: 战斗开始前6秒内使用预定义的起手序列
+    -- opener 序列优先级高于常规 APL 规则
+    -- Opener mode: use the predefined pull sequence within the first 6 s of combat.
+    -- This takes priority over the regular APL rule walk.
+    local openerUsed = false
+    if limitedState.combatDuration and limitedState.combatDuration < 6 then
+        local openerSeq = nil
+        if currentAPL and currentAPL.profiles then
+            local profile = currentAPL.profiles[currentProfileName]
+                         or currentAPL.profiles["default"]
+            if profile and profile.opener then
+                openerSeq = profile.opener
             end
         end
-        if not found then break end  -- no more valid spells
+
+        if openerSeq then
+            -- 根据当前 Blizzard 推荐（slot 1）判断我们在 opener 的哪一步
+            -- Determine which opener step we have reached based on Blizzard's slot-1 spell.
+            local startStep = 1
+            if currentSpellID then
+                for _, entry in ipairs(openerSeq) do
+                    if entry.spellID == currentSpellID then
+                        startStep = entry.step + 1
+                        break
+                    end
+                end
+            end
+
+            -- 从 startStep 开始填充预测（最多 depth 步）
+            -- Fill predictions starting from startStep, up to depth entries.
+            for i = startStep, math.min(startStep + depth - 1, #openerSeq) do
+                local entry = openerSeq[i]
+                -- Skip spells the player hasn't learned (e.g. untalented Essence Break)
+                -- 跳过未学习的技能（如未天赋的精华爆裂）
+                local known = (not IsPlayerSpell) or IsPlayerSpell(entry.spellID)
+                if entry and known then
+                    predictions[#predictions + 1] = {
+                        spellID    = entry.spellID,
+                        confidence = math.max(0.7, 0.95 - (i - startStep) * 0.1),
+                        source     = "apl_opener",
+                        note       = entry.note or ("Opener step " .. i),
+                    }
+                end
+            end
+
+            if #predictions > 0 then
+                openerUsed = true
+            end
+        end
+    end
+
+    -- 如果 opener 已经填充了预测，跳过常规 APL 循环
+    -- Skip the regular APL walk when the opener sequence has provided predictions.
+    if not openerUsed then
+        for step = 1, depth do
+            local actionList = getActionList(simState)
+            if not actionList then break end
+
+            -- Sort by priority
+            local sorted = {}
+            for _, rule in ipairs(actionList) do sorted[#sorted + 1] = rule end
+            table.sort(sorted, function(a, b) return (a.priority or 999) < (b.priority or 999) end)
+
+            -- FIX (Perf): build the step-note string ONCE per outer loop iteration,
+            -- not once per rule in the inner loop, to avoid repeated string allocation.
+            local stepNote = "APL prediction step " .. step
+
+            local found = false
+            for _, rule in ipairs(sorted) do
+                -- Step 1: skip the spell Blizzard is already showing in slot 1 (only when a recommendation exists).
+                -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
+                -- currentSpellID が nil の場合はスキップしない
+                local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
+                if not skipCurrent and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
+                    -- Confidence degrades with depth
+                    local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
+
+                    predictions[#predictions + 1] = {
+                        spellID    = rule.spellID,
+                        confidence = rule.confidence and math.min(rule.confidence, conf) or conf,
+                        source     = "apl_predict",
+                        note       = rule.note or stepNote,
+                    }
+
+                    -- Advance the simulation state
+                    self:SimulateSpellCast(simState, rule.spellID)
+                    found = true
+                    break
+                end
+            end
+            if not found then break end  -- no more valid spells
+        end
     end
 
     return predictions
@@ -313,7 +368,7 @@ function APLEngine:IsMetaActive()
 end
 
 -- Havoc Metamorphosis (191427) and Devourer Void Eruption (198013) active durations
-local META_SPELL_IDS = { [191427] = 24, [198013] = 24 }
+local META_SPELL_IDS = { [191427] = 24, [198013] = 8 }
 
 ---Auto-activate meta state when the player casts a meta-trigger spell,
 ---then deactivate after the spell duration elapses.

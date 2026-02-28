@@ -110,9 +110,10 @@ end
 local function OnSpellCastSucceeded(_, unit, _, spellID)
     if unit ~= "player" or not InCombatLockdown() then return end
     
-    -- Filter simplistic non-GCD spells using C_Spell
-    local ok, cdInfo = pcall(C_Spell.GetSpellCooldown, spellID)
-    if not ok or type(cdInfo) ~= "table" then return end
+    -- Filter non-GCD spells using C_Spell.GetSpellInfo (NOT GetSpellCooldown)
+    -- WOW 12.0 SECRET VALUE SAFE: GetSpellInfo does not return secret values
+    local ok, info = pcall(C_Spell.GetSpellInfo, spellID)
+    if not ok or not info then return end
     if spellID == 6603 then return end -- auto attack
     
     pastCasts[castIndex] = spellID
