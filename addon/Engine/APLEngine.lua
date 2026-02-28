@@ -12,6 +12,14 @@ local RA = NS.RA
 local APLEngine = {}
 RA:RegisterModule("APLEngine", APLEngine)
 
+-- 已知的被动/不可施放技能黑名单（API 查询的快速路径备份）
+-- Known passive/non-castable spell blacklist (fast-path backup for API queries)
+local PASSIVE_BLACKLIST = {
+    [203555] = true,  -- Demon Blades (Havoc DH passive)
+    [290271] = true,  -- Demon Blades AI Passive variant
+    -- 后续如有更多可在此添加
+}
+
 ------------------------------------------------------------------------
 -- Internal State
 ------------------------------------------------------------------------
@@ -328,7 +336,12 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                         isSoftBlocked = true
                     end
                 end
-                if not skipCurrent and not notKnown and not realCD and not isSoftBlocked
+
+                -- Skip passive spells (e.g. Demon Blades 203555)
+                -- 跳过被动技能（如恶魔之刃 203555）
+                local isPassive = PASSIVE_BLACKLIST[rule.spellID] or (RA.IsSpellPassive and RA:IsSpellPassive(rule.spellID))
+
+                if not skipCurrent and not notKnown and not isPassive and not realCD and not isSoftBlocked
                    and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                     -- Confidence degrades with depth
                     local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)

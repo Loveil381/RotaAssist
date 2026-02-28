@@ -51,61 +51,91 @@ local function scanCooldowns()
             cdStates[spellID] = state
         end
 
-        -- WOW 12.0 SECRET VALUE SAFE
-        -- FIX (Bug3): Capture all 4 return values including startTime and duration.
-        -- 修复：使用 4 返回值版本，同时获取 startTime 和 duration。
-        local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(spellID)
-        if remaining ~= nil then
-            state.remaining = remaining
-            local wasReady  = state.ready
-            state.ready     = ready
-
-            -- FIX (Bug3): Store startTime and duration in the state table
-            -- so downstream consumers (CooldownBar widget) can render the sweep.
-            -- 保存 startTime/duration 供 UI 的 SetCooldown() 调用。
-            state.startTime = cdStart or 0
-            state.duration  = cdDuration or 0
-
-            if not wasReady and remaining > 0 and remaining <= (cd.alertThreshold or 5) then
-                if eh and eh.Fire then
-                    eh:Fire("ROTAASSIST_CD_ALERT", spellID, remaining)
+        -- Charge-spell priority: check charges first for accurate state
+        local chargeHandled = false
+        do
+            local chOk, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
+            if chOk and chInfo and type(chInfo) == "table"
+               and chInfo.maxCharges and chInfo.maxCharges > 1 then
+                chargeHandled = true
+                if chInfo.currentCharges and chInfo.currentCharges > 0 then
+                    state.remaining = 0
+                    state.ready = true
+                else
+                    local now = GetTime()
+                    local cst = chInfo.cooldownStartTime or 0
+                    local cdur = chInfo.cooldownDuration or 0
+                    local realRemaining = (cst + cdur) - now
+                    if realRemaining <= 0 then
+                        state.remaining = 0
+                        state.ready = true
+                    else
+                        state.remaining = realRemaining
+                        state.ready = false
+                    end
                 end
+                state.startTime = chInfo.cooldownStartTime or 0
+                state.duration = chInfo.cooldownDuration or 0
             end
-        else
-            -- Secret value: 不能直接读 CD。改用施法历史 + WhitelistSpells.cdSeconds 估算。
-            -- Secret CD: fall back to cast-history estimation using WhitelistSpells.cdSeconds.
-            local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
-            if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 0 then
-                local recorder = RA:GetModule("CastHistoryRecorder")
-                local lastCastTime = nil
-                if recorder then
-                    local recent = recorder:GetRecentCasts(20)
-                    for _, cast in ipairs(recent) do
-                        if cast.spellID == spellID then
-                            lastCastTime = cast.timestamp
-                            break
+        end
+
+        if not chargeHandled then
+            -- WOW 12.0 SECRET VALUE SAFE
+            -- FIX (Bug3): Capture all 4 return values including startTime and duration.
+            -- 修复：使用 4 返回值版本，同时获取 startTime 和 duration。
+            local remaining, ready, cdStart, cdDuration = RA:GetSpellCooldownSafe(spellID)
+            if remaining ~= nil then
+                state.remaining = remaining
+                local wasReady  = state.ready
+                state.ready     = ready
+
+                -- FIX (Bug3): Store startTime and duration in the state table
+                -- so downstream consumers (CooldownBar widget) can render the sweep.
+                -- 保存 startTime/duration 供 UI 的 SetCooldown() 调用。
+                state.startTime = cdStart or 0
+                state.duration  = cdDuration or 0
+
+                if not wasReady and remaining > 0 and remaining <= (cd.alertThreshold or 5) then
+                    if eh and eh.Fire then
+                        eh:Fire("ROTAASSIST_CD_ALERT", spellID, remaining)
+                    end
+                end
+            else
+                -- Secret value: 不能直接读 CD。改用施法历史 + WhitelistSpells.cdSeconds 估算。
+                -- Secret CD: fall back to cast-history estimation using WhitelistSpells.cdSeconds.
+                local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+                if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 0 then
+                    local recorder = RA:GetModule("CastHistoryRecorder")
+                    local lastCastTime = nil
+                    if recorder then
+                        local recent = recorder:GetRecentCasts(20)
+                        for _, cast in ipairs(recent) do
+                            if cast.spellID == spellID then
+                                lastCastTime = cast.timestamp
+                                break
+                            end
                         end
                     end
-                end
-                if lastCastTime then
-                    local elapsed = GetTime() - lastCastTime
-                    local estimatedRemaining = wsInfo.cdSeconds - elapsed
-                    if estimatedRemaining <= 0 then
+                    if lastCastTime then
+                        local elapsed = GetTime() - lastCastTime
+                        local estimatedRemaining = wsInfo.cdSeconds - elapsed
+                        if estimatedRemaining <= 0 then
+                            state.remaining = 0
+                            state.ready     = true
+                        else
+                            state.remaining = estimatedRemaining
+                            state.ready     = false
+                        end
+                    else
+                        -- 从未施放过：保持就绪（合理默认，技能在初始状态下可用）
+                        -- Never cast this session: assume ready (spell available by default).
                         state.remaining = 0
                         state.ready     = true
-                    else
-                        state.remaining = estimatedRemaining
-                        state.ready     = false
                     end
-                else
-                    -- 从未施放过：保持就绪（合理默认，技能在初始状态下可用）
-                    -- Never cast this session: assume ready (spell available by default).
-                    state.remaining = 0
-                    state.ready     = true
                 end
+                -- 无 cdSeconds 或 cdSeconds == 0：保留旧状态（现有行为）
+                -- No cdSeconds info: leave state unchanged (preserve previous behavior).
             end
-            -- 无 cdSeconds 或 cdSeconds == 0：保留旧状态（现有行为）
-            -- No cdSeconds info: leave state unchanged (preserve previous behavior).
         end
 
         -- Cache texture/name on first pass

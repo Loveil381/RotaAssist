@@ -147,11 +147,41 @@ function RA:GetSpellCooldownSafe(spellID)
         return nil, nil, nil, nil
     end
 
-    -- WOW 12.0 SECRET VALUE SAFE
     if issecretvalue(dur) or issecretvalue(st) then
-        return nil, nil, nil, nil  -- secret: cannot read
+        return nil, nil, nil, nil
     end
 
+    -- Charge-spell handling: when duration is short (GCD range),
+    -- check C_Spell.GetSpellCharges for the real cooldown state.
+    if dur > 0 and dur < 2.5 then
+        local chOk, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
+        if chOk and chInfo and type(chInfo) == "table"
+           and chInfo.maxCharges and chInfo.maxCharges > 1 then
+            if chInfo.currentCharges and chInfo.currentCharges > 0 then
+                -- Still has charges available — treat as usable but on GCD
+                local now = GetTime()
+                local gcdRemain = (st + dur) - now
+                if gcdRemain <= 0 then
+                    return 0, true, 0, 0
+                end
+                return gcdRemain, false, st, dur
+            else
+                -- Zero charges — use recharge timer as the real CD
+                local cst = chInfo.cooldownStartTime
+                local cdur = chInfo.cooldownDuration
+                if cst and cdur and not issecretvalue(cst) and not issecretvalue(cdur) then
+                    local now = GetTime()
+                    local realRemaining = (cst + cdur) - now
+                    if realRemaining <= 0 then
+                        return 0, true, cst, cdur
+                    end
+                    return realRemaining, false, cst, cdur
+                end
+            end
+        end
+    end
+
+    -- Standard path
     if dur <= 0 then
         return 0, true, 0, 0
     end

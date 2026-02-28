@@ -32,6 +32,19 @@ local PASSIVE_BLACKLIST = {
     -- 后续如有更多可在此添加
 }
 
+--- Check if a spell is currently on significant cooldown (> 1.5s remaining).
+--- 检查技能是否在有效 CD 中（超过 1.5秒），用于过滤 next[] 中的预测。
+local function IsSpellOnCooldown(spellID)
+    if not mCooldownOverlay then return false end
+    local cds = mCooldownOverlay:GetCooldownStates()
+    local cdState = cds[spellID]
+    if cdState and not cdState.ready
+       and cdState.remaining and cdState.remaining > 1.5 then
+        return true
+    end
+    return false
+end
+
 ------------------------------------------------------------------------
 -- Internal State
 ------------------------------------------------------------------------
@@ -401,8 +414,10 @@ local function AssembleQueue()
             local cdState = cds[sid]
             if cdState and not cdState.ready
                and cdState.remaining and cdState.remaining > 1.5 then
-                -- Exempt Blizzard rec and defensive spell
-                if sid ~= context.blizzSpell and sid ~= context.defSpell then
+                -- Only exempt defensive spell (Blizzard's API never recommends CD spells;
+                -- if the Bridge cache is stale, we want it filtered out too)
+                -- 仅排除防御技能，移除 Blizzard 推荐幼呢权（防止缓存旧幼呢 CD 技能）
+                if sid ~= context.defSpell then
                     toRemove[#toRemove + 1] = sid
                 end
             end
@@ -497,9 +512,10 @@ local function AssembleQueue()
         -- Priority 1: APL predictions (steps 1 to 3)
         for i = 1, #aplPredictions do
             if nIdx > 5 then break end
-            if not (RA:IsSpellPassive(aplPredictions[i].spellID) or PASSIVE_BLACKLIST[aplPredictions[i].spellID]) then
+            local sid = aplPredictions[i].spellID
+            if not (RA:IsSpellPassive(sid) or PASSIVE_BLACKLIST[sid]) and not IsSpellOnCooldown(sid) then
                 finalQueue.next[nIdx] = {
-                    spellID    = aplPredictions[i].spellID,
+                    spellID    = sid,
                     confidence = aplPredictions[i].confidence or 0.7
                 }
                 nIdx = nIdx + 1
@@ -533,7 +549,7 @@ local function AssembleQueue()
                 -- 先尝试 primary（如果不在队列中）
                 local npPrimary = npResult.primary
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
-                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) then
+                    if not (RA:IsSpellPassive(npPrimary.spellID) or PASSIVE_BLACKLIST[npPrimary.spellID]) and not IsSpellOnCooldown(npPrimary.spellID) then
                         local dominated = false
                         if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
                             dominated = true
@@ -557,7 +573,7 @@ local function AssembleQueue()
                 if npResult.alternatives then
                     for _, alt in ipairs(npResult.alternatives) do
                         if nIdx > 5 then break end
-                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) then
+                        if not (RA:IsSpellPassive(alt.spellID) or PASSIVE_BLACKLIST[alt.spellID]) and not IsSpellOnCooldown(alt.spellID) then
                             local dominated = false
                             if finalQueue.main and finalQueue.main.spellID == alt.spellID then
                                 dominated = true
