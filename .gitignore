@@ -21,13 +21,8 @@ Desktop.ini
 *.tmp
 
 # === Third-Party Libraries (manually managed) ===
-addon/Libs/LibStub/
-addon/Libs/AceAddon-3.0/
-addon/Libs/AceConfig-3.0/
-addon/Libs/AceDB-3.0/
-addon/Libs/AceLocale-3.0/
-addon/Libs/LibDBIcon-1.0/
-addon/Libs/LibDataBroker-1.1/
+addon/Libs/
+
 
 # === Companion App (Phase 4) ===
 companion/backend/__pycache__/
