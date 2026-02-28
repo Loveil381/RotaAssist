@@ -53,10 +53,12 @@ local finalQueue = {
 -- Previous main spell ID to fire event on change
 local prevMainSpellID = nil
 
--- FIX (Bug2): Track last-frame main recommendation so AccuracyTracker
--- can compare the spell that was recommended *before* the cast completed.
 -- 上一帧主推荐ID，供 AccuracyTracker 做上一帧比对。
 local lastRecommendedSpellID = nil
+
+-- Sticky Blizzard recommendation (caches last known ID if Blizzard temporarily returns nil)
+-- 记忆 Blizzard 推荐（防止 GCD 或延迟导致推荐瞬间消失引起预测抖动）
+local lastKnownBlizzSpell = nil
 
 ------------------------------------------------------------------------
 -- Helper Functions
@@ -117,6 +119,7 @@ local function AssembleQueue()
         finalQueue.next      = {}
         finalQueue.cooldowns = {}
         finalQueue.defensive = nil
+        lastKnownBlizzSpell  = nil -- Clear cache out of combat
         return
     end
 
@@ -136,6 +139,13 @@ local function AssembleQueue()
     if mBridge then
         local rec = mBridge:GetCurrentRecommendation()
         context.blizzSpell = rec and rec.spellID or nil
+        
+        -- Apply sticky logic: if current is nil, use last known
+        if context.blizzSpell then
+            lastKnownBlizzSpell = context.blizzSpell
+        elseif lastKnownBlizzSpell then
+            context.blizzSpell = lastKnownBlizzSpell
+        end
     end
 
     -- FIX (Bug1): PredictNext returns an ARRAY of predictions.
