@@ -133,13 +133,18 @@ end
 ---@param spellID  number The spell being cast
 ---@return table simState  The updated state (same table, mutated)
 function APLEngine:SimulateSpellCast(simState, spellID)
-    -- FIX: 只有真正的长 CD 技能（≥8秒）才在模拟中设置冷却
-    -- GCD 类技能（如 Chaos Strike、Blade Dance）的短冷却不应阻塞后续预测步骤
-    -- FIX: Only long-CD spells (≥8 s) get a simulated cooldown entry.
-    -- GCD-level short CDs must not block subsequent prediction steps.
+    -- FIX (OverridePair): 降低 CD 阈值从 ≥8s 到 ≥3s，以正确模拟 Blade Dance/Death Sweep 等短 CD
+    -- FIX (OverridePair): Lower threshold from ≥8s to ≥3s for proper short-CD simulation.
+    -- Also set simulated CD on the paired override ID.
+    -- 同时对覆盖对技能设置模拟 CD。
     local wsData = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
-    if wsData and wsData.cdSeconds and wsData.cdSeconds >= 8 then
+    if wsData and wsData.cdSeconds and wsData.cdSeconds >= 3 then
         simState.cooldowns[spellID] = wsData.cdSeconds
+        -- FIX (OverridePair): mirror sim CD to paired spell
+        local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+        if pairedID then
+            simState.cooldowns[pairedID] = wsData.cdSeconds
+        end
     end
 
     -- Apply resource cost/gen from SpecEnhancements
@@ -317,6 +322,8 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- Step 1 only: real-time CD guard — if CooldownOverlay says this spell has
                 -- > 1.0s remaining, skip it even if simState thinks it's ready.
                 -- 仅第一步：实时 CD 检查，对 simState 的 CD 估算做最终安全网
+                -- FIX (OverridePair): Also check paired override ID in real CD guard.
+                -- 覆盖对实时 CD 检查：同时检查配对 ID 的 CD 状态。
                 local realCD = false
                 if step == 1 and not skipCurrent and not notKnown then
                     local cdOverlay = RA:GetModule("CooldownOverlay")
@@ -326,6 +333,17 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                         if cdState and not cdState.ready
                            and cdState.remaining and cdState.remaining > 1.0 then
                             realCD = true
+                        end
+                        -- Check paired override ID
+                        if not realCD then
+                            local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[rule.spellID]
+                            if pairedID then
+                                local pairedState = cds[pairedID]
+                                if pairedState and not pairedState.ready
+                                   and pairedState.remaining and pairedState.remaining > 1.0 then
+                                    realCD = true
+                                end
+                            end
                         end
                     end
                 end

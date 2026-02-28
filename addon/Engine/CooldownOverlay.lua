@@ -120,10 +120,13 @@ local function scanCooldowns()
                 if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 0 then
                     local recorder = RA:GetModule("CastHistoryRecorder")
                     local lastCastTime = nil
+                    -- FIX (OverridePair): Also match paired override ID in cast history.
+                    -- 覆盖对：同时匹配配对 ID 的施法历史（如 Death Sweep 施放后也估算 Blade Dance 的 CD）。
                     if recorder then
                         local recent = recorder:GetRecentCasts(20)
+                        local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
                         for _, cast in ipairs(recent) do
-                            if cast.spellID == spellID then
+                            if cast.spellID == spellID or (pairedID and cast.spellID == pairedID) then
                                 lastCastTime = cast.timestamp
                                 break
                             end
@@ -318,6 +321,8 @@ end
 ---Avoids the 0.2s polling delay. On secret-value responses, sets ready=false using
 ---WhitelistSpells.cdSeconds as the estimated cooldown duration.
 ---施法后立刻刷新单个技能的 CD 状态；secret value 时用 WhitelistSpells.cdSeconds 估算。
+--- FIX (OverridePair): Also refreshes the paired override ID's state.
+--- 同时刷新覆盖对技能的 CD 状态（如刷新 Death Sweep 时同时刷新 Blade Dance）。
 ---@param spellID number
 function CooldownOverlay:RefreshSpellCooldown(spellID)
     if not spellID then return end
@@ -347,6 +352,20 @@ function CooldownOverlay:RefreshSpellCooldown(spellID)
             state.duration  = wsInfo.cdSeconds
         end
         -- No cdSeconds info: leave state unchanged
+    end
+
+    -- FIX (OverridePair): Refresh paired override ID if it exists in cdStates.
+    -- 覆盖对：如果配对 ID 已在跟踪表中，同步刷新其状态。
+    local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+    if pairedID then
+        local pairedState = cdStates[pairedID]
+        if pairedState then
+            -- Mirror the same CD state to the paired spell
+            pairedState.remaining = state.remaining
+            pairedState.ready     = state.ready
+            pairedState.startTime = state.startTime
+            pairedState.duration  = state.duration
+        end
     end
 end
 

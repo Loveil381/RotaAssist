@@ -74,8 +74,8 @@ APL.profiles["default"] = {
         -- ① Metamorphosis — manual-only big CD reminder
         -- 变身 — 仅提醒，手动激活
         -- メタモルフォーシス — 手動リマインダー
-        {
-            spellID   = 191427,
+        { spellID = 191427, cdSeconds = 240,
+            cdSeconds = 240,
             priority  = 1,
             condition = "cd_ready AND not_in_meta",
             note      = "Major CD. Manual activation — press when ready for burst",
@@ -87,8 +87,8 @@ APL.profiles["default"] = {
         -- ② The Hunt — use on cooldown
         -- 猎杀 — 冷却好就用
         -- ザ・ハント — CDごとに使用
-        {
-            spellID   = 370965,
+        { spellID = 370965, cdSeconds = 90,
+            cdSeconds = 90,
             priority  = 2,
             condition = "cd_ready",
             note      = "High-damage charge. Use on cooldown for burst",
@@ -100,8 +100,8 @@ APL.profiles["default"] = {
         -- ③ Vengeful Retreat — triggers Initiative talent
         -- 复仇回退 — 触发先手天赋
         -- ヴェンジフルリトリート — イニシアチブ発動
-        {
-            spellID   = 198793,
+        { spellID = 198793, cdSeconds = 25,
+            cdSeconds = 25,
             priority  = 3,
             condition = "cd_ready",
             note      = "Triggers Initiative (Mastery window). Use before builders",
@@ -113,8 +113,8 @@ APL.profiles["default"] = {
         -- ④ Eye Beam — core rotational, triggers Demonic
         -- 眼棱 — 核心循环技能，触发恶魔形态
         -- アイビーム — コアローテーション、デモニック発動
-        {
-            spellID   = 198013,
+        { spellID = 198013, cdSeconds = 30,
+            cdSeconds = 30,
             priority  = 4,
             condition = "cd_ready",
             note      = "Use on cooldown to trigger Demonic form",
@@ -126,8 +126,8 @@ APL.profiles["default"] = {
         -- ⑤ Essence Break — burst window after Eye Beam
         -- 精华爆裂 — 眼棱后使用，爆发窗口
         -- エッセンスブレイク — アイビーム後のバーストウィンドウ
-        {
-            spellID   = 258860,
+        { spellID = 258860, cdSeconds = 10,
+            cdSeconds = 10,
             priority  = 5,
             condition = "cd_ready AND after:198013",
             note      = "Use after Eye Beam for burst window (if talented)",
@@ -139,8 +139,8 @@ APL.profiles["default"] = {
         -- ⑥ Blade Dance / Death Sweep — on cooldown (higher value in Meta)
         -- 刃舞/死亡横扫 — 冷却好就用（变身中优先）
         -- ブレードダンス / デススウィープ — CDごとに使用（メタ中優先）
-        {
-            spellID   = 188499,
+        { spellID = 188499, cdSeconds = 9,
+            cdSeconds = 9,
             priority  = 6,
             condition = "cd_ready",
             note      = "Core rotational. Becomes Death Sweep in Metamorphosis",
@@ -152,8 +152,8 @@ APL.profiles["default"] = {
         -- ⑦ Glaive Tempest — AoE burst if talented
         -- 飞刃风暴 — 如果有天赋，冷却好就用
         -- グレイヴテンペスト — タレントあればCDごと
-        {
-            spellID   = 342817,
+        { spellID = 342817, cdSeconds = 20,
+            cdSeconds = 20,
             priority  = 7,
             condition = "cd_ready",
             note      = "AoE burst if talented. Good even in ST",
@@ -165,8 +165,8 @@ APL.profiles["default"] = {
         -- ⑧ Immolation Aura — Fury generation
         -- 献祭光环 — 怒气生成
         -- イモレーション・オーラ — フューリー生成
-        {
-            spellID   = 258920,
+        { spellID = 258920, cdSeconds = 30,
+            cdSeconds = 30,
             priority  = 8,
             condition = "cd_ready",
             note      = "Fury generation. Use on cooldown",
@@ -178,8 +178,8 @@ APL.profiles["default"] = {
         -- ⑨ Felblade — Fury gen / gap closer
         -- 邪刃 — 怒气生成/突进
         -- フェルブレード — フューリー生成＆ギャップクローズ
-        {
-            spellID   = 232893,
+        { spellID = 232893, cdSeconds = 15,
+            cdSeconds = 15,
             priority  = 9,
             condition = "cd_ready",
             note      = "Fury generator and gap closer",
@@ -191,8 +191,8 @@ APL.profiles["default"] = {
         -- ⑩ Fel Rush — movement + Unbound Chaos damage
         -- 邪能冲刺 — 移动 + 解缚混沌伤害
         -- フェルラッシュ — 移動＆ダメージ
-        {
-            spellID   = 195072,
+        { spellID = 195072, cdSeconds = 10,
+            cdSeconds = 10,
             priority  = 10,
             condition = "cd_ready",
             note      = "Movement/damage. 2 charges. Use for Unbound Chaos procs",
@@ -221,11 +221,11 @@ APL.profiles["default"] = {
     -- AoE 优先级（3+目标）
     -- AoE優先度（3体以上）
     aoe = {
-        { spellID = 198013, priority = 1, condition = "cd_ready",  targetCount = 3, note = "Eye Beam — AoE king",          displayPriority = 1, confidence = 0.95, tags = {"aoe"} },
-        { spellID = 188499, priority = 2, condition = "cd_ready",  targetCount = 3, note = "Blade Dance — immediate AoE",  displayPriority = 2, confidence = 0.95, tags = {"aoe"} },
-        { spellID = 342817, priority = 3, condition = "cd_ready",  targetCount = 3, note = "Glaive Tempest — sustained AoE", displayPriority = 3, confidence = 0.9, tags = {"aoe"} },
-        { spellID = 258920, priority = 4, condition = "cd_ready",  targetCount = 3, note = "Immolation Aura — Fury gen",   displayPriority = 4, confidence = 0.9, tags = {"aoe"} },
-        { spellID = 195072, priority = 5, condition = "cd_ready",  targetCount = 3, note = "Fel Rush — Unbound Chaos",     displayPriority = 5, confidence = 0.75, tags = {"aoe", "movement"} },
+        { spellID = 198013, cdSeconds = 30, priority = 1, condition = "cd_ready",  targetCount = 3, note = "Eye Beam — AoE king",          displayPriority = 1, confidence = 0.95, tags = {"aoe"} },
+        { spellID = 188499, cdSeconds = 9, priority = 2, condition = "cd_ready",  targetCount = 3, note = "Blade Dance — immediate AoE",  displayPriority = 2, confidence = 0.95, tags = {"aoe"} },
+        { spellID = 342817, cdSeconds = 20, priority = 3, condition = "cd_ready",  targetCount = 3, note = "Glaive Tempest — sustained AoE", displayPriority = 3, confidence = 0.9, tags = {"aoe"} },
+        { spellID = 258920, cdSeconds = 30, priority = 4, condition = "cd_ready",  targetCount = 3, note = "Immolation Aura — Fury gen",   displayPriority = 4, confidence = 0.9, tags = {"aoe"} },
+        { spellID = 195072, cdSeconds = 10, priority = 5, condition = "cd_ready",  targetCount = 3, note = "Fel Rush — Unbound Chaos",     displayPriority = 5, confidence = 0.75, tags = {"aoe", "movement"} },
         { spellID = 162794, priority = 6, condition = "always",    targetCount = 3, note = "Chaos Strike — Fury dump",     displayPriority = 6, confidence = 0.65, tags = {"aoe"} },
     },
 
@@ -235,18 +235,18 @@ APL.profiles["default"] = {
     -- 起手循环
     -- オープナーローテーション
     opener = {
-        { spellID = 370965, step = 1, note = "The Hunt — on pull charge" },
-        { spellID = 258920, step = 2, note = "Immolation Aura — immediate Fury" },
-        { spellID = 198013, step = 3, note = "Eye Beam — trigger Demonic" },
-        { spellID = 258860, step = 4, note = "Essence Break — burst window (if talented)" },
-        { spellID = 188499, step = 5, note = "Blade Dance / Death Sweep" },
+        { spellID = 370965, cdSeconds = 90, step = 1, note = "The Hunt — on pull charge" },
+        { spellID = 258920, cdSeconds = 30, step = 2, note = "Immolation Aura — immediate Fury" },
+        { spellID = 198013, cdSeconds = 30, step = 3, note = "Eye Beam — trigger Demonic" },
+        { spellID = 258860, cdSeconds = 10, step = 4, note = "Essence Break — burst window (if talented)" },
+        { spellID = 188499, cdSeconds = 9, step = 5, note = "Blade Dance / Death Sweep" },
     },
 
     ------------------------------------
     -- MAJOR COOLDOWNS (manual reminders)
     ------------------------------------
     majorCooldowns = {
-        { spellID = 191427, note = "Metamorphosis — manual activation. Align with burst" },
+        { spellID = 191427, cdSeconds = 240, note = "Metamorphosis — manual activation. Align with burst" },
     },
 }
 
@@ -275,17 +275,17 @@ APL.profiles["fel_scarred"] = {
 
     singleTarget = {
         -- Meta moves up slightly in importance for Student of Suffering
-        { spellID = 191427, priority = 1, condition = "cd_ready AND not_in_meta", note = "Metamorphosis — Student of Suffering Mastery window", displayPriority = 1, confidence = 0.7, tags = {"burst", "major"} },
-        { spellID = 370965, priority = 2, condition = "cd_ready",                 note = "The Hunt",                                           displayPriority = 2, confidence = 0.9, tags = {"burst"} },
-        { spellID = 198793, priority = 3, condition = "cd_ready",                 note = "Vengeful Retreat — Initiative",                      displayPriority = 3, confidence = 0.85, tags = {"movement", "burst"} },
+        { spellID = 191427, cdSeconds = 240, priority = 1, condition = "cd_ready AND not_in_meta", note = "Metamorphosis — Student of Suffering Mastery window", displayPriority = 1, confidence = 0.7, tags = {"burst", "major"} },
+        { spellID = 370965, cdSeconds = 90, priority = 2, condition = "cd_ready",                 note = "The Hunt",                                           displayPriority = 2, confidence = 0.9, tags = {"burst"} },
+        { spellID = 198793, cdSeconds = 25, priority = 3, condition = "cd_ready",                 note = "Vengeful Retreat — Initiative",                      displayPriority = 3, confidence = 0.85, tags = {"movement", "burst"} },
         -- Eye Beam: longer channel with Demonic Intensity — respect the cast
-        { spellID = 198013, priority = 4, condition = "cd_ready",                 note = "Eye Beam — DO NOT CLIP (Demonic Intensity)",         displayPriority = 4, confidence = 0.95, tags = {"sustain"} },
-        { spellID = 258860, priority = 5, condition = "cd_ready AND after:198013", note = "Essence Break after Eye Beam",                      displayPriority = 5, confidence = 0.85, tags = {"burst"} },
-        { spellID = 188499, priority = 6, condition = "cd_ready",                 note = "Blade Dance / Death Sweep",                          displayPriority = 6, confidence = 0.95, tags = {"sustain"} },
-        { spellID = 342817, priority = 7, condition = "cd_ready",                 note = "Glaive Tempest",                                     displayPriority = 7, confidence = 0.8,  tags = {"burst", "aoe"} },
-        { spellID = 258920, priority = 8, condition = "cd_ready",                 note = "Immolation Aura",                                    displayPriority = 8, confidence = 0.9,  tags = {"sustain"} },
-        { spellID = 232893, priority = 9, condition = "cd_ready",                 note = "Felblade",                                           displayPriority = 9, confidence = 0.85, tags = {"sustain"} },
-        { spellID = 195072, priority = 10, condition = "cd_ready",                note = "Fel Rush",                                           displayPriority = 10, confidence = 0.7, tags = {"movement"} },
+        { spellID = 198013, cdSeconds = 30, priority = 4, condition = "cd_ready",                 note = "Eye Beam — DO NOT CLIP (Demonic Intensity)",         displayPriority = 4, confidence = 0.95, tags = {"sustain"} },
+        { spellID = 258860, cdSeconds = 10, priority = 5, condition = "cd_ready AND after:198013", note = "Essence Break after Eye Beam",                      displayPriority = 5, confidence = 0.85, tags = {"burst"} },
+        { spellID = 188499, cdSeconds = 9, priority = 6, condition = "cd_ready",                 note = "Blade Dance / Death Sweep",                          displayPriority = 6, confidence = 0.95, tags = {"sustain"} },
+        { spellID = 342817, cdSeconds = 20, priority = 7, condition = "cd_ready",                 note = "Glaive Tempest",                                     displayPriority = 7, confidence = 0.8,  tags = {"burst", "aoe"} },
+        { spellID = 258920, cdSeconds = 30, priority = 8, condition = "cd_ready",                 note = "Immolation Aura",                                    displayPriority = 8, confidence = 0.9,  tags = {"sustain"} },
+        { spellID = 232893, cdSeconds = 15, priority = 9, condition = "cd_ready",                 note = "Felblade",                                           displayPriority = 9, confidence = 0.85, tags = {"sustain"} },
+        { spellID = 195072, cdSeconds = 10, priority = 10, condition = "cd_ready",                note = "Fel Rush",                                           displayPriority = 10, confidence = 0.7, tags = {"movement"} },
         { spellID = 162794, priority = 11, condition = "always",                  note = "Chaos Strike / Annihilation — filler",               displayPriority = 11, confidence = 0.7, tags = {"sustain"} },
     },
 

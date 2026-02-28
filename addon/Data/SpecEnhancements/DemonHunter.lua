@@ -43,6 +43,7 @@ RA.SpecEnhancements[577] = {
             [232893] = { gen  = 40  },  -- Felblade
             [195072] = { cost = 0   },  -- Fel Rush
             [198793] = { cost = 0, gen = 0 },  -- Vengeful Retreat
+            [342817] = { cost = 30  },  -- Glaive Tempest
         },
     },
 
@@ -104,6 +105,12 @@ RA.SpecEnhancements[581] = {
             [263642] = { cost = 0   },  -- Fracture
             [204596] = { cost = 0   },  -- Sigil of Flame
             [212084] = { cost = 50  },  -- Fel Devastation
+            [204021] = { cost = 0   },  -- Fiery Brand
+            [207407] = { cost = 0   },  -- Soul Carver
+            [258920] = { gen  = 20  },  -- Immolation Aura
+            [370965] = { cost = 0   },  -- The Hunt
+            [232893] = { gen  = 40  },  -- Felblade
+            [203782] = { gen  = 10  },  -- Shear
         },
     },
 
@@ -162,6 +169,11 @@ RA.SpecEnhancements[1480] = {
             [442501] = { cost = 0  },   -- Consume
             [442515] = { cost = 0  },   -- Reap
             [442510] = { cost = 0  },   -- Collapsing Star
+            [442525] = { gen  = 10 },   -- Soul Immolation
+            [442520] = { cost = 0  },   -- Voidblade
+            [370965] = { cost = 0  },   -- The Hunt
+            [198793] = { cost = 0, gen = 0 },  -- Vengeful Retreat
+            [442530] = { cost = 0  },   -- Shift
         },
     },
 

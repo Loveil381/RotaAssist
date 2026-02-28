@@ -81,8 +81,8 @@ APL.profiles["default"] = {
         -- ① Soul Immolation — resource generation on cooldown
         -- 灵魂献祭 — 冷却好就用，资源生成
         -- ソウルイモレーション — CDごとに使用、リソース生成
-        {
-            spellID   = 442525,
+        { spellID = 442525, cdSeconds = 15,
+            cdSeconds = 15,
             priority  = 1,
             condition = "cd_ready AND not_in_meta",
             note      = "Soul Immolation — resource gen, self-damage. Use on CD",
@@ -94,8 +94,8 @@ APL.profiles["default"] = {
         -- ② Voidblade — melee leap combo initiator
         -- 虚空之刃 — 近战跳跃，连击起手
         -- ヴォイドブレード — 近接リープ、コンボ開始
-        {
-            spellID   = 442520,
+        { spellID = 442520, cdSeconds = 15,
+            cdSeconds = 15,
             priority  = 2,
             condition = "cd_ready AND not_in_meta",
             note      = "Melee leap. Use to initiate combos",
@@ -107,8 +107,8 @@ APL.profiles["default"] = {
         -- ③ The Hunt — high-damage charge
         -- 猎杀 — 高伤害冲锋
         -- ザ・ハント — 高ダメージチャージ
-        {
-            spellID   = 370965,
+        { spellID = 370965, cdSeconds = 90,
+            cdSeconds = 90,
             priority  = 3,
             condition = "cd_ready",
             note      = "The Hunt — high damage. Use on cooldown",
@@ -120,8 +120,8 @@ APL.profiles["default"] = {
         -- ④ Reap — consume Voidfall stacks (estimated at 3)
         -- 收割 — 消耗虚空坠落层数（估计3层时使用）
         -- リープ — ヴォイドフォールスタック消費（推定3スタック時）
-        {
-            spellID   = 442515,
+        { spellID = 442515, cdSeconds = 10,
+            cdSeconds = 10,
             priority  = 4,
             condition = "cd_ready",
             note      = "Reap — Soul consumer. Best at 3 Voidfall stacks (estimated)",
@@ -133,8 +133,8 @@ APL.profiles["default"] = {
         -- ⑤ Void Ray — at 100 Fury (resource-gated outside Meta)
         -- 虚空射线 — 100怒气时使用（变身外资源消耗）
         -- ヴォイドレイ — フューリー100で使用（メタ外リソース消費）
-        {
-            spellID   = 442507,
+        { spellID = 442507, cdSeconds = 16,
+            cdSeconds = 16,
             priority  = 5,
             condition = "estimated_resource >= 100 AND not_in_meta",
             note      = "Void Ray — costs 100 Fury outside Void Meta",
@@ -146,8 +146,8 @@ APL.profiles["default"] = {
         -- ⑥ Vengeful Retreat — movement / utility
         -- 复仇回退 — 移动/实用
         -- ヴェンジフルリトリート — 移動/ユーティリティ
-        {
-            spellID   = 198793,
+        { spellID = 198793, cdSeconds = 25,
+            cdSeconds = 25,
             priority  = 6,
             condition = "cd_ready AND not_in_meta",
             note      = "Vengeful Retreat — movement utility",
@@ -159,8 +159,8 @@ APL.profiles["default"] = {
         -- ⑦ Shift — dash, 2-3 charges
         -- 位移 — 冲刺，2-3充能
         -- シフト — ダッシュ、2-3チャージ
-        {
-            spellID   = 442530,
+        { spellID = 442530, cdSeconds = 10,
+            cdSeconds = 10,
             priority  = 7,
             condition = "cd_ready",
             note      = "Shift — dash with 2-3 charges. Use for repositioning",
@@ -209,8 +209,8 @@ APL.profiles["default"] = {
         -- ② Void Ray — on cooldown (16s hasted CD in Meta)
         -- 虚空射线 — 冷却好就用（变身中16秒CD）
         -- ヴォイドレイ — CDごとに使用（メタ中16秒CD）
-        {
-            spellID   = 442507,
+        { spellID = 442507, cdSeconds = 16,
+            cdSeconds = 16,
             priority  = 2,
             condition = "cd_ready AND in_meta",
             note      = "Void Ray — 16s hasted CD inside Void Meta. Core rotational",
@@ -222,8 +222,8 @@ APL.profiles["default"] = {
         -- ③ Reap — after 2-3 Devour casts (Soul collection)
         -- 收割 — 2-3次吞噬后使用（收集灵魂）
         -- リープ — デヴァウア2-3回後に使用（ソウル収集）
-        {
-            spellID   = 442515,
+        { spellID = 442515, cdSeconds = 10,
+            cdSeconds = 10,
             priority  = 3,
             condition = "cd_ready AND in_meta",
             note      = "Reap/Cull — use after 2-3 Devour casts for Soul burst",
@@ -235,8 +235,8 @@ APL.profiles["default"] = {
         -- ④ Voidblade — if Voidrush talented (pauses Soul drain)
         -- 虚空之刃 — 如有虚空冲能天赋（暂停灵魂流失）
         -- ヴォイドブレード — ヴォイドラッシュタレント時（ソウル減少停止）
-        {
-            spellID   = 442520,
+        { spellID = 442520, cdSeconds = 15,
+            cdSeconds = 15,
             priority  = 4,
             condition = "cd_ready AND in_meta",
             note      = "Voidblade — if Voidrush talented, pauses Soul drain",
@@ -267,10 +267,10 @@ APL.profiles["default"] = {
     -- AoE: コラプシングスターが最優先（大AoE）
     aoe = {
         { spellID = 442510, priority = 1, condition = "in_meta AND estimated_resource >= 30", targetCount = 3, note = "Collapsing Star — AoE nuke",         displayPriority = 1, confidence = 0.85, tags = {"aoe", "burst"} },
-        { spellID = 442507, priority = 2, condition = "cd_ready",                             targetCount = 3, note = "Void Ray — aggressive use in AoE",   displayPriority = 2, confidence = 0.85, tags = {"aoe"} },
-        { spellID = 442525, priority = 3, condition = "cd_ready",                             targetCount = 3, note = "Soul Immolation — resource gen",     displayPriority = 3, confidence = 0.8,  tags = {"aoe"} },
-        { spellID = 442515, priority = 4, condition = "cd_ready",                             targetCount = 3, note = "Reap — Soul burst AoE",              displayPriority = 4, confidence = 0.75, tags = {"aoe"} },
-        { spellID = 442520, priority = 5, condition = "cd_ready",                             targetCount = 3, note = "Voidblade — leap AoE",               displayPriority = 5, confidence = 0.7,  tags = {"aoe", "movement"} },
+        { spellID = 442507, cdSeconds = 16, priority = 2, condition = "cd_ready",                             targetCount = 3, note = "Void Ray — aggressive use in AoE",   displayPriority = 2, confidence = 0.85, tags = {"aoe"} },
+        { spellID = 442525, cdSeconds = 15, priority = 3, condition = "cd_ready",                             targetCount = 3, note = "Soul Immolation — resource gen",     displayPriority = 3, confidence = 0.8,  tags = {"aoe"} },
+        { spellID = 442515, cdSeconds = 10, priority = 4, condition = "cd_ready",                             targetCount = 3, note = "Reap — Soul burst AoE",              displayPriority = 4, confidence = 0.75, tags = {"aoe"} },
+        { spellID = 442520, cdSeconds = 15, priority = 5, condition = "cd_ready",                             targetCount = 3, note = "Voidblade — leap AoE",               displayPriority = 5, confidence = 0.7,  tags = {"aoe", "movement"} },
         { spellID = 442501, priority = 6, condition = "always",                               targetCount = 3, note = "Consume — filler",                   displayPriority = 6, confidence = 0.5,  tags = {"aoe"} },
     },
 
@@ -280,11 +280,11 @@ APL.profiles["default"] = {
     -- 起手循环
     -- オープナーローテーション
     opener = {
-        { spellID = 442525, step = 1, note = "Soul Immolation — pre-pull resource gen" },
-        { spellID = 370965, step = 2, note = "The Hunt — on-pull charge" },
-        { spellID = 442520, step = 3, note = "Voidblade — melee leap" },
-        { spellID = 442515, step = 4, note = "Reap — early Soul burst" },
-        { spellID = 442507, step = 5, note = "Void Ray — first Fury dump" },
+        { spellID = 442525, cdSeconds = 15, step = 1, note = "Soul Immolation — pre-pull resource gen" },
+        { spellID = 370965, cdSeconds = 90, step = 2, note = "The Hunt — on-pull charge" },
+        { spellID = 442520, cdSeconds = 15, step = 3, note = "Voidblade — melee leap" },
+        { spellID = 442515, cdSeconds = 10, step = 4, note = "Reap — early Soul burst" },
+        { spellID = 442507, cdSeconds = 16, step = 5, note = "Void Ray — first Fury dump" },
     },
 
     ------------------------------------
@@ -322,22 +322,22 @@ APL.profiles["void_scarred"] = {
 
     singleTarget = {
         -- Outside Meta: same general priority, emphasize Voidblade
-        { spellID = 442520, priority = 1, condition = "cd_ready AND not_in_meta",                note = "Voidblade — Hungering Slash combo initiator",   displayPriority = 1, confidence = 0.85, tags = {"burst", "movement"} },
-        { spellID = 442525, priority = 2, condition = "cd_ready AND not_in_meta",                note = "Soul Immolation — resource gen",                displayPriority = 2, confidence = 0.85, tags = {"sustain"} },
-        { spellID = 370965, priority = 3, condition = "cd_ready",                                note = "The Hunt",                                      displayPriority = 3, confidence = 0.9,  tags = {"burst"} },
-        { spellID = 442515, priority = 4, condition = "cd_ready",                                note = "Reap — Soul consumer",                          displayPriority = 4, confidence = 0.75, tags = {"sustain"} },
-        { spellID = 442507, priority = 5, condition = "estimated_resource >= 100 AND not_in_meta", note = "Void Ray — Fury dump + Eradicate proc",       displayPriority = 5, confidence = 0.7,  tags = {"sustain"} },
-        { spellID = 198793, priority = 6, condition = "cd_ready AND not_in_meta",                note = "Vengeful Retreat",                               displayPriority = 6, confidence = 0.7,  tags = {"movement"} },
-        { spellID = 442530, priority = 7, condition = "cd_ready",                                note = "Shift — dash",                                  displayPriority = 7, confidence = 0.6,  tags = {"movement"} },
+        { spellID = 442520, cdSeconds = 15, priority = 1, condition = "cd_ready AND not_in_meta",                note = "Voidblade — Hungering Slash combo initiator",   displayPriority = 1, confidence = 0.85, tags = {"burst", "movement"} },
+        { spellID = 442525, cdSeconds = 15, priority = 2, condition = "cd_ready AND not_in_meta",                note = "Soul Immolation — resource gen",                displayPriority = 2, confidence = 0.85, tags = {"sustain"} },
+        { spellID = 370965, cdSeconds = 90, priority = 3, condition = "cd_ready",                                note = "The Hunt",                                      displayPriority = 3, confidence = 0.9,  tags = {"burst"} },
+        { spellID = 442515, cdSeconds = 10, priority = 4, condition = "cd_ready",                                note = "Reap — Soul consumer",                          displayPriority = 4, confidence = 0.75, tags = {"sustain"} },
+        { spellID = 442507, cdSeconds = 16, priority = 5, condition = "estimated_resource >= 100 AND not_in_meta", note = "Void Ray — Fury dump + Eradicate proc",       displayPriority = 5, confidence = 0.7,  tags = {"sustain"} },
+        { spellID = 198793, cdSeconds = 25, priority = 6, condition = "cd_ready AND not_in_meta",                note = "Vengeful Retreat",                               displayPriority = 6, confidence = 0.7,  tags = {"movement"} },
+        { spellID = 442530, cdSeconds = 10, priority = 7, condition = "cd_ready",                                note = "Shift — dash",                                  displayPriority = 7, confidence = 0.6,  tags = {"movement"} },
         { spellID = 442501, priority = 8, condition = "always",                                  note = "Consume — filler, Eradicate proc fishing",      displayPriority = 8, confidence = 0.6,  tags = {"sustain"} },
     },
 
     -- Void Meta phase: skip Collapsing Star in pure ST, more Devour spam
     voidMeta = {
         -- No Collapsing Star in ST for Void-Scarred (save Souls)
-        { spellID = 442507, priority = 1, condition = "cd_ready AND in_meta",      note = "Void Ray — core + Eradicate proc",       displayPriority = 1, confidence = 0.9,  tags = {"sustain"} },
-        { spellID = 442520, priority = 2, condition = "cd_ready AND in_meta",      note = "Voidblade — Voidrush pauses drain",       displayPriority = 2, confidence = 0.8,  tags = {"burst", "movement"} },
-        { spellID = 442515, priority = 3, condition = "cd_ready AND in_meta",      note = "Reap — Soul burst",                       displayPriority = 3, confidence = 0.75, tags = {"sustain"} },
+        { spellID = 442507, cdSeconds = 16, priority = 1, condition = "cd_ready AND in_meta",      note = "Void Ray — core + Eradicate proc",       displayPriority = 1, confidence = 0.9,  tags = {"sustain"} },
+        { spellID = 442520, cdSeconds = 15, priority = 2, condition = "cd_ready AND in_meta",      note = "Voidblade — Voidrush pauses drain",       displayPriority = 2, confidence = 0.8,  tags = {"burst", "movement"} },
+        { spellID = 442515, cdSeconds = 10, priority = 3, condition = "cd_ready AND in_meta",      note = "Reap — Soul burst",                       displayPriority = 3, confidence = 0.75, tags = {"sustain"} },
         { spellID = 442501, priority = 4, condition = "always",                    note = "Consume/Devour — spam for Eradicate procs", displayPriority = 4, confidence = 0.65, tags = {"sustain"} },
     },
 
@@ -346,10 +346,10 @@ APL.profiles["void_scarred"] = {
     -- AoEではヴォイドスカードでもコラプシングスターを使用
     aoe = {
         { spellID = 442510, priority = 1, condition = "in_meta AND estimated_resource >= 30", targetCount = 3, note = "Collapsing Star — AoE even for VS",  displayPriority = 1, confidence = 0.85, tags = {"aoe", "burst"} },
-        { spellID = 442507, priority = 2, condition = "cd_ready",                             targetCount = 3, note = "Void Ray — aggressive AoE",          displayPriority = 2, confidence = 0.85, tags = {"aoe"} },
-        { spellID = 442525, priority = 3, condition = "cd_ready",                             targetCount = 3, note = "Soul Immolation",                    displayPriority = 3, confidence = 0.8,  tags = {"aoe"} },
-        { spellID = 442515, priority = 4, condition = "cd_ready",                             targetCount = 3, note = "Reap",                               displayPriority = 4, confidence = 0.75, tags = {"aoe"} },
-        { spellID = 442520, priority = 5, condition = "cd_ready",                             targetCount = 3, note = "Voidblade",                          displayPriority = 5, confidence = 0.7,  tags = {"aoe", "movement"} },
+        { spellID = 442507, cdSeconds = 16, priority = 2, condition = "cd_ready",                             targetCount = 3, note = "Void Ray — aggressive AoE",          displayPriority = 2, confidence = 0.85, tags = {"aoe"} },
+        { spellID = 442525, cdSeconds = 15, priority = 3, condition = "cd_ready",                             targetCount = 3, note = "Soul Immolation",                    displayPriority = 3, confidence = 0.8,  tags = {"aoe"} },
+        { spellID = 442515, cdSeconds = 10, priority = 4, condition = "cd_ready",                             targetCount = 3, note = "Reap",                               displayPriority = 4, confidence = 0.75, tags = {"aoe"} },
+        { spellID = 442520, cdSeconds = 15, priority = 5, condition = "cd_ready",                             targetCount = 3, note = "Voidblade",                          displayPriority = 5, confidence = 0.7,  tags = {"aoe", "movement"} },
         { spellID = 442501, priority = 6, condition = "always",                               targetCount = 3, note = "Consume — filler",                   displayPriority = 6, confidence = 0.5,  tags = {"aoe"} },
     },
 

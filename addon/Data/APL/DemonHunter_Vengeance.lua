@@ -65,8 +65,8 @@ APL.profiles["default"] = {
         -- ① Fiery Brand — maintain for damage reduction
         -- 火焰烙印 — 保持减伤
         -- ファイアリーブランド — 被ダメ軽減を維持
-        {
-            spellID   = 204021,
+        { spellID = 204021, cdSeconds = 60,
+            cdSeconds = 60,
             priority  = 1,
             condition = "cd_ready",
             note      = "Maintain Fiery Brand for damage reduction uptime",
@@ -78,8 +78,8 @@ APL.profiles["default"] = {
         -- ② Fel Devastation — healing + AoE damage
         -- 邪能毁灭 — 治疗 + 范围伤害
         -- フェルデヴァステーション — 回復＋AoEダメージ
-        {
-            spellID   = 212084,
+        { spellID = 212084, cdSeconds = 60,
+            cdSeconds = 60,
             priority  = 2,
             condition = "cd_ready",
             note      = "Core ability. Use on cooldown for healing and damage",
@@ -104,8 +104,8 @@ APL.profiles["default"] = {
         -- ④ Soul Carver — Soul Fragment generation
         -- 灵魂雕刻 — 生成灵魂碎片
         -- ソウルカーバー — ソウルフラグメント生成
-        {
-            spellID   = 207407,
+        { spellID = 207407, cdSeconds = 60,
+            cdSeconds = 60,
             priority  = 4,
             condition = "cd_ready",
             note      = "Soul Fragment generator. Use on cooldown",
@@ -117,8 +117,8 @@ APL.profiles["default"] = {
         -- ⑤ Sigil of Flame — core AoE/DoT
         -- 火焰咒符 — 核心范围/持续伤害
         -- シジル・オブ・フレイム — コアAoE/DoT
-        {
-            spellID   = 204596,
+        { spellID = 204596, cdSeconds = 30,
+            cdSeconds = 30,
             priority  = 5,
             condition = "cd_ready",
             note      = "Core AoE/DoT. Use on cooldown",
@@ -130,8 +130,8 @@ APL.profiles["default"] = {
         -- ⑥ Immolation Aura — sustained damage + Fury
         -- 献祭光环 — 持续伤害 + 怒气
         -- イモレーション・オーラ — 持続ダメージ＋フューリー
-        {
-            spellID   = 258920,
+        { spellID = 258920, cdSeconds = 30,
+            cdSeconds = 30,
             priority  = 6,
             condition = "cd_ready",
             note      = "Sustained damage and Fury generation",
@@ -143,8 +143,8 @@ APL.profiles["default"] = {
         -- ⑦ Fracture — primary builder, 2 charges
         -- 碎裂 — 主要构建技能，2充能
         -- フラクチャー — メインビルダー、2チャージ
-        {
-            spellID   = 263642,
+        { spellID = 263642, cdSeconds = 4.5,
+            cdSeconds = 4.5,
             priority  = 7,
             condition = "cd_ready",
             note      = "Primary builder. 2 charges, generates Soul Fragments",
@@ -156,8 +156,8 @@ APL.profiles["default"] = {
         -- ⑧ The Hunt — damage + healing
         -- 猎杀 — 伤害 + 治疗
         -- ザ・ハント — ダメージ＋回復
-        {
-            spellID   = 370965,
+        { spellID = 370965, cdSeconds = 90,
+            cdSeconds = 90,
             priority  = 8,
             condition = "cd_ready",
             note      = "High-damage charge with healing component",
@@ -169,8 +169,8 @@ APL.profiles["default"] = {
         -- ⑨ Felblade — gap closer + Soul gen
         -- 邪刃 — 突进 + 灵魂碎片
         -- フェルブレード — ギャップクローズ＋ソウル生成
-        {
-            spellID   = 232893,
+        { spellID = 232893, cdSeconds = 15,
+            cdSeconds = 15,
             priority  = 9,
             condition = "cd_ready",
             note      = "Gap closer and Soul Fragment generator",
@@ -201,11 +201,11 @@ APL.profiles["default"] = {
     -- AoE: スピリットボム最優先、シジル＋フェルデヴァ継続
     aoe = {
         { spellID = 247454, priority = 1, condition = "estimated_resource >= 4", targetCount = 3, note = "Spirit Bomb — always top in AoE",   displayPriority = 1, confidence = 0.9, tags = {"aoe"} },
-        { spellID = 204596, priority = 2, condition = "cd_ready",                targetCount = 3, note = "Sigil of Flame",                    displayPriority = 2, confidence = 0.9, tags = {"aoe"} },
-        { spellID = 212084, priority = 3, condition = "cd_ready",                targetCount = 3, note = "Fel Devastation",                   displayPriority = 3, confidence = 0.9, tags = {"aoe", "defensive"} },
-        { spellID = 207407, priority = 4, condition = "cd_ready",                targetCount = 3, note = "Soul Carver — fragment gen",        displayPriority = 4, confidence = 0.85, tags = {"aoe"} },
-        { spellID = 258920, priority = 5, condition = "cd_ready",                targetCount = 3, note = "Immolation Aura",                   displayPriority = 5, confidence = 0.85, tags = {"aoe"} },
-        { spellID = 263642, priority = 6, condition = "cd_ready",                targetCount = 3, note = "Fracture — fragments",              displayPriority = 6, confidence = 0.8,  tags = {"aoe", "builder"} },
+        { spellID = 204596, cdSeconds = 30, priority = 2, condition = "cd_ready",                targetCount = 3, note = "Sigil of Flame",                    displayPriority = 2, confidence = 0.9, tags = {"aoe"} },
+        { spellID = 212084, cdSeconds = 60, priority = 3, condition = "cd_ready",                targetCount = 3, note = "Fel Devastation",                   displayPriority = 3, confidence = 0.9, tags = {"aoe", "defensive"} },
+        { spellID = 207407, cdSeconds = 60, priority = 4, condition = "cd_ready",                targetCount = 3, note = "Soul Carver — fragment gen",        displayPriority = 4, confidence = 0.85, tags = {"aoe"} },
+        { spellID = 258920, cdSeconds = 30, priority = 5, condition = "cd_ready",                targetCount = 3, note = "Immolation Aura",                   displayPriority = 5, confidence = 0.85, tags = {"aoe"} },
+        { spellID = 263642, cdSeconds = 4.5, priority = 6, condition = "cd_ready",                targetCount = 3, note = "Fracture — fragments",              displayPriority = 6, confidence = 0.8,  tags = {"aoe", "builder"} },
         { spellID = 203782, priority = 7, condition = "always",                  targetCount = 3, note = "Shear — filler",                    displayPriority = 7, confidence = 0.5,  tags = {"aoe", "builder"} },
     },
 
@@ -213,11 +213,11 @@ APL.profiles["default"] = {
     -- OPENER (pull sequence)
     ------------------------------------
     opener = {
-        { spellID = 204596, step = 1, note = "Sigil of Flame — pre-place on boss" },
-        { spellID = 258920, step = 2, note = "Immolation Aura — immediate aggro" },
-        { spellID = 212084, step = 3, note = "Fel Devastation — opening burst + heal" },
-        { spellID = 204021, step = 4, note = "Fiery Brand — establish mitigation" },
-        { spellID = 263642, step = 5, note = "Fracture — start Soul gen" },
+        { spellID = 204596, cdSeconds = 30, step = 1, note = "Sigil of Flame — pre-place on boss" },
+        { spellID = 258920, cdSeconds = 30, step = 2, note = "Immolation Aura — immediate aggro" },
+        { spellID = 212084, cdSeconds = 60, step = 3, note = "Fel Devastation — opening burst + heal" },
+        { spellID = 204021, cdSeconds = 60, step = 4, note = "Fiery Brand — establish mitigation" },
+        { spellID = 263642, cdSeconds = 4.5, step = 5, note = "Fracture — start Soul gen" },
     },
 
     ------------------------------------
@@ -228,8 +228,8 @@ APL.profiles["default"] = {
     -- 我们无法读取血量，但可以追踪CD状态
     -- 体力は読めないが、CD状態は追跡可能
     majorCooldowns = {
-        { spellID = 187827, note = "Metamorphosis — emergency defensive. Manual only" },
-        { spellID = 204021, note = "Fiery Brand — track uptime for mitigation" },
+        { spellID = 187827, cdSeconds = 180, note = "Metamorphosis — emergency defensive. Manual only" },
+        { spellID = 204021, cdSeconds = 60, note = "Fiery Brand — track uptime for mitigation" },
     },
 }
 

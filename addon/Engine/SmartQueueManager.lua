@@ -40,6 +40,8 @@ local flickerCounters   = {}  -- [index] = count
 
 --- Check if a spell is currently on significant cooldown (> 1.0s remaining).
 --- 检查技能是否在有效 CD 中（超过 1.0秒），用于过滤 next[] 中的预测。
+--- FIX (OverridePair): Also checks the paired override ID (e.g. Death Sweep for Blade Dance).
+--- 同时检查覆盖对技能的 CD 状态（如 Blade Dance ↔ Death Sweep）。
 local function IsSpellOnCooldown(spellID)
     if not spellID then return false end
     -- Primary: check CooldownOverlay tracked states
@@ -50,6 +52,16 @@ local function IsSpellOnCooldown(spellID)
             if not cdState.ready and cdState.remaining and cdState.remaining > 1.0 then
                 return true
             end
+            -- FIX (OverridePair): paired ID check when primary reports ready
+            -- 覆盖对检查：主 ID 就绪时查看配对 ID 是否在 CD
+            local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+            if pairedID then
+                local pairedState = cds[pairedID]
+                if pairedState and not pairedState.ready
+                   and pairedState.remaining and pairedState.remaining > 1.0 then
+                    return true
+                end
+            end
             return false
         end
     end
@@ -57,6 +69,18 @@ local function IsSpellOnCooldown(spellID)
     local remaining = RA:GetSpellCooldownSafe(spellID)
     if remaining and remaining > 1.0 then
         return true
+    end
+
+    -- FIX (OverridePair): check paired ID via direct API when primary is not on CD
+    -- 覆盖对 API 回退：主 ID 未在 CD 时检查配对 ID
+    if remaining ~= nil then
+        local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+        if pairedID then
+            local pRemaining = RA:GetSpellCooldownSafe(pairedID)
+            if pRemaining and pRemaining > 1.0 then
+                return true
+            end
+        end
     end
 
     -- remaining == nil (secret value): estimate from cast history
@@ -482,19 +506,43 @@ local function AssembleQueue()
     -- 安全网：过滤掉已知在 CD 中的候选（除 Blizzard 推荐和 defensive 以外）
     -- Safety net: drop candidates known to be on cooldown (> 1.0s remaining).
     -- Blizzard rec and defensive are exempt (may have charge/proc info we lack).
+    -- FIX (OverridePair): CD safety net now also checks paired override IDs.
+    -- If either spell in a pair is on CD, remove BOTH from candidates.
+    -- 覆盖对 CD 安全网：如果任一覆盖对技能在 CD 中，移除两者。
     if mCooldownOverlay then
         local cds = mCooldownOverlay:GetCooldownStates()
         wipe(toRemove_reuse)
         local toRemove = toRemove_reuse
         for sid, _ in pairs(candidates) do
+            local onCD = false
             local cdState = cds[sid]
             if cdState and not cdState.ready
                and cdState.remaining and cdState.remaining > 1.0 then
-                -- Only exempt defensive spell (Blizzard's API never recommends CD spells;
-                -- if the Bridge cache is stale, we want it filtered out too)
-                -- 仅排除防御技能，移除 Blizzard 推荐幼呢权（防止缓存旧幼呢 CD 技能）
+                onCD = true
+            end
+            -- Check paired override ID as well
+            -- 同时检查覆盖对配对 ID
+            if not onCD then
+                local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[sid]
+                if pairedID then
+                    local pairedState = cds[pairedID]
+                    if pairedState and not pairedState.ready
+                       and pairedState.remaining and pairedState.remaining > 1.0 then
+                        onCD = true
+                    end
+                end
+            end
+            if onCD then
+                -- Only exempt defensive spell
+                -- 仅排除防御技能
                 if sid ~= context.defSpell then
                     toRemove[#toRemove + 1] = sid
+                    -- Also mark paired ID for removal if it's a candidate
+                    -- 同时标记配对 ID 移除
+                    local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[sid]
+                    if pairedID and candidates[pairedID] and pairedID ~= context.defSpell then
+                        toRemove[#toRemove + 1] = pairedID
+                    end
                 end
             end
         end
@@ -846,9 +894,16 @@ function SmartQueueManager:OnEnable()
             -- 2. Soft-block: suppress just-cast spell until SPELL_UPDATE_COOLDOWN confirms real CD.
             --    Only block spells with a meaningful CD (>= 3s) listed in WhitelistSpells.
             --    仅对 WhitelistSpells 中 cdSeconds >= 3 的技能启用软屏蔽
+            -- FIX (OverridePair): Also soft-block the paired override ID.
+            -- 同时对覆盖对技能施加软屏蔽（如施放 Death Sweep 后同时屏蔽 Blade Dance）。
             local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
             if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds >= 3 then
-                softBlockedSpells[spellID] = GetTime() + SOFT_BLOCK_DURATION
+                local blockExpiry = GetTime() + SOFT_BLOCK_DURATION
+                softBlockedSpells[spellID] = blockExpiry
+                local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+                if pairedID then
+                    softBlockedSpells[pairedID] = blockExpiry
+                end
             end
 
             -- 3. Invalidate the Bridge recommendation cache so the next call to
@@ -861,8 +916,18 @@ function SmartQueueManager:OnEnable()
             -- 4. Clear sticky Blizzard spell if we just cast it — unless it's a channeled
             --    spell. During a channel the sticky should keep showing what comes AFTER.
             --    引导技能施法后不清除 sticky，让引导期间继续显示下一步技能
-            if lastKnownBlizzSpell and lastKnownBlizzSpell == spellID then
-                if not CHANNELED_SPELL_IDS[spellID] then
+            -- FIX (OverridePair): Also clear when paired ID matches (e.g. cast Death Sweep
+            -- while sticky is Blade Dance).
+            -- 覆盖对也清除 sticky（如 sticky 为 Blade Dance 但施放了 Death Sweep）。
+            if lastKnownBlizzSpell then
+                local shouldClear = (lastKnownBlizzSpell == spellID)
+                if not shouldClear then
+                    local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
+                    if pairedID and lastKnownBlizzSpell == pairedID then
+                        shouldClear = true
+                    end
+                end
+                if shouldClear and not CHANNELED_SPELL_IDS[spellID] then
                     lastKnownBlizzSpell = nil
                 end
             end

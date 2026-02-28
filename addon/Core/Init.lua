@@ -299,6 +299,52 @@ function RA:IsSpellRecommendable(spellID)
     return true
 end
 
+------------------------------------------------------------------------
+-- Known Override Pairs (shared cooldown / form-swap spells)
+-- 已知覆盖对：共享 CD 或变身切换的技能对照表
+-- FIX (OverridePair): Bidirectional mapping so any spell can find its
+-- paired form. Used by SmartQueue, CooldownOverlay, and APLEngine to
+-- treat A↔B as a single cooldown.
+------------------------------------------------------------------------
+
+RA.KNOWN_OVERRIDE_PAIRS = {
+    -- Blade Dance ↔ Death Sweep
+    [188499] = 210152,
+    [210152] = 188499,
+    -- Demon's Bite ↔ Demon Blades (passive talent replacement)
+    [162243] = 203555,
+    [203555] = 162243,
+    -- Chaos Strike ↔ Annihilation
+    [162794] = 201427,
+    [201427] = 162794,
+}
+
+--- Return the "base" (lower-ID) form of a spell if it belongs to an
+--- override pair, or the spell itself if not paired.
+--- 返回覆盖对中 ID 较小的「基底」版本；不在表中则返回自身。
+--- FIX (OverridePair): Normalizes spellIDs for cooldown dedup.
+---@param spellID number
+---@return number baseID
+function RA:GetBaseSpellID(spellID)
+    if not spellID then return spellID end
+    local paired = self.KNOWN_OVERRIDE_PAIRS[spellID]
+    if not paired then return spellID end
+    return math.min(spellID, paired)
+end
+
+--- Check whether two spells share a cooldown via KNOWN_OVERRIDE_PAIRS.
+--- 判断两个技能是否通过 KNOWN_OVERRIDE_PAIRS 共享 CD。
+--- FIX (OverridePair): Used as a predicate in queue filtering.
+---@param spellA number
+---@param spellB number
+---@return boolean sharesCooldown
+function RA:SharesCooldown(spellA, spellB)
+    if not spellA or not spellB then return false end
+    if spellA == spellB then return true end
+    local pairedA = self.KNOWN_OVERRIDE_PAIRS[spellA]
+    return pairedA ~= nil and pairedA == spellB
+end
+
 --- 安全获取玩家生命百分比
 
 --- @return number|nil hpPct 0.0-1.0，nil=secret 无法读取
