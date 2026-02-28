@@ -244,7 +244,12 @@ local function UpdateDisplay()
     -- 8. Pre-Pull Panel
     if not inCombat then
         local ppc = RA:GetModule("PrePullChecker")
-        if ppc then elements.prePull:Update(ppc:RunChecks()) end
+        if ppc then
+            local ok, checks = pcall(ppc.RunChecks, ppc)
+            if ok and checks then
+                elements.prePull:Update(checks)
+            end
+        end
     else
         elements.prePull:Hide()
     end
@@ -325,7 +330,12 @@ local function checkVisibility()
         mainFrame:Show()
         if not inCombat then
             local ppc = RA:GetModule("PrePullChecker")
-            if ppc then elements.prePull:Update(ppc:RunChecks()) end
+            if ppc then
+                local ok, checks = pcall(ppc.RunChecks, ppc)
+                if ok and checks then
+                    elements.prePull:Update(checks)
+                end
+            end
         end
     end
     UpdateDisplay()

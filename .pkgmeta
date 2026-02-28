@@ -1,23 +1,47 @@
 package-as: RotaAssist
 
 externals:
-  libs/LibStub:
+  addon/Libs/LibStub:
     url: https://repos.curseforge.com/wow/libstub/trunk
     tag: latest
-  libs/AceAddon-3.0:
+  addon/Libs/CallbackHandler-1.0:
+    url: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+    tag: latest
+  addon/Libs/AceAddon-3.0:
     url: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
     tag: latest
-  libs/AceDB-3.0:
+  addon/Libs/AceDB-3.0:
     url: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
     tag: latest
-  libs/AceEvent-3.0:
+  addon/Libs/AceEvent-3.0:
     url: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
     tag: latest
-  libs/AceLocale-3.0:
+  addon/Libs/AceConsole-3.0:
+    url: https://repos.curseforge.com/wow/ace3/trunk/AceConsole-3.0
+    tag: latest
+  addon/Libs/AceLocale-3.0:
     url: https://repos.curseforge.com/wow/ace3/trunk/AceLocale-3.0
     tag: latest
-  libs/AceTimer-3.0:
+  addon/Libs/AceTimer-3.0:
     url: https://repos.curseforge.com/wow/ace3/trunk/AceTimer-3.0
+    tag: latest
+  addon/Libs/AceConfig-3.0:
+    url: https://repos.curseforge.com/wow/ace3/trunk/AceConfig-3.0
+    tag: latest
+  addon/Libs/AceConfig-3.0/AceConfigRegistry-3.0:
+    url: https://repos.curseforge.com/wow/ace3/trunk/AceConfigRegistry-3.0
+    tag: latest
+  addon/Libs/AceConfig-3.0/AceConfigDialog-3.0:
+    url: https://repos.curseforge.com/wow/ace3/trunk/AceConfigDialog-3.0
+    tag: latest
+  addon/Libs/AceConfig-3.0/AceConfigCmd-3.0:
+    url: https://repos.curseforge.com/wow/ace3/trunk/AceConfigCmd-3.0
+    tag: latest
+  addon/Libs/LibDataBroker-1.1:
+    url: https://repos.curseforge.com/wow/libdatabroker-1-1/trunk
+    tag: latest
+  addon/Libs/LibDBIcon-1.0:
+    url: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
     tag: latest
 
 ignore:

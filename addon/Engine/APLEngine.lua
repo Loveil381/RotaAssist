@@ -123,9 +123,12 @@ end
 ---@param spellID  number The spell being cast
 ---@return table simState  The updated state (same table, mutated)
 function APLEngine:SimulateSpellCast(simState, spellID)
-    -- Apply cooldown from WhitelistSpells
+    -- FIX: 只有真正的长 CD 技能（≥8秒）才在模拟中设置冷却
+    -- GCD 类技能（如 Chaos Strike、Blade Dance）的短冷却不应阻塞后续预测步骤
+    -- FIX: Only long-CD spells (≥8 s) get a simulated cooldown entry.
+    -- GCD-level short CDs must not block subsequent prediction steps.
     local wsData = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
-    if wsData and wsData.cdSeconds and wsData.cdSeconds > 0 then
+    if wsData and wsData.cdSeconds and wsData.cdSeconds >= 8 then
         simState.cooldowns[spellID] = wsData.cdSeconds
     end
 
@@ -230,7 +233,6 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
 
     -- Now walk the APL to find the next `depth` spells
     local predictions = {}
-    local usedSpells  = { [currentSpellID or 0] = true }
 
     for step = 1, depth do
         local actionList = getActionList(simState)
@@ -247,24 +249,26 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
 
         local found = false
         for _, rule in ipairs(sorted) do
-            if not usedSpells[rule.spellID] then
-                if self:EvaluateCondition(rule.condition, rule.spellID, simState) then
-                    -- Confidence degrades with depth
-                    local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
+            -- 第一步：跳过当前 Blizzard 推荐（那是 slot 1，不应出现在预测中）
+            -- 第二步及以后：允许同一个技能重复出现（例如连续 Chaos Strike）
+            -- Step 1: skip the spell Blizzard is already showing in slot 1.
+            -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
+            local skipCurrent = (step == 1 and rule.spellID == currentSpellID)
+            if not skipCurrent and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
+                -- Confidence degrades with depth
+                local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
 
-                    predictions[#predictions + 1] = {
-                        spellID    = rule.spellID,
-                        confidence = rule.confidence and math.min(rule.confidence, conf) or conf,
-                        source     = "apl_predict",
-                        note       = rule.note or stepNote,
-                    }
-                    usedSpells[rule.spellID] = true
+                predictions[#predictions + 1] = {
+                    spellID    = rule.spellID,
+                    confidence = rule.confidence and math.min(rule.confidence, conf) or conf,
+                    source     = "apl_predict",
+                    note       = rule.note or stepNote,
+                }
 
-                    -- Advance the simulation state
-                    self:SimulateSpellCast(simState, rule.spellID)
-                    found = true
-                    break
-                end
+                -- Advance the simulation state
+                self:SimulateSpellCast(simState, rule.spellID)
+                found = true
+                break
             end
         end
         if not found then break end  -- no more valid spells
