@@ -309,11 +309,16 @@ local function AssembleQueue()
             for _, rule in ipairs(rules) do
                 local sid = rule.spellID
                 if sid and not rotationSpells[sid] then
-                    -- Check if the CD is actually ready in the overlay
-                    local cdState = cdStates[sid]
-                    if cdState and cdState.ready then
-                        context.blindSpotCandidates[sid] = true
-                        candidates[sid] = true
+                    -- 跳过未学习的天赋技能（避免因 unlearned spell CD = 0 被误判为就绪）
+                    -- Skip unlearned talent spells (their CD returns 0, falsely appearing ready)
+                    local isKnown = not IsPlayerSpell or IsPlayerSpell(sid)
+                    if isKnown then
+                        -- Check if the CD is actually ready in the overlay
+                        local cdState = cdStates[sid]
+                        if cdState and cdState.ready then
+                            context.blindSpotCandidates[sid] = true
+                            candidates[sid] = true
+                        end
                     end
                 end
             end

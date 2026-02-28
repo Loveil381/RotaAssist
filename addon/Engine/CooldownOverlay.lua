@@ -72,8 +72,40 @@ local function scanCooldowns()
                 end
             end
         else
-            -- Secret: preserve last known state, don't update
-            -- 获取失败（secret value）：保留上次已知状态，不更新
+            -- Secret value: 不能直接读 CD。改用施法历史 + WhitelistSpells.cdSeconds 估算。
+            -- Secret CD: fall back to cast-history estimation using WhitelistSpells.cdSeconds.
+            local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+            if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 0 then
+                local recorder = RA:GetModule("CastHistoryRecorder")
+                local lastCastTime = nil
+                if recorder then
+                    local recent = recorder:GetRecentCasts(20)
+                    for _, cast in ipairs(recent) do
+                        if cast.spellID == spellID then
+                            lastCastTime = cast.timestamp
+                            break
+                        end
+                    end
+                end
+                if lastCastTime then
+                    local elapsed = GetTime() - lastCastTime
+                    local estimatedRemaining = wsInfo.cdSeconds - elapsed
+                    if estimatedRemaining <= 0 then
+                        state.remaining = 0
+                        state.ready     = true
+                    else
+                        state.remaining = estimatedRemaining
+                        state.ready     = false
+                    end
+                else
+                    -- 从未施放过：保持就绪（合理默认，技能在初始状态下可用）
+                    -- Never cast this session: assume ready (spell available by default).
+                    state.remaining = 0
+                    state.ready     = true
+                end
+            end
+            -- 无 cdSeconds 或 cdSeconds == 0：保留旧状态（现有行为）
+            -- No cdSeconds info: leave state unchanged (preserve previous behavior).
         end
 
         -- Cache texture/name on first pass
@@ -116,6 +148,16 @@ function CooldownOverlay:OnEnable()
         eh:Subscribe("ROTAASSIST_SPEC_CHANGED", "CooldownOverlay", function(_, specInfo)
             self:LoadForSpec(specInfo and specInfo.specID)
         end)
+
+        -- 天赋改变时重新扫描（同专精内换天赋不触发 SPEC_CHANGED）
+        -- Reload when talents change within the same spec (no SPEC_CHANGED fires)
+        eh:Subscribe("PLAYER_TALENT_UPDATE", "CooldownOverlay", function()
+            local sd = RA:GetModule("SpecDetector")
+            if sd then
+                local spec = sd:GetCurrentSpec()
+                if spec then self:LoadForSpec(spec.specID) end
+            end
+        end)
     end
 
     -- Try loading immediately if spec is already known
@@ -140,11 +182,21 @@ function CooldownOverlay:LoadForSpec(specID)
     local seen     = {}
 
     -- 1. Load explicit major cooldowns configured in SpecEnhancements
+    -- 跳过未学习的天赋技能 / Skip unlearned talent spells
     if enhData and enhData.majorCooldowns then
         for _, cd in ipairs(enhData.majorCooldowns) do
             if not seen[cd.spellID] then
-                combined[#combined + 1] = cd
-                seen[cd.spellID] = true
+                local isKnown = true
+                if IsPlayerSpell then
+                    isKnown = IsPlayerSpell(cd.spellID)
+                    if not isKnown and IsSpellKnown then
+                        isKnown = IsSpellKnown(cd.spellID)
+                    end
+                end
+                if isKnown then
+                    combined[#combined + 1] = cd
+                    seen[cd.spellID] = true
+                end
             end
         end
     end
@@ -165,8 +217,20 @@ function CooldownOverlay:LoadForSpec(specID)
                 local classMatch = (not ws.class) or (classFile and ws.class == classFile)
                 local specMatch  = (not ws.specID) or (ws.specID == specID)
                 if classMatch and specMatch and ws.cdSeconds and ws.cdSeconds >= 3 then
-                    combined[#combined + 1] = { spellID = sid, alertThreshold = 5 }
-                    seen[sid] = true
+                    -- 跳过未学习的天赋技能 / Skip unlearned talent spells
+                    local isKnown = true
+                    if IsPlayerSpell then
+                        isKnown = IsPlayerSpell(sid)
+                        -- 备用：部分变体技能 IsPlayerSpell 返回 false 但 IsSpellKnown 返回 true
+                        -- Fallback: some variant spells return false from IsPlayerSpell but true from IsSpellKnown
+                        if not isKnown and IsSpellKnown then
+                            isKnown = IsSpellKnown(sid)
+                        end
+                    end
+                    if isKnown then
+                        combined[#combined + 1] = { spellID = sid, alertThreshold = 5 }
+                        seen[sid] = true
+                    end
                 end
             end
         end

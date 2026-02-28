@@ -307,7 +307,9 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
                 -- currentSpellID が nil の場合はスキップしない
                 local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
-                if not skipCurrent and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
+                -- 跳过未学习的天赋技能 / Skip unlearned talent spells
+                local notKnown = IsPlayerSpell and not IsPlayerSpell(rule.spellID)
+                if not skipCurrent and not notKnown and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                     -- Confidence degrades with depth
                     local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
 
