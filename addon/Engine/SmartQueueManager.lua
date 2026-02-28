@@ -220,10 +220,12 @@ local function AssembleQueue()
         -- GetCooldownStates() returns { [spellID] = {remaining, ready, texture, name, startTime, duration} }
         for spellID, cd in pairs(cds) do
             local isWhitelisted = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
-            if isWhitelisted and cd.ready then
-                context.cdReadyList[spellID] = true
-            end
-            if isWhitelisted and not cd.ready then
+            if isWhitelisted then
+                if cd.ready then
+                    context.cdReadyList[spellID] = true
+                end
+                -- 就绪和冷却中的大招都进入 cooldowns 列表供 CooldownBar 显示
+                -- Include both ready and on-cooldown major CDs in the bar
                 cd.spellID = spellID  -- inject spellID for downstream consumers
                 finalQueue.cooldowns[cIdx] = cd
                 cIdx = cIdx + 1
@@ -277,12 +279,17 @@ local function AssembleQueue()
             confidence = topConf
         }
 
-        -- Fire event if main spell changed
-        if prevMainSpellID ~= finalQueue.main.spellID then
-            prevMainSpellID = finalQueue.main.spellID
-            local eh = RA:GetModule("EventHandler")
-            if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", finalQueue.main) end
+        -- 追踪主推荐是否变化（供其他系统使用），但每次都通知 UI
+        -- Track main spell change for other systems, but always notify UI.
+        local newMainID = finalQueue.main and finalQueue.main.spellID or nil
+        if prevMainSpellID ~= newMainID then
+            prevMainSpellID = newMainID
         end
+        -- 每次 AssembleQueue 都通知 UI 更新
+        -- （预测内容可能在主推荐不变时也发生变化，例如冷却刷新或 APL 步骤推进）
+        -- Always fire so prediction/cooldown changes reach the UI every tick.
+        local eh = RA:GetModule("EventHandler")
+        if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", finalQueue.main) end
 
         -- FIX (Bug1): Populate next[] using APL predictions (steps 2+) first,
         -- then fill remaining slots from scored candidates (rank 2+).
@@ -323,11 +330,13 @@ local function AssembleQueue()
         lastRecommendedSpellID = finalQueue.main and finalQueue.main.spellID or nil
         finalQueue.main = nil
         for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
+        -- 队列清空：更新追踪值并无条件通知 UI
+        -- Queue cleared: update tracking and always notify UI.
         if prevMainSpellID ~= nil then
             prevMainSpellID = nil
-            local eh = RA:GetModule("EventHandler")
-            if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", nil) end
         end
+        local eh = RA:GetModule("EventHandler")
+        if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", nil) end
     end
 end
 

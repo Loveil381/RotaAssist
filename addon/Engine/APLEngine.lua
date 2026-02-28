@@ -193,10 +193,10 @@ end
 function APLEngine:PredictNext(currentSpellID, limitedState, depth)
     depth = depth or 2
 
-    -- FIX (P0-Bug2): Nil guard — return early if we have no current spell or
-    -- no state to simulate against. Prevents "attempt to index a nil value"
-    -- when callers (e.g. SmartQueueManager) pass nil arguments.
-    if not currentSpellID or not limitedState then return {} end
+    -- limitedState is still required for simulation; return early only if missing.
+    -- currentSpellID may be nil (no Blizzard recommendation) — prediction continues from APL top.
+    -- limitedState は必須。currentSpellID が nil の場合は APL 先頭から予測する。
+    if not limitedState then return {} end
 
     if not currentAPL then return {} end
 
@@ -249,11 +249,10 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
 
         local found = false
         for _, rule in ipairs(sorted) do
-            -- 第一步：跳过当前 Blizzard 推荐（那是 slot 1，不应出现在预测中）
-            -- 第二步及以后：允许同一个技能重复出现（例如连续 Chaos Strike）
-            -- Step 1: skip the spell Blizzard is already showing in slot 1.
+            -- Step 1: skip the spell Blizzard is already showing in slot 1 (only when a recommendation exists).
             -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
-            local skipCurrent = (step == 1 and rule.spellID == currentSpellID)
+            -- currentSpellID が nil の場合はスキップしない
+            local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
             if not skipCurrent and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                 -- Confidence degrades with depth
                 local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)

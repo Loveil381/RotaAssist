@@ -63,7 +63,9 @@ function CooldownBar:Update(cooldownStates)
                 icon:SetCooldown(nil, nil)
                 icon:SetDesaturated(false)
                 icon:SetAlert(false)
-                icon:SetKeybind("")
+                -- 就绪时显示 "OK" 表示大招可用
+                -- Show "OK" when the cooldown is ready to use
+                icon:SetKeybind("OK")
             else
                 icon:SetDesaturated(true)
                 local start = GetTime() - (state.duration and (state.duration - state.remaining) or 0)

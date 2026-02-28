@@ -37,14 +37,14 @@ function IconWidget:Create(parent, size, name)
     
     -- Keybind Text (Bottom Right)
     obj.keybind = obj.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    obj.keybind:SetPoint("BOTTOMRIGHT", obj.frame, "BOTTOMRIGHT", -2, 2)
+    obj.keybind:SetPoint("TOPRIGHT", obj.frame, "TOPRIGHT", -1, -1)
     obj.keybind:SetJustifyH("RIGHT")
     local fontSize = math.max(10, math.floor(size * 0.25))
     obj.keybind:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     
     -- Confidence Text (Top Left)
     obj.confidence = obj.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    obj.confidence:SetPoint("TOPLEFT", obj.frame, "TOPLEFT", 2, -2)
+    obj.confidence:SetPoint("BOTTOMLEFT", obj.frame, "BOTTOMLEFT", 2, 2)
     obj.confidence:SetJustifyH("LEFT")
     obj.confidence:SetFont(STANDARD_TEXT_FONT, math.max(10, math.floor(size * 0.22)), "OUTLINE")
     obj.confidence:SetTextColor(1, 0.8, 0) -- Gold
