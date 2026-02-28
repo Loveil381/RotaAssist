@@ -80,9 +80,7 @@ local function CalculateScore(spellID, context, weights)
         primarySource = "BLIZZARD"
     end
 
-    -- 2. APL Engine Prediction (first element of aplPredictions array)
-    -- FIX (Bug1): aplPred is now the first element {spellID, confidence, source}
-    -- 修复：aplPred 现在是 aplPredictions[1] 而不是整个数组
+    -- 2. APL Engine Prediction
     if context.aplPred and context.aplPred.spellID == spellID then
         score = score + (context.aplPred.confidence * weights.aplWeight)
         if score > (1.0 * weights.blizzardWeight) then
@@ -90,17 +88,24 @@ local function CalculateScore(spellID, context, weights)
         end
     end
 
-    -- 3. AI Inference Tip Bonus (no direct spellID map from tips; APL/Blizzard drive)
-    if context.aiTip and context.aiTip.text then
-        -- Simplified: no direct DB link; let APL/Blizzard drive mostly.
+    -- 3. Blind-spot bonus: APL-prioritised CD that Blizzard's rotation omits.
+    -- 盲区加分：APL 优先级较高且 Blizzard 循环中缺少的就绪 CD，得分 >= 1.0 超越 Blizzard
+    if context.blindSpotCandidates and context.blindSpotCandidates[spellID] then
+        score = score + (1.2 * weights.aplWeight)
+        if score > 0 then primarySource = "APL_BLINDSPOT" end
     end
 
-    -- 4. Cooldown Overlay (whitelisted CDs ready during BURST prep)
+    -- 4. AI Inference Tip Bonus
+    if context.aiTip and context.aiTip.text then
+        -- Simplified: let APL/Blizzard drive mostly.
+    end
+
+    -- 5. Cooldown Overlay (whitelisted CDs ready during BURST prep)
     if context.cdReadyList[spellID] and context.aiPhase == "BURST_PREPARE" then
         score = score + (0.5 * weights.cdWeight)
     end
 
-    -- 5. Defensive Urgency
+    -- 6. Defensive Urgency
     if context.defSpell == spellID then
         score = score + ((context.defUrgency or 1.0) * weights.defWeight)
         primarySource = "DEFENSIVE"
@@ -127,13 +132,14 @@ local function AssembleQueue()
 
     -- 1. Gather Context
     local context = {
-        blizzSpell   = nil,
-        aplPred      = nil,   -- first APL prediction {spellID, confidence, source}
-        cdReadyList  = {},
-        defSpell     = nil,
-        defUrgency   = 0,
-        aiPhase      = "NORMAL",
-        aiTip        = nil
+        blizzSpell          = nil,
+        aplPred             = nil,
+        cdReadyList         = {},
+        blindSpotCandidates = {},   -- APL-priority CDs missing from Blizzard's rotation
+        defSpell            = nil,
+        defUrgency          = 0,
+        aiPhase             = "NORMAL",
+        aiTip               = nil
     }
 
     if mBridge then
@@ -145,6 +151,16 @@ local function AssembleQueue()
             lastKnownBlizzSpell = context.blizzSpell
         elseif lastKnownBlizzSpell then
             context.blizzSpell = lastKnownBlizzSpell
+        end
+    end
+
+    -- Build Blizzard rotation spell set for blind-spot detection
+    -- Blizzard 循环技能集合，用于检测盲区技能
+    local rotationSpells = {}
+    if mBridge then
+        local list = mBridge:GetRotationSpells()
+        for _, sid in ipairs(list) do
+            rotationSpells[sid] = true
         end
     end
 
@@ -196,7 +212,8 @@ local function AssembleQueue()
             end
         end
 
-        local ok, result = pcall(mAPLEngine.PredictNext, mAPLEngine, context.blizzSpell, limitedState)
+        -- Increase depth to 3 to get better lookahead for the prediction bar
+        local ok, result = pcall(mAPLEngine.PredictNext, mAPLEngine, context.blizzSpell, limitedState, 3)
         if ok and type(result) == "table" then
             aplPredictions = result
         end
@@ -263,6 +280,38 @@ local function AssembleQueue()
     if context.defSpell then candidates[context.defSpell] = true end
     for sid, _ in pairs(context.cdReadyList) do candidates[sid] = true end
 
+    -- Blind-spot detection: APL rules that are CD-ready but absent from Blizzard's rotation list
+    -- 盲区检测：APL 中优先级较高且 CD 就绪、但 Blizzard 循环列表中缺失的技能
+    if mAPLEngine and mAPLEngine:HasAPL() then
+        local actionList = mAPLEngine:GetCurrentAPL()
+        -- GetCurrentAPL returns the raw APL table; try to get a flat rule list
+        local rules = nil
+        if actionList then
+            if actionList.rules then
+                rules = actionList.rules
+            elseif actionList.profiles then
+                local prof = actionList.profiles["default"]
+                if prof then rules = prof.singleTarget end
+            end
+        end
+        if rules then
+            local cdStates = mCooldownOverlay and mCooldownOverlay:GetCooldownStates() or {}
+            for _, rule in ipairs(rules) do
+                local sid = rule.spellID
+                if sid and not rotationSpells[sid] then
+                    -- Check if the CD is actually ready in the overlay
+                    local cdState = cdStates[sid]
+                    if cdState and cdState.ready then
+                        context.blindSpotCandidates[sid] = true
+                        candidates[sid] = true
+                    end
+                end
+            end
+        end
+    end
+
+    for sid, _ in pairs(context.blindSpotCandidates) do candidates[sid] = true end
+
     -- 3. Score & Rank
     local scored = {}
     for sid, _ in pairs(candidates) do
@@ -289,17 +338,12 @@ local function AssembleQueue()
             confidence = topConf
         }
 
-        -- 追踪主推荐是否变化（供其他系统使用），但每次都通知 UI
-        -- Track main spell change for other systems, but always notify UI.
+        -- 追踪主推荐是否变化（供其他系统使用）
+        -- Track main spell change for other systems.
         local newMainID = finalQueue.main and finalQueue.main.spellID or nil
         if prevMainSpellID ~= newMainID then
             prevMainSpellID = newMainID
         end
-        -- 每次 AssembleQueue 都通知 UI 更新
-        -- （预测内容可能在主推荐不变时也发生变化，例如冷却刷新或 APL 步骤推进）
-        -- Always fire so prediction/cooldown changes reach the UI every tick.
-        local eh = RA:GetModule("EventHandler")
-        if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", finalQueue.main) end
 
         -- FIX (Bug1): Populate next[] using APL predictions (steps 2+) first,
         -- then fill remaining slots from scored candidates (rank 2+).
@@ -307,8 +351,8 @@ local function AssembleQueue()
         for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
         local nIdx = 1
 
-        -- Priority 1: APL prediction steps 2 and beyond
-        for i = 2, #aplPredictions do
+        -- Priority 1: APL predictions (steps 1 to 3)
+        for i = 1, #aplPredictions do
             if nIdx > 5 then break end
             finalQueue.next[nIdx] = {
                 spellID    = aplPredictions[i].spellID,
@@ -335,6 +379,11 @@ local function AssembleQueue()
                 nIdx = nIdx + 1
             end
         end
+
+        -- 每次 AssembleQueue 都通知 UI 更新（放在填充 next[] 之后）
+        -- Always fire AFTER filling next[] so the UI sees the complete data.
+        local eh = RA:GetModule("EventHandler")
+        if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", finalQueue.main) end
     else
         -- FIX (Bug2): Also reset lastRecommendedSpellID when queue clears
         lastRecommendedSpellID = finalQueue.main and finalQueue.main.spellID or nil
@@ -425,6 +474,17 @@ function SmartQueueManager:OnEnable()
 
     updateFrame:SetScript("OnUpdate", onUpdate)
     updateFrame:Show()
+
+    -- Drive APLEngine meta-state from actual spell casts
+    -- 通过施法成功事件自动更新 APL变身状态
+    local eh = RA:GetModule("EventHandler")
+    if eh then
+        eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "SmartQueueManager", function(_, unit, _, spellID)
+            if unit == "player" and mAPLEngine and mAPLEngine.SetMetaStateFromCast then
+                mAPLEngine:SetMetaStateFromCast(spellID)
+            end
+        end)
+    end
 end
 
 function SmartQueueManager:OnDisable()

@@ -135,12 +135,48 @@ function CooldownOverlay:LoadForSpec(specID)
 
     if not specID or not RA.SpecEnhancements then return end
 
-    local enhData = RA.SpecEnhancements[specID]
+    local enhData  = RA.SpecEnhancements[specID]
+    local combined = {}
+    local seen     = {}
+
+    -- 1. Load explicit major cooldowns configured in SpecEnhancements
     if enhData and enhData.majorCooldowns then
-        trackedCDs = enhData.majorCooldowns
+        for _, cd in ipairs(enhData.majorCooldowns) do
+            if not seen[cd.spellID] then
+                combined[#combined + 1] = cd
+                seen[cd.spellID] = true
+            end
+        end
+    end
+
+    -- 2. Supplement with class-wide WhitelistSpells (for blind-spot CD detection)
+    -- 使用 WhitelistSpells 补充追踪列表，使 APLEngine 能获得所有技能的真实 CD 状态
+    if RA.WhitelistSpells then
+        -- Determine current classID for matching
+        local classID = nil
+        local sd = RA:GetModule("SpecDetector")
+        if sd then
+            local spec = sd:GetCurrentSpec()
+            classID = spec and spec.classID
+        end
+
+        for sid, ws in pairs(RA.WhitelistSpells) do
+            if not seen[sid] then
+                local classMatch = (not ws.class) or (classID and ws.class == classID)
+                local specMatch  = (not ws.specID) or (ws.specID == specID)
+                if classMatch and specMatch and ws.cdSeconds and ws.cdSeconds >= 3 then
+                    combined[#combined + 1] = { spellID = sid, alertThreshold = 5 }
+                    seen[sid] = true
+                end
+            end
+        end
+    end
+
+    if #combined > 0 then
+        trackedCDs = combined
         isTracking  = true
         updateFrame:SetScript("OnUpdate", onUpdate)
-        RA:PrintDebug(string.format("CooldownOverlay: Tracking %d major CDs for specID %d",
+        RA:PrintDebug(string.format("CooldownOverlay: Tracking %d CDs for specID %d (incl. whitelist)",
             #trackedCDs, specID))
     else
         updateFrame:SetScript("OnUpdate", nil)

@@ -239,6 +239,15 @@ function EventHandler:OnEnable()
     RA:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START", function(_, unit)
         EventHandler:Fire("ROTAASSIST_CHANNEL_START", unit)
     end)
+
+    -- Central dispatchers for spell stop and interrupt events.
+    -- 跨模块派发￡◆战斗时打断/停止施法事件
+    RA:RegisterEvent("UNIT_SPELLCAST_STOP", function(_, unit)
+        EventHandler:Fire("ROTAASSIST_SPELLCAST_STOP", unit)
+    end)
+    RA:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", function(_, unit)
+        EventHandler:Fire("ROTAASSIST_SPELLCAST_INTERRUPTED", unit)
+    end)
 end
 
 function EventHandler:OnDisable()

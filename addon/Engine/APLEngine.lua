@@ -312,6 +312,21 @@ function APLEngine:IsMetaActive()
     return metaActive
 end
 
+-- Havoc Metamorphosis (191427) and Devourer Void Eruption (198013) active durations
+local META_SPELL_IDS = { [191427] = 24, [198013] = 24 }
+
+---Auto-activate meta state when the player casts a meta-trigger spell,
+---then deactivate after the spell duration elapses.
+---@param spellID number
+function APLEngine:SetMetaStateFromCast(spellID)
+    local duration = META_SPELL_IDS[spellID]
+    if not duration then return end
+    metaActive = true
+    C_Timer.After(duration, function()
+        metaActive = false
+    end)
+end
+
 ---Set the active profile.
 ---@param profileName string
 function APLEngine:SetProfile(profileName)

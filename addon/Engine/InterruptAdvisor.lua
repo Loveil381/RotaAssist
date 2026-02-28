@@ -223,7 +223,52 @@ function InterruptAdvisor:OnEnable()
         eh:Subscribe("ROTAASSIST_SPELLCAST_START", "InterruptAdvisor", OnSpellCastStart)
         eh:Subscribe("ROTAASSIST_CHANNEL_START", "InterruptAdvisor", OnSpellCastStart)
         eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "InterruptAdvisor", OnSpellCastSucceeded)
+
+        -- 敲打或停止时立即消除打断提示
+        -- Immediately dismiss when the enemy spell is stopped or interrupted.
+        local function dismissInterrupt(_, unit)
+            if unit and unit ~= "player" then
+                interruptState.shouldInterrupt = false
+                interruptState.urgency = 0
+                eh:Fire("ROTAASSIST_INTERRUPT_ALERT", false, nil)
+            end
+        end
+        eh:Subscribe("ROTAASSIST_SPELLCAST_STOP",        "InterruptAdvisor", dismissInterrupt)
+        eh:Subscribe("ROTAASSIST_SPELLCAST_INTERRUPTED",  "InterruptAdvisor", dismissInterrupt)
     end
+
+    -- 定时探测：如果战斗内无敌方施法者，或陋出战斗，自动消断提示
+    -- Periodic poller: auto-dismiss when no enemy is casting or after leaving combat.
+    self.dismissTimer = C_Timer.NewTicker(0.5, function()
+        if not InCombatLockdown() then
+            if interruptState.shouldInterrupt then
+                interruptState.shouldInterrupt = false
+                interruptState.urgency = 0
+                local eh2 = RA:GetModule("EventHandler")
+                if eh2 then eh2:Fire("ROTAASSIST_INTERRUPT_ALERT", false, nil) end
+            end
+            return
+        end
+        -- 在战斗中，扫描 nameplate 是否还有敌方在施法
+        if interruptState.shouldInterrupt then
+            local stillCasting = false
+            for i = 1, 40 do
+                local unit = "nameplate" .. i
+                if UnitExists(unit) and UnitCanAttack("player", unit) then
+                    if UnitCastingInfo(unit) or UnitChannelInfo(unit) then
+                        stillCasting = true
+                        break
+                    end
+                end
+            end
+            if not stillCasting then
+                interruptState.shouldInterrupt = false
+                interruptState.urgency = 0
+                local eh2 = RA:GetModule("EventHandler")
+                if eh2 then eh2:Fire("ROTAASSIST_INTERRUPT_ALERT", false, nil) end
+            end
+        end
+    end)
 end
 
 function InterruptAdvisor:OnDisable()
@@ -232,9 +277,15 @@ function InterruptAdvisor:OnDisable()
     -- dispatchers and break other subscribers.
     local eh = RA:GetModule("EventHandler")
     if eh then
-        eh:Unsubscribe("ROTAASSIST_SPELLCAST_START", "InterruptAdvisor")
-        eh:Unsubscribe("ROTAASSIST_CHANNEL_START", "InterruptAdvisor")
-        eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "InterruptAdvisor")
-        eh:Unsubscribe("ROTAASSIST_SPEC_CHANGED", "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_START",       "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_CHANNEL_START",          "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_SUCCEEDED",    "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPEC_CHANGED",           "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_STOP",         "InterruptAdvisor")
+        eh:Unsubscribe("ROTAASSIST_SPELLCAST_INTERRUPTED",  "InterruptAdvisor")
+    end
+    if self.dismissTimer then
+        self.dismissTimer:Cancel()
+        self.dismissTimer = nil
     end
 end
