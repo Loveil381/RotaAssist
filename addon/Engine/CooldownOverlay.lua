@@ -158,6 +158,17 @@ function CooldownOverlay:OnEnable()
                 if spec then self:LoadForSpec(spec.specID) end
             end
         end)
+
+        -- 收到 CD 变化通知时立刻扫描（不等 0.2s 节流）
+        -- Immediately scan when any CD state changes, triggered by SPELL_UPDATE_COOLDOWN.
+        local cdEventThrottle = 0
+        eh:Subscribe("ROTAASSIST_CD_UPDATED", "CooldownOverlay", function()
+            if not isTracking then return end
+            local now = GetTime()
+            if now - cdEventThrottle < 0.05 then return end
+            cdEventThrottle = now
+            scanCooldowns()
+        end)
     end
 
     -- Try loading immediately if spec is already known

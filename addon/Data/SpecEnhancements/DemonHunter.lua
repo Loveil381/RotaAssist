@@ -32,15 +32,17 @@ RA.SpecEnhancements[577] = {
 
     --- Resource info for simulation and UI
     resource = {
-        type      = 17, -- Enum.PowerType.Fury
+        powerType = 17, -- Enum.PowerType.Fury
         maxBase   = 120,
         spellCosts = {
-            [162243] = { cost = 40  },  -- Chaos Strike
+            [162794] = { cost = 40  },  -- Chaos Strike / Annihilation
+            [162243] = { gen  = 40  },  -- Demon's Bite (Only if NOT using Demon Blades)
             [188499] = { cost = 35  },  -- Blade Dance
             [198013] = { cost = 30  },  -- Eye Beam
             [258920] = { gen  = 20  },  -- Immolation Aura
             [232893] = { gen  = 40  },  -- Felblade
             [195072] = { cost = 0   },  -- Fel Rush
+            [198793] = { cost = 0, gen = 0 },  -- Vengeful Retreat
         },
     },
 
@@ -95,7 +97,7 @@ RA.SpecEnhancements[581] = {
     },
 
     resource = {
-        type      = 17, -- Fury
+        powerType = 17, -- Fury
         maxBase   = 100,
         spellCosts = {
             [247454] = { cost = 40  },  -- Spirit Bomb
@@ -152,7 +154,7 @@ RA.SpecEnhancements[1480] = {
     },
 
     resource = {
-        type      = 17,  -- Enum.PowerType.Fury (Assuming Devourer uses Fury)
+        powerType = 17,  -- Enum.PowerType.Fury (Assuming Devourer uses Fury)
         maxBase   = 100,
         spellCosts = {
             -- VERIFY: Placeholder spellID, needs live server verification

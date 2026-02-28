@@ -69,6 +69,15 @@ local lastRecommendedSpellID = nil
 -- 记忆 Blizzard 推荐（防止 GCD 或延迟导致推荐瞬间消失引起预测抖动）
 local lastKnownBlizzSpell = nil
 
+-- 施法后的软屏蔽：在真实 CD 数据到来前临时阻止刚施放的技能被推荐
+-- Soft-block: temporarily suppress the just-cast spell until SPELL_UPDATE_COOLDOWN confirms the real CD.
+local softBlockedSpells = {}
+local SOFT_BLOCK_DURATION = 0.6  -- seconds until soft-block auto-expires
+
+local context_reuse = { blizzSpell=nil, aplPred=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
+local candidates_reuse = {}
+local scored_reuse = {}
+
 ------------------------------------------------------------------------
 -- Helper Functions
 ------------------------------------------------------------------------
@@ -143,16 +152,15 @@ local function AssembleQueue()
     local weights = RA.db and RA.db.profile.smartQueue or defaultWeights
 
     -- 1. Gather Context
-    local context = {
-        blizzSpell          = nil,
-        aplPred             = nil,
-        cdReadyList         = {},
-        blindSpotCandidates = {},   -- APL-priority CDs missing from Blizzard's rotation
-        defSpell            = nil,
-        defUrgency          = 0,
-        aiPhase             = "NORMAL",
-        aiTip               = nil
-    }
+    local context = context_reuse
+    context.blizzSpell = nil
+    context.aplPred = nil
+    wipe(context.cdReadyList)
+    wipe(context.blindSpotCandidates)
+    context.defSpell = nil
+    context.defUrgency = 0
+    context.aiPhase = "NORMAL"
+    context.aiTip = nil
 
     if mBridge then
         local rec = mBridge:GetCurrentRecommendation()
@@ -179,6 +187,13 @@ local function AssembleQueue()
     -- FIX (Bug1): PredictNext returns an ARRAY of predictions.
     -- Parse it correctly; the first element joins scoring, rest go to next[].
     -- 修复：PredictNext 返回数组，第一个元素参与评分，其余填充 next[]。
+    local currentTargetCount = 1
+    if mAIInference then
+        local aiCtx = mAIInference:GetContext()
+        if aiCtx and aiCtx.targetCount then
+            currentTargetCount = aiCtx.targetCount
+        end
+    end
     local aplPredictions = {}
     if mAPLEngine and mAPLEngine.HasAPL and mAPLEngine:HasAPL() then
         -- FIX (P0-Bug2): Build a valid limitedState table from context
@@ -188,6 +203,7 @@ local function AssembleQueue()
             inMeta          = false,
             targetCount     = 1,
             combatDuration  = 0,   -- 传递战斗时长给 APLEngine 用于 opener 检测
+            softBlocked     = softBlockedSpells,  -- 传递软屏蔽表给 APLEngine / pass soft-block map
         }
 
         -- FIX (Bug4): Support both `type` and `powerType` field names in
@@ -223,12 +239,13 @@ local function AssembleQueue()
             local aiCtx = mAIInference:GetContext()
             if aiCtx then
                 if aiCtx.targetCount then
-                    limitedState.targetCount = aiCtx.targetCount
+                    currentTargetCount = aiCtx.targetCount
                 end
                 -- 传递战斗时长给 APLEngine 用于 opener 检测
                 limitedState.combatDuration = aiCtx.timeSincePull or 0
             end
         end
+        limitedState.targetCount = currentTargetCount
 
         -- Increase depth to 3 to get better lookahead for the prediction bar
         local ok, result = pcall(mAPLEngine.PredictNext, mAPLEngine, context.blizzSpell, limitedState, 3)
@@ -290,7 +307,8 @@ local function AssembleQueue()
     end
 
     -- 2. Build Candidates Map
-    local candidates = {}
+    local candidates = candidates_reuse
+    wipe(candidates)
     if context.blizzSpell then candidates[context.blizzSpell] = true end
     if context.aplPred and context.aplPred.spellID then
         candidates[context.aplPred.spellID] = true
@@ -308,8 +326,16 @@ local function AssembleQueue()
             if actionList.rules then
                 rules = actionList.rules
             elseif actionList.profiles then
-                local prof = actionList.profiles["default"]
-                if prof then rules = prof.singleTarget end
+                local profName = (mAPLEngine and mAPLEngine.GetProfileName)
+                    and mAPLEngine:GetProfileName() or "default"
+                local prof = actionList.profiles[profName] or actionList.profiles["default"]
+                if prof then
+                    if currentTargetCount >= 3 and prof.aoe then
+                        rules = prof.aoe
+                    else
+                        rules = prof.singleTarget
+                    end
+                end
             end
         end
         if rules then
@@ -372,13 +398,40 @@ local function AssembleQueue()
         end
     end
 
+    -- 软屏蔽：施放后 SOFT_BLOCK_DURATION 秒内，临时阻止刚施放技能被推荐
+    -- Soft-block filter: suppress recently-cast spells until real CD data arrives.
+    -- Exempts Blizzard rec and defensive spell in case of charges / procs.
+    do
+        local now = GetTime()
+        local sbToRemove = {}
+        for sid, expiry in pairs(softBlockedSpells) do
+            if now < expiry then
+                if sid ~= context.blizzSpell and sid ~= context.defSpell then
+                    sbToRemove[#sbToRemove + 1] = sid
+                end
+            end
+        end
+        for _, sid in ipairs(sbToRemove) do
+            candidates[sid] = nil
+            context.blindSpotCandidates[sid] = nil
+        end
+    end
+
     -- 3. Score & Rank
-    local scored = {}
+    local scored = scored_reuse
+    local nScored = 0
     for sid, _ in pairs(candidates) do
         local score, src = CalculateScore(sid, context, weights)
         if score > 0 then
-            table.insert(scored, { spellID = sid, score = score, source = src })
+            nScored = nScored + 1
+            if not scored[nScored] then scored[nScored] = {} end
+            scored[nScored].spellID = sid
+            scored[nScored].score = score
+            scored[nScored].source = src
         end
+    end
+    for i = nScored + 1, #scored do
+        scored[i] = nil
     end
     table.sort(scored, function(a, b) return a.score > b.score end)
 
@@ -594,9 +647,9 @@ function SmartQueueManager:OnEnable()
     updateFrame:SetScript("OnUpdate", onUpdate)
     updateFrame:Show()
 
-    -- Drive APLEngine meta-state from actual spell casts; also force-refresh CD
-    -- state immediately after each cast so the recommendation never lags behind.
-    -- 施法成功后：更新变身状态、立刻刷新 CD、失效 Bridge 缓存、重建队列
+    -- Drive APLEngine meta-state from actual spell casts; also apply soft-block and
+    -- force-refresh recommendation cache so the UI never lags behind a cast.
+    -- 施法成功后：更新变身状态、软屏蔽、失效 Bridge 缓存、重建队列
     local eh = RA:GetModule("EventHandler")
     if eh then
         eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "SmartQueueManager", function(_, unit, _, spellID)
@@ -607,11 +660,12 @@ function SmartQueueManager:OnEnable()
                 mAPLEngine:SetMetaStateFromCast(spellID)
             end
 
-            -- 2. Immediately mark the just-cast spell as on-cooldown in CooldownOverlay,
-            --    so the next AssembleQueue call sees ready=false without waiting 0.2s.
-            --    立刻将刚施放的技能标记为 CD 中，不等 0.2s 的定时扫描
-            if mCooldownOverlay and mCooldownOverlay.RefreshSpellCooldown then
-                mCooldownOverlay:RefreshSpellCooldown(spellID)
+            -- 2. Soft-block: suppress just-cast spell until SPELL_UPDATE_COOLDOWN confirms real CD.
+            --    Only block spells with a meaningful CD (>= 3s) listed in WhitelistSpells.
+            --    仅对 WhitelistSpells 中 cdSeconds >= 3 的技能启用软屏蔽
+            local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+            if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds >= 3 then
+                softBlockedSpells[spellID] = GetTime() + SOFT_BLOCK_DURATION
             end
 
             -- 3. Invalidate the Bridge recommendation cache so the next call to
@@ -627,10 +681,20 @@ function SmartQueueManager:OnEnable()
                 lastKnownBlizzSpell = nil
             end
 
-            -- 5. Trigger an immediate queue rebuild (resets the 0.15s throttle timer).
-            --    立刻重建队列，重置节流计时器
-            lastUpdate = THROTTLE_UPDATE  -- saturate timer so next OnUpdate triggers immediately
+            -- 5. Trigger an immediate queue rebuild.
+            --    立刻重建队列
+            lastUpdate = THROTTLE_UPDATE
             AssembleQueue()
+        end)
+
+        -- 当 SPELL_UPDATE_COOLDOWN 触发时，真实 CD 数据已就绪：清除软屏蔽并立刻重建队列
+        -- When real CD data arrives, clear soft-blocks and rebuild to reflect true CD state.
+        eh:Subscribe("ROTAASSIST_CD_UPDATED", "SmartQueueManager", function()
+            if next(softBlockedSpells) then
+                wipe(softBlockedSpells)
+                lastUpdate = THROTTLE_UPDATE
+                AssembleQueue()
+            end
         end)
     end
 end

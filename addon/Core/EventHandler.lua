@@ -248,6 +248,13 @@ function EventHandler:OnEnable()
     RA:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", function(_, unit)
         EventHandler:Fire("ROTAASSIST_SPELLCAST_INTERRUPTED", unit)
     end)
+
+    -- 中央派发 SPELL_UPDATE_COOLDOWN → ROTAASSIST_CD_UPDATED
+    -- WoW fires this whenever any spell CD changes (cast, charge, GCD).
+    -- Multiple modules subscribe via ROTAASSIST_CD_UPDATED instead of registering this event themselves.
+    RA:RegisterEvent("SPELL_UPDATE_COOLDOWN", function()
+        EventHandler:Fire("ROTAASSIST_CD_UPDATED")
+    end)
 end
 
 function EventHandler:OnDisable()

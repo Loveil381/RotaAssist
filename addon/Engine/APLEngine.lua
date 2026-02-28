@@ -291,18 +291,12 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
         for step = 1, depth do
             local actionList = getActionList(simState)
             if not actionList then break end
-
-            -- Sort by priority
-            local sorted = {}
-            for _, rule in ipairs(actionList) do sorted[#sorted + 1] = rule end
-            table.sort(sorted, function(a, b) return (a.priority or 999) < (b.priority or 999) end)
-
             -- FIX (Perf): build the step-note string ONCE per outer loop iteration,
             -- not once per rule in the inner loop, to avoid repeated string allocation.
             local stepNote = "APL prediction step " .. step
 
             local found = false
-            for _, rule in ipairs(sorted) do
+            for _, rule in ipairs(actionList) do
                 -- Step 1: skip the spell Blizzard is already showing in slot 1 (only when a recommendation exists).
                 -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
                 -- currentSpellID が nil の場合はスキップしない
@@ -324,7 +318,17 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                         end
                     end
                 end
-                if not skipCurrent and not notKnown and not realCD
+                -- Step 1 only: soft-block guard — suppress recently-cast spells until
+                -- SPELL_UPDATE_COOLDOWN confirms the real CD has started.
+                -- 仅第一步：软屏蔽守卫，抑制刚施放的技能直到 SPELL_UPDATE_COOLDOWN 确认真实 CD
+                local isSoftBlocked = false
+                if step == 1 and limitedState.softBlocked then
+                    local blockExpiry = limitedState.softBlocked[rule.spellID]
+                    if blockExpiry and GetTime() < blockExpiry then
+                        isSoftBlocked = true
+                    end
+                end
+                if not skipCurrent and not notKnown and not realCD and not isSoftBlocked
                    and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                     -- Confidence degrades with depth
                     local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)
@@ -370,6 +374,22 @@ function APLEngine:SetAPL(specID, aplData, classID)
     currentAPL         = aplData
     metaActive         = false
     currentProfileName = "default"
+
+    -- 预排序所有 action lists
+    if aplData and aplData.profiles then
+        for _, profile in pairs(aplData.profiles) do
+            if profile.singleTarget then
+                table.sort(profile.singleTarget, function(a,b) return (a.priority or 999) < (b.priority or 999) end)
+            end
+            if profile.aoe then
+                table.sort(profile.aoe, function(a,b) return (a.priority or 999) < (b.priority or 999) end)
+            end
+        end
+    end
+    if aplData and aplData.rules then
+        table.sort(aplData.rules, function(a,b) return (a.priority or 999) < (b.priority or 999) end)
+    end
+
     RA:PrintDebug(string.format("APLEngine: Loaded APL for specID %d classID %s",
         specID, tostring(classID)))
 end
@@ -404,6 +424,11 @@ end
 ---@param profileName string
 function APLEngine:SetProfile(profileName)
     currentProfileName = profileName or "default"
+end
+
+---@return string
+function APLEngine:GetProfileName()
+    return currentProfileName or "default"
 end
 
 ---@return table|nil
