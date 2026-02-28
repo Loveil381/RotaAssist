@@ -55,27 +55,40 @@ local function scanCooldowns()
         local chargeHandled = false
         do
             local chOk, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
-            if chOk and chInfo and type(chInfo) == "table"
-               and chInfo.maxCharges and chInfo.maxCharges > 1 then
-                chargeHandled = true
-                if chInfo.currentCharges and chInfo.currentCharges > 0 then
-                    state.remaining = 0
-                    state.ready = true
-                else
-                    local now = GetTime()
-                    local cst = chInfo.cooldownStartTime or 0
-                    local cdur = chInfo.cooldownDuration or 0
-                    local realRemaining = (cst + cdur) - now
-                    if realRemaining <= 0 then
+            if chOk and chInfo and type(chInfo) == "table" then
+                local mc = chInfo.maxCharges
+                -- SECRET VALUE GUARD: maxCharges 和 currentCharges 可能是 secret
+                if mc and not issecretvalue(mc) and mc > 1 then
+                    chargeHandled = true
+                    local cc = chInfo.currentCharges
+                    if cc and not issecretvalue(cc) and cc > 0 then
                         state.remaining = 0
                         state.ready = true
+                        state.startTime = 0
+                        state.duration = 0
                     else
-                        state.remaining = realRemaining
-                        state.ready = false
+                        local cst = chInfo.cooldownStartTime
+                        local cdur = chInfo.cooldownDuration
+                        if cst and cdur
+                           and not issecretvalue(cst) and not issecretvalue(cdur)
+                           and cdur > 0 then
+                            local cRem = (cst + cdur) - GetTime()
+                            if cRem <= 0 then
+                                state.remaining = 0
+                                state.ready = true
+                            else
+                                state.remaining = cRem
+                                state.ready = false
+                            end
+                            state.startTime = cst
+                            state.duration = cdur
+                        else
+                            -- 字段是 secret 或无效：放弃 charge 路径，走标准 CD 检查
+                            chargeHandled = false
+                        end
                     end
                 end
-                state.startTime = chInfo.cooldownStartTime or 0
-                state.duration = chInfo.cooldownDuration or 0
+                -- 如果 maxCharges 是 secret 或 <= 1，chargeHandled 仍为 false，走标准路径
             end
         end
 
