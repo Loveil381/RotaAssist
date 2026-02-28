@@ -33,6 +33,11 @@ local PASSIVE_BLACKLIST = {
     -- 后续如有更多可在此添加
 }
 
+-- 抗抖动配置 / Anti-flicker config
+local FLICKER_THRESHOLD = 2
+local previousNextSpells = {} -- [index] = spellID
+local flickerCounters   = {}  -- [index] = count
+
 --- Check if a spell is currently on significant cooldown (> 1.0s remaining).
 --- 检查技能是否在有效 CD 中（超过 1.0秒），用于过滤 next[] 中的预测。
 local function IsSpellOnCooldown(spellID)
@@ -52,6 +57,27 @@ local function IsSpellOnCooldown(spellID)
     local remaining = RA:GetSpellCooldownSafe(spellID)
     if remaining and remaining > 1.0 then
         return true
+    end
+
+    -- remaining == nil (secret value): estimate from cast history
+    -- 12.0 secret value 回退：从施法历史记录中估算冷却状态
+    if remaining == nil then
+        local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
+        if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 1.5 then
+            local recorder = RA:GetModule("CastHistoryRecorder")
+            if recorder then
+                local recent = recorder:GetRecentCasts(20)
+                for _, cast in ipairs(recent) do
+                    if cast.spellID == spellID then
+                        local elapsedTime = GetTime() - cast.timestamp
+                        if elapsedTime < wsInfo.cdSeconds then
+                            return true
+                        end
+                        break
+                    end
+                end
+            end
+        end
     end
     return false
 end
@@ -221,6 +247,8 @@ local function AssembleQueue()
         finalQueue.cooldowns = {}
         finalQueue.defensive = nil
         lastKnownBlizzSpell  = nil -- Clear cache out of combat
+        wipe(previousNextSpells)   -- 清空抗抖动缓存
+        wipe(flickerCounters)
         return
     end
 
@@ -599,12 +627,14 @@ local function AssembleQueue()
             end
         end
 
-        -- Priority 2: scored candidates rank 2+ (deduplicate against APL predictions)
+        -- Priority 2: scored candidates rank 2+ (deduplicate against next[] internal entries)
+        -- 去重逻辑：仅针对 next[] 内部去重，允许与 main 相同
         for i = 2, math.min(#scored, 6) do
             if nIdx > 5 then break end
+            local sid = scored[i].spellID
             local dominated = false
-            for _, existing in ipairs(finalQueue.next) do
-                if existing and existing.spellID == scored[i].spellID then
+            for j = 1, nIdx - 1 do
+                if finalQueue.next[j] and finalQueue.next[j].spellID == sid then
                     dominated = true
                     break
                 end
@@ -613,7 +643,7 @@ local function AssembleQueue()
                 if not finalQueue.next[nIdx] then
                     finalQueue.next[nIdx] = { spellID = 0, confidence = 0 }
                 end
-                finalQueue.next[nIdx].spellID    = scored[i].spellID
+                finalQueue.next[nIdx].spellID    = sid
                 finalQueue.next[nIdx].confidence = math.min(1.0, scored[i].score / 1.5)
                 nIdx = nIdx + 1
             end
@@ -629,11 +659,8 @@ local function AssembleQueue()
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
                     if IsSpellCastable(npPrimary.spellID) then
                         local dominated = false
-                        if finalQueue.main and finalQueue.main.spellID == npPrimary.spellID then
-                            dominated = true
-                        end
-                        for _, existing in ipairs(finalQueue.next) do
-                            if existing and existing.spellID == npPrimary.spellID then
+                        for j = 1, nIdx - 1 do
+                            if finalQueue.next[j] and finalQueue.next[j].spellID == npPrimary.spellID then
                                 dominated = true
                                 break
                             end
@@ -654,11 +681,8 @@ local function AssembleQueue()
                         if nIdx > 5 then break end
                         if IsSpellCastable(alt.spellID) then
                             local dominated = false
-                            if finalQueue.main and finalQueue.main.spellID == alt.spellID then
-                                dominated = true
-                            end
-                            for _, existing in ipairs(finalQueue.next) do
-                                if existing and existing.spellID == alt.spellID then
+                            for j = 1, nIdx - 1 do
+                                if finalQueue.next[j] and finalQueue.next[j].spellID == alt.spellID then
                                     dominated = true
                                     break
                                 end
@@ -677,6 +701,33 @@ local function AssembleQueue()
             end
         end
 
+        -- 5. Anti-Flicker Logic for next[]
+        -- 抗抖动处理：只有当预测变化持续两帧以上时才更新 UI
+        for i = 1, 5 do
+            local proposed = finalQueue.next[i] and finalQueue.next[i].spellID or 0
+            local previous = previousNextSpells[i] or 0
+
+            if proposed ~= previous then
+                flickerCounters[i] = (flickerCounters[i] or 0) + 1
+                if flickerCounters[i] >= FLICKER_THRESHOLD then
+                    previousNextSpells[i] = proposed
+                    flickerCounters[i] = 0
+                else
+                    -- Revert to previous to stabilize
+                    if previous == 0 then
+                        finalQueue.next[i] = nil
+                    else
+                        if not finalQueue.next[i] then
+                            finalQueue.next[i] = { spellID = 0, confidence = 0.5 }
+                        end
+                        finalQueue.next[i].spellID = previous
+                    end
+                end
+            else
+                flickerCounters[i] = 0
+            end
+        end
+
         for i = nIdx, #finalQueue.next do
             finalQueue.next[i] = nil
         end
@@ -690,6 +741,8 @@ local function AssembleQueue()
         lastRecommendedSpellID = finalQueue.main and finalQueue.main.spellID or nil
         finalQueue.main = nil
         for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
+        wipe(previousNextSpells)
+        wipe(flickerCounters)
         -- 队列清空：更新追踪值并无条件通知 UI
         -- Queue cleared: update tracking and always notify UI.
         if prevMainSpellID ~= nil then
@@ -857,5 +910,7 @@ function SmartQueueManager:OnDisable()
     lastRecommendedSpellID = nil
     mNeuralPredictor       = nil
     for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
+    wipe(previousNextSpells)
+    wipe(flickerCounters)
     finalQueue.main = nil
 end

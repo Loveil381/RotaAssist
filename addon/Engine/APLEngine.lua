@@ -310,7 +310,8 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- Step 1: skip the spell Blizzard is already showing in slot 1 (only when a recommendation exists).
                 -- Step 2+: allow repeated spells so builder-spam is predicted correctly.
                 -- currentSpellID が nil の場合はスキップしない
-                local skipCurrent = (step == 1 and currentSpellID and rule.spellID == currentSpellID)
+                -- FIX: 始终允许预测重复技能，确保 Builder (如 喷发) 预测连续性
+                local skipCurrent = false
                 -- 跳过未学习的天赋技能 / Skip unlearned talent spells
                 local notKnown = IsPlayerSpell and not IsPlayerSpell(rule.spellID)
                 -- Step 1 only: real-time CD guard — if CooldownOverlay says this spell has
@@ -343,7 +344,16 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- 跳过被动技能（如恶魔之刃 203555）
                 local isPassive = PASSIVE_BLACKLIST[rule.spellID] or (RA.IsSpellPassive and RA:IsSpellPassive(rule.spellID))
 
-                if not skipCurrent and not notKnown and not isPassive and not realCD and not isSoftBlocked
+                -- 【新增】覆盖型被动检测：防止天赋覆盖变成被动（如 丝缕交织）
+                local isOverriddenPassive = false
+                if not isPassive and RA.ResolveSpellOverride then
+                    local resolved, wasOvr = RA:ResolveSpellOverride(rule.spellID)
+                    if wasOvr and RA:IsSpellPassive(resolved) then
+                        isOverriddenPassive = true
+                    end
+                end
+
+                if not skipCurrent and not notKnown and not isPassive and not isOverriddenPassive and not realCD and not isSoftBlocked
                    and self:EvaluateCondition(rule.condition, rule.spellID, simState) then
                     -- Confidence degrades with depth
                     local conf = math.max(0.5, 0.9 - (step - 1) * 0.2)

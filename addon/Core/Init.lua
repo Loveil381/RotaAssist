@@ -232,31 +232,67 @@ function RA:IsSpellPassive(spellID)
     return false
 end
 
+--- Resolve spell override (detect talent replacements)
+--- 检测技能覆盖关系（如点了天赋后 Time Skip 变为 Interwoven Threads）
+---@param spellID number
+---@return number resolvedID
+---@return boolean wasOverridden
+function RA:ResolveSpellOverride(spellID)
+    if not spellID or spellID == 0 then return spellID, false end
+
+    -- 1. Try C_Spell.GetOverrideSpell (WoW 12.0)
+    if C_Spell and C_Spell.GetOverrideSpell then
+        local ok, overrideID = pcall(C_Spell.GetOverrideSpell, spellID)
+        if ok and overrideID and overrideID ~= spellID then
+            return overrideID, true
+        end
+    end
+
+    -- 2. Fallback to FindSpellOverrideByID (Legacy/11.x)
+    if FindSpellOverrideByID then
+        local ok, overrideID = pcall(FindSpellOverrideByID, spellID)
+        if ok and overrideID and overrideID ~= spellID then
+            return overrideID, true
+        end
+    end
+
+    return spellID, false
+end
+
 --- Check if a spell is safe to display as a recommendation.
 --- Multi-layer runtime filter (MaxDps CheckSpellUsable pattern):
 ---   1. Reject nil / 0 / auto-attack (6603)
----   2. Reject passive spells via RA:IsSpellPassive
----   3. Reject unlearned spells via IsPlayerSpell
----   4. Reject unusable spells via C_Spell.IsSpellUsable (pcall-protected)
---- 推荐可用性の総合チェック（被動/未習得/使用不可を排除）
+---   2. Resolve overrides (talent replacements)
+---   3. Reject passive spells via RA:IsSpellPassive
+---   4. Reject unlearned spells via IsPlayerSpell
+---   5. Reject unusable spells via C_Spell.IsSpellUsable (pcall-protected)
+--- 推荐可用性の综合チェック（被動/未習得/使用不可を排除）
 ---@param spellID number
 ---@return boolean isRecommendable
 function RA:IsSpellRecommendable(spellID)
     -- 1. Nil / 0 / auto-attack
     if not spellID or spellID == 0 or spellID == 6603 then return false end
 
-    -- 2. Passive spell check
+    -- 2. Resolve overrides & check passive
+    local resolvedID, wasOverridden = self:ResolveSpellOverride(spellID)
+    if wasOverridden and self:IsSpellPassive(resolvedID) then
+        return false
+    end
+
+    -- 3. Passive spell check (original ID)
     if self:IsSpellPassive(spellID) then return false end
 
-    -- 3. Unlearned spell check
+    -- 4. Unlearned spell check
     if IsPlayerSpell then
         local okK, known = pcall(IsPlayerSpell, spellID)
         if okK and not known then return false end
     end
 
-    -- 4. C_Spell.IsSpellUsable runtime gate (catches talent-replacement passives)
+    -- 5. C_Spell.IsSpellUsable runtime gate
     if C_Spell and C_Spell.IsSpellUsable then
-        local okU, usable = pcall(C_Spell.IsSpellUsable, spellID)
+        -- Check both original and resolved ID to be safe
+        local checkID = wasOverridden and resolvedID or spellID
+        local okU, usable = pcall(C_Spell.IsSpellUsable, checkID)
         if okU and usable == false then return false end
     end
 

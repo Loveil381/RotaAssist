@@ -304,6 +304,12 @@ function NeuralPredictor:GetCombinedPrediction()
         }
         if SQM_BLACKLIST[spellID] then return end
 
+        -- 1.5. 覆盖解析：处理天赋替换产生的新被动
+        if RA.ResolveSpellOverride then
+            local resolved, wasOvr = RA:ResolveSpellOverride(spellID)
+            if wasOvr and RA:IsSpellPassive(resolved) then return end
+        end
+
         -- 2. 未学习技能过滤：玩家未点的天赋不推荐
         -- Filter unlearned spells: skip talents the player hasn't selected
         if IsPlayerSpell then

@@ -91,6 +91,18 @@ function Bridge:GetCurrentRecommendation()
         return nil
     end
 
+    -- 【新增】过滤覆盖型被动：检测天赋是否将主动技能替换为被动（如 丝缕交织 替换 时间停止）
+    -- Filter overridden passives: check if talent replaces active with passive (Time Skip -> Interwoven Threads)
+    if RA.ResolveSpellOverride then
+        local resolvedID, wasOverridden = RA:ResolveSpellOverride(spellID)
+        if wasOverridden and RA:IsSpellPassive(resolvedID) then
+            previousRec = cachedRec
+            cachedRec = nil
+            lastRefresh = now
+            return nil
+        end
+    end
+
     -- 【新增】过滤被动技能：Blizzard API 偶尔会返回被动技能（如 Demon Blades 203555）
     -- Filter passive spells: Blizzard API occasionally returns passives
     if RA:IsSpellPassive(spellID) then
