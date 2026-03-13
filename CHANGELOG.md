@@ -1,22 +1,32 @@
 # Changelog
 
 All notable changes to RotaAssist will be documented in this file.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.0.0] - 2026-02-25
+## [1.0.0] - 2026-03-13
 
 ### Added
-- **Core**: Blizzard `C_AssistedCombat` integration via `AssistedCombatBridge` with pcall protection and throttled caching
-- **Core**: `EventHandler` pub/sub system, `SavedVars` with AceDB-3.0 defaults, `CooldownTracker`
-- **Engine/AIInference.lua**: Signal-based combat phase inference (Burst/AoE/Resource/Emergency/Opener + 6 more phases) using weighted voting on non-secret signals
-- **Engine/NeuralPredictor.lua**: Decision tree evaluator + Markov chain predictor with personal learning (40/60 blend after 100+ transitions)
-- **Engine/SmartQueueManager.lua**: Multi-source weighted recommendation fusion (Blizzard × APL × AI × Cooldowns × Defensives)
-- **Engine/AccuracyTracker.lua**: Dual-track accuracy tracking (Blizzard vs SmartQueue) with phase-based stats and session history
-- **Engine/InterruptAdvisor.lua**: 12.0-compliant interrupt reminders using Blizzard recommendation + enemy cast bar detection (no secret API)
-- **Engine/CastHistoryRecorder.lua**: Ring buffer (200 cap) with Markov chain learning and cross-session persistence
-- **Engine/PatternDetector.lua**: 12-phase combat phase detection with confidence-weighted voting
-- **Data**: Havoc/Vengeance/Devourer spec enhancements, decision trees, and Markov transition matrices
-- **UI**: T-shaped layout with `MainDisplay`, `AccuracyMeter`, `PhaseIndicator`, `ResourceBar`, `CooldownBar`, `DefensiveAlert`, `PrePullPanel`
-- **Training**: Complete Python pipeline (`simc_apl_to_dataset.py` → `train_decision_tree.py` → `sklearn2lua.py` + `markov_builder.py`)
-- **Locale**: Full enUS, zhCN, jaJP support (190+ strings each)
-- **Packaging**: `.pkgmeta` for CurseForge, complete `.toc` with correct load order
+- Core engine: Blizzard C_AssistedCombat bridge with throttling and passive filtering
+- APL Engine: SimC-based priority simulation with opener sequences and multi-profile support
+- Neural Predictor: Decision tree + Markov chain prediction with personal learning (SavedVariables)
+- Smart Queue Manager: 5-source weighted fusion (Blizzard, APL, AI, CD, Defensive) with anti-flicker
+- Pattern Detector: 12-phase combat detection using non-secret signals only
+- Cast History Recorder: Ring buffer with per-spec SavedVariables persistence
+- Accuracy Tracker: Real-time and historical accuracy with per-phase breakdown
+- Cooldown Overlay: Whitelisted CD tracking with override pair support
+- Defensive Advisor: HP-threshold based defensive reminders
+- Interrupt Advisor: 12.0-compliant interrupt alerts with sound and visual flash
+- Pre-Pull Checker: Flask, food, rune verification before combat
+- T-shaped UI layout with keybind display, drag/lock, context menu, scaling
+- Resource bar (Secret Value safe)
+- Phase indicator with 12 combat phases
+- Accuracy meter widget
+- Multi-language support: English, Chinese (Simplified), Japanese
+- Training pipeline: Python scripts for decision tree and Markov matrix generation
+- Full Demon Hunter support: Havoc, Vengeance, Devourer (⚠ Devourer spellIDs unverified)
+- Partial support: Evoker (3 specs), Rogue Subtlety, Shaman Elemental, Druid Balance
+- APL data for: Warrior Arms/Fury, Mage Fire
+
+### Known Issues
+- Devourer (specID 1480) spell IDs are placeholders pending live server verification
+- Evoker/Rogue/Shaman/Druid missing SpecEnhancements data (degraded prediction quality)
+- No automated tests
