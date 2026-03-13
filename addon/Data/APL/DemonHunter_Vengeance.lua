@@ -66,7 +66,6 @@ APL.profiles["default"] = {
         -- 火焰烙印 — 保持减伤
         -- ファイアリーブランド — 被ダメ軽減を維持
         { spellID = 204021, cdSeconds = 60,
-            cdSeconds = 60,
             priority  = 1,
             condition = "cd_ready",
             note      = "Maintain Fiery Brand for damage reduction uptime",
@@ -79,7 +78,6 @@ APL.profiles["default"] = {
         -- 邪能毁灭 — 治疗 + 范围伤害
         -- フェルデヴァステーション — 回復＋AoEダメージ
         { spellID = 212084, cdSeconds = 60,
-            cdSeconds = 60,
             priority  = 2,
             condition = "cd_ready",
             note      = "Core ability. Use on cooldown for healing and damage",
@@ -105,7 +103,6 @@ APL.profiles["default"] = {
         -- 灵魂雕刻 — 生成灵魂碎片
         -- ソウルカーバー — ソウルフラグメント生成
         { spellID = 207407, cdSeconds = 60,
-            cdSeconds = 60,
             priority  = 4,
             condition = "cd_ready",
             note      = "Soul Fragment generator. Use on cooldown",
@@ -118,7 +115,6 @@ APL.profiles["default"] = {
         -- 火焰咒符 — 核心范围/持续伤害
         -- シジル・オブ・フレイム — コアAoE/DoT
         { spellID = 204596, cdSeconds = 30,
-            cdSeconds = 30,
             priority  = 5,
             condition = "cd_ready",
             note      = "Core AoE/DoT. Use on cooldown",
@@ -131,7 +127,6 @@ APL.profiles["default"] = {
         -- 献祭光环 — 持续伤害 + 怒气
         -- イモレーション・オーラ — 持続ダメージ＋フューリー
         { spellID = 258920, cdSeconds = 30,
-            cdSeconds = 30,
             priority  = 6,
             condition = "cd_ready",
             note      = "Sustained damage and Fury generation",
@@ -144,7 +139,6 @@ APL.profiles["default"] = {
         -- 碎裂 — 主要构建技能，2充能
         -- フラクチャー — メインビルダー、2チャージ
         { spellID = 263642, cdSeconds = 4.5,
-            cdSeconds = 4.5,
             priority  = 7,
             condition = "cd_ready",
             note      = "Primary builder. 2 charges, generates Soul Fragments",
@@ -157,7 +151,6 @@ APL.profiles["default"] = {
         -- 猎杀 — 伤害 + 治疗
         -- ザ・ハント — ダメージ＋回復
         { spellID = 370965, cdSeconds = 90,
-            cdSeconds = 90,
             priority  = 8,
             condition = "cd_ready",
             note      = "High-damage charge with healing component",
@@ -170,7 +163,6 @@ APL.profiles["default"] = {
         -- 邪刃 — 突进 + 灵魂碎片
         -- フェルブレード — ギャップクローズ＋ソウル生成
         { spellID = 232893, cdSeconds = 15,
-            cdSeconds = 15,
             priority  = 9,
             condition = "cd_ready",
             note      = "Gap closer and Soul Fragment generator",

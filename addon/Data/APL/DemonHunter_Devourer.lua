@@ -82,7 +82,6 @@ APL.profiles["default"] = {
         -- 灵魂献祭 — 冷却好就用，资源生成
         -- ソウルイモレーション — CDごとに使用、リソース生成
         { spellID = 442525, cdSeconds = 15,
-            cdSeconds = 15,
             priority  = 1,
             condition = "cd_ready AND not_in_meta",
             note      = "Soul Immolation — resource gen, self-damage. Use on CD",
@@ -95,7 +94,6 @@ APL.profiles["default"] = {
         -- 虚空之刃 — 近战跳跃，连击起手
         -- ヴォイドブレード — 近接リープ、コンボ開始
         { spellID = 442520, cdSeconds = 15,
-            cdSeconds = 15,
             priority  = 2,
             condition = "cd_ready AND not_in_meta",
             note      = "Melee leap. Use to initiate combos",
@@ -108,7 +106,6 @@ APL.profiles["default"] = {
         -- 猎杀 — 高伤害冲锋
         -- ザ・ハント — 高ダメージチャージ
         { spellID = 370965, cdSeconds = 90,
-            cdSeconds = 90,
             priority  = 3,
             condition = "cd_ready",
             note      = "The Hunt — high damage. Use on cooldown",
@@ -121,7 +118,6 @@ APL.profiles["default"] = {
         -- 收割 — 消耗虚空坠落层数（估计3层时使用）
         -- リープ — ヴォイドフォールスタック消費（推定3スタック時）
         { spellID = 442515, cdSeconds = 10,
-            cdSeconds = 10,
             priority  = 4,
             condition = "cd_ready",
             note      = "Reap — Soul consumer. Best at 3 Voidfall stacks (estimated)",
@@ -134,7 +130,6 @@ APL.profiles["default"] = {
         -- 虚空射线 — 100怒气时使用（变身外资源消耗）
         -- ヴォイドレイ — フューリー100で使用（メタ外リソース消費）
         { spellID = 442507, cdSeconds = 16,
-            cdSeconds = 16,
             priority  = 5,
             condition = "estimated_resource >= 100 AND not_in_meta",
             note      = "Void Ray — costs 100 Fury outside Void Meta",
@@ -147,7 +142,6 @@ APL.profiles["default"] = {
         -- 复仇回退 — 移动/实用
         -- ヴェンジフルリトリート — 移動/ユーティリティ
         { spellID = 198793, cdSeconds = 25,
-            cdSeconds = 25,
             priority  = 6,
             condition = "cd_ready AND not_in_meta",
             note      = "Vengeful Retreat — movement utility",
@@ -160,7 +154,6 @@ APL.profiles["default"] = {
         -- 位移 — 冲刺，2-3充能
         -- シフト — ダッシュ、2-3チャージ
         { spellID = 442530, cdSeconds = 10,
-            cdSeconds = 10,
             priority  = 7,
             condition = "cd_ready",
             note      = "Shift — dash with 2-3 charges. Use for repositioning",
@@ -210,7 +203,6 @@ APL.profiles["default"] = {
         -- 虚空射线 — 冷却好就用（变身中16秒CD）
         -- ヴォイドレイ — CDごとに使用（メタ中16秒CD）
         { spellID = 442507, cdSeconds = 16,
-            cdSeconds = 16,
             priority  = 2,
             condition = "cd_ready AND in_meta",
             note      = "Void Ray — 16s hasted CD inside Void Meta. Core rotational",
@@ -223,7 +215,6 @@ APL.profiles["default"] = {
         -- 收割 — 2-3次吞噬后使用（收集灵魂）
         -- リープ — デヴァウア2-3回後に使用（ソウル収集）
         { spellID = 442515, cdSeconds = 10,
-            cdSeconds = 10,
             priority  = 3,
             condition = "cd_ready AND in_meta",
             note      = "Reap/Cull — use after 2-3 Devour casts for Soul burst",
@@ -236,7 +227,6 @@ APL.profiles["default"] = {
         -- 虚空之刃 — 如有虚空冲能天赋（暂停灵魂流失）
         -- ヴォイドブレード — ヴォイドラッシュタレント時（ソウル減少停止）
         { spellID = 442520, cdSeconds = 15,
-            cdSeconds = 15,
             priority  = 4,
             condition = "cd_ready AND in_meta",
             note      = "Voidblade — if Voidrush talented, pauses Soul drain",

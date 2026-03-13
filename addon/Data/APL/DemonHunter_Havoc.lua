@@ -75,7 +75,6 @@ APL.profiles["default"] = {
         -- 变身 — 仅提醒，手动激活
         -- メタモルフォーシス — 手動リマインダー
         { spellID = 191427, cdSeconds = 240,
-            cdSeconds = 240,
             priority  = 1,
             condition = "cd_ready AND not_in_meta",
             note      = "Major CD. Manual activation — press when ready for burst",
@@ -88,7 +87,6 @@ APL.profiles["default"] = {
         -- 猎杀 — 冷却好就用
         -- ザ・ハント — CDごとに使用
         { spellID = 370965, cdSeconds = 90,
-            cdSeconds = 90,
             priority  = 2,
             condition = "cd_ready",
             note      = "High-damage charge. Use on cooldown for burst",
@@ -101,7 +99,6 @@ APL.profiles["default"] = {
         -- 复仇回退 — 触发先手天赋
         -- ヴェンジフルリトリート — イニシアチブ発動
         { spellID = 198793, cdSeconds = 25,
-            cdSeconds = 25,
             priority  = 3,
             condition = "cd_ready",
             note      = "Triggers Initiative (Mastery window). Use before builders",
@@ -114,7 +111,6 @@ APL.profiles["default"] = {
         -- 眼棱 — 核心循环技能，触发恶魔形态
         -- アイビーム — コアローテーション、デモニック発動
         { spellID = 198013, cdSeconds = 30,
-            cdSeconds = 30,
             priority  = 4,
             condition = "cd_ready",
             note      = "Use on cooldown to trigger Demonic form",
@@ -127,7 +123,6 @@ APL.profiles["default"] = {
         -- 精华爆裂 — 眼棱后使用，爆发窗口
         -- エッセンスブレイク — アイビーム後のバーストウィンドウ
         { spellID = 258860, cdSeconds = 10,
-            cdSeconds = 10,
             priority  = 5,
             condition = "cd_ready AND after:198013",
             note      = "Use after Eye Beam for burst window (if talented)",
@@ -140,7 +135,6 @@ APL.profiles["default"] = {
         -- 刃舞/死亡横扫 — 冷却好就用（变身中优先）
         -- ブレードダンス / デススウィープ — CDごとに使用（メタ中優先）
         { spellID = 188499, cdSeconds = 9,
-            cdSeconds = 9,
             priority  = 6,
             condition = "cd_ready",
             note      = "Core rotational. Becomes Death Sweep in Metamorphosis",
@@ -153,7 +147,6 @@ APL.profiles["default"] = {
         -- 飞刃风暴 — 如果有天赋，冷却好就用
         -- グレイヴテンペスト — タレントあればCDごと
         { spellID = 342817, cdSeconds = 20,
-            cdSeconds = 20,
             priority  = 7,
             condition = "cd_ready",
             note      = "AoE burst if talented. Good even in ST",
@@ -166,7 +159,6 @@ APL.profiles["default"] = {
         -- 献祭光环 — 怒气生成
         -- イモレーション・オーラ — フューリー生成
         { spellID = 258920, cdSeconds = 30,
-            cdSeconds = 30,
             priority  = 8,
             condition = "cd_ready",
             note      = "Fury generation. Use on cooldown",
@@ -179,7 +171,6 @@ APL.profiles["default"] = {
         -- 邪刃 — 怒气生成/突进
         -- フェルブレード — フューリー生成＆ギャップクローズ
         { spellID = 232893, cdSeconds = 15,
-            cdSeconds = 15,
             priority  = 9,
             condition = "cd_ready",
             note      = "Fury generator and gap closer",
@@ -192,7 +183,6 @@ APL.profiles["default"] = {
         -- 邪能冲刺 — 移动 + 解缚混沌伤害
         -- フェルラッシュ — 移動＆ダメージ
         { spellID = 195072, cdSeconds = 10,
-            cdSeconds = 10,
             priority  = 10,
             condition = "cd_ready",
             note      = "Movement/damage. 2 charges. Use for Unbound Chaos procs",
