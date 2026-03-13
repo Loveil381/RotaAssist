@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lua-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y luarocks
+          sudo luarocks install luacheck
+      - name: Run Luacheck
+        run: luacheck addon/ --config .luacheckrc
+
+  python-training:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r training/requirements.txt
+      - name: Test simc_apl_to_dataset (havoc)
+        run: |
+          python training/simc_apl_to_dataset.py --spec havoc --output /tmp/test_havoc.csv --samples 10
+          test -f /tmp/test_havoc.csv
+      - name: Test simc_apl_to_dataset (vengeance)
+        run: |
+          python training/simc_apl_to_dataset.py --spec vengeance --output /tmp/test_veng.csv --samples 10
+          test -f /tmp/test_veng.csv
