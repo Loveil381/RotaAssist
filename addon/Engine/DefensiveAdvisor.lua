@@ -286,3 +286,26 @@ end
 function DefensiveAdvisor:GetActiveRecommendation()
     return lastActiveAlert
 end
+
+function DefensiveAdvisor:OnDisable()
+    isTracking = false
+    if updateFrame then
+        updateFrame:SetScript("OnUpdate", nil)
+    end
+    -- Clean up probe frames
+    for sid, f in pairs(probeFrames) do
+        f:Hide()
+        f:SetParent(nil)
+    end
+    wipe(probeFrames)
+    wipe(THRESHOLD_CURVES)
+    defensives = nil
+    lastAlertSpellID = nil
+    lastActiveAlert = nil
+
+    local eh = RA:GetModule("EventHandler")
+    if eh then
+        eh:Unsubscribe("ROTAASSIST_SPEC_CHANGED", "DefensiveAdvisor")
+        eh:Unsubscribe("PLAYER_REGEN_ENABLED",    "DefensiveAdvisor")
+    end
+end
