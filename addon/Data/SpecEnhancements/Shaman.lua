@@ -24,7 +24,7 @@ RA.SpecEnhancements[262] = {
     },
 
     resource = {
-        type      = 11, -- Enum.PowerType.Maelstrom
+        powerType = 11, -- Enum.PowerType.Maelstrom
         maxBase   = 100,
         spellCosts = {
             [8042]   = { cost = 60 },  -- Earth Shock

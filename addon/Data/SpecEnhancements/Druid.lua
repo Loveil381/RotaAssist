@@ -24,7 +24,7 @@ RA.SpecEnhancements[102] = {
     },
 
     resource = {
-        type      = 8, -- Enum.PowerType.LunarPower
+        powerType = 8, -- Enum.PowerType.LunarPower
         maxBase   = 100,
         spellCosts = {
             [78674]  = { cost = 40 },  -- Starsurge
