@@ -45,3 +45,17 @@ python simc_apl_to_dataset.py --spec havoc --output /tmp/test.csv --samples 10
 - NO git reset --hard, git checkout -- ., rm -rf
 - Commit after each logical unit of work
 - Push when task is complete
+
+## Lessons Learned (Auto-Updated)
+
+### Round 1-2 Findings
+- `Predictor.lua` in `addon/Engine/` is dead code — NOT loaded by TOC, references
+  deprecated modules (AssistCapture, CooldownTracker). Do not modify it; it should
+  be deleted.
+- SpecEnhancements schema is inconsistent: DH uses `interruptSpellID` (flat),
+  Evoker/Rogue use `interruptSpell = { spellID, ... }` (nested). Always use the
+  nested format going forward.
+- `resource.type` vs `resource.powerType`: Both exist. Prefer `powerType`.
+  SmartQueueManager already handles both via fallback.
+- Every module that creates frames or C_Timer tickers MUST implement `OnDisable()`
+  to clean them up.
