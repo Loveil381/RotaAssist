@@ -101,6 +101,8 @@ local function IsSpellOnCooldown(spellID)
     return false
 end
 
+SmartQueueManager._IsSpellOnCooldown = IsSpellOnCooldown
+
 --- Unified castability gate: checks passive, unlearned, unusable, and cooldown.
 --- 统一可施放性检查：被动、未学习、不可施放、冷却中四重过滤。
 --- @param spellID number
@@ -125,6 +127,8 @@ local function IsSpellCastable(spellID)
     if IsSpellOnCooldown(spellID) then return false end
     return true
 end
+
+SmartQueueManager._IsSpellCastable = IsSpellCastable
 
 ------------------------------------------------------------------------
 -- Internal State
@@ -255,6 +259,9 @@ local function CalculateScore(spellID, context, weights, aplPredictions)
 
     return score, primarySource
 end
+
+-- Expose for unit testing (module-level reference)
+SmartQueueManager._CalculateScore = CalculateScore
 
 ------------------------------------------------------------------------
 -- Update Loop
