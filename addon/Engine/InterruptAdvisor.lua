@@ -203,9 +203,10 @@ function InterruptAdvisor:OnEnable()
             local spec = sd:GetCurrentSpec()
             if spec and RA.SpecEnhancements[spec.specID] then
                 local ehConfig = RA.SpecEnhancements[spec.specID]
+                local interruptSpell = ehConfig.interruptSpell
                 currentInterruptConfig = {
-                    spellID = ehConfig.interruptSpellID or (ehConfig.interruptSpell and ehConfig.interruptSpell.spellID) or nil,
-                    cooldown = ehConfig.interruptCooldown or 15
+                    spellID = interruptSpell and interruptSpell.spellID or nil,
+                    cooldown = interruptSpell and interruptSpell.cooldown or nil,
                 }
             end
         end

@@ -22,7 +22,7 @@ RA.SpecEnhancements[259] = {
         { spellID = 5277, hpThreshold = 0.40, name = "Evasion" },
     },
     resource = {
-        type      = 3, -- Energy
+        powerType = 3, -- Energy
         maxBase   = 120,
         spellCosts = {},
     },
@@ -45,7 +45,7 @@ RA.SpecEnhancements[260] = {
         { spellID = 5277, hpThreshold = 0.40, name = "Evasion" },
     },
     resource = {
-        type      = 3, -- Energy
+        powerType = 3, -- Energy
         maxBase   = 120,
         spellCosts = {},
     },
@@ -74,7 +74,7 @@ RA.SpecEnhancements[261] = {
     },
 
     resource = {
-        type      = 3, -- Energy
+        powerType = 3, -- Energy
         maxBase   = 120,
         spellCosts = {
             [185438] = { cost = 40 }, -- Shadowstrike

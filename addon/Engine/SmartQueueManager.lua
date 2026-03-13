@@ -336,9 +336,8 @@ local function AssembleQueue()
             softBlocked     = softBlockedSpells,  -- 传递软屏蔽表给 APLEngine / pass soft-block map
         }
 
-        -- FIX (Bug4): Support both `type` and `powerType` field names in
-        -- SpecEnhancements resource config.
-        -- 修复：同时兼容 resource.type 和 resource.powerType 两种写法。
+        -- Read the normalized SpecEnhancements resource config.
+        -- 读取统一后的 SpecEnhancements 资源配置。
         local powerType = 0  -- default to mana
         local specDetector = RA:GetModule("SpecDetector")
         if specDetector then
@@ -346,7 +345,7 @@ local function AssembleQueue()
             if spec and RA.SpecEnhancements and RA.SpecEnhancements[spec.specID] then
                 local resConfig = RA.SpecEnhancements[spec.specID].resource
                 if resConfig then
-                    powerType = resConfig.powerType or resConfig.type or 0
+                    powerType = resConfig.powerType or 0
                 end
             end
         end

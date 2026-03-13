@@ -40,7 +40,7 @@ RA.SpecEnhancements[0] = {
     --- 【英】Resource type and costs: Used by APLEngine to simulate resource availability steps ahead.
     resource = {
         -- Enum.PowerType (e.g. 0=Mana, 1=Rage, 3=Energy, 17=Fury)
-        type      = 0,
+        powerType = 0,
         maxBase   = 100,
         spellCosts = {
             [11111] = { cost = 40  },  -- Cast consumes 40
