@@ -307,17 +307,8 @@ end
 -- treat A↔B as a single cooldown.
 ------------------------------------------------------------------------
 
-RA.KNOWN_OVERRIDE_PAIRS = {
-    -- Blade Dance ↔ Death Sweep
-    [188499] = 210152,
-    [210152] = 188499,
-    -- Demon's Bite ↔ Demon Blades (passive talent replacement)
-    [162243] = 203555,
-    [203555] = 162243,
-    -- Chaos Strike ↔ Annihilation
-    [162794] = 201427,
-    [201427] = 162794,
-}
+RA.Registry = RA.Registry or {}
+RA.KNOWN_OVERRIDE_PAIRS = RA.Registry.OVERRIDE_PAIRS
 
 --- Return the "base" (lower-ID) form of a spell if it belongs to an
 --- override pair, or the spell itself if not paired.

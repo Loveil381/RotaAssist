@@ -22,6 +22,7 @@ Locales\jaJP.lua
 
 # Core
 Core\Init.lua
+Data\Registry.lua
 Core\SavedVars.lua
 Core\EventHandler.lua
 Core\AssistCapture.lua

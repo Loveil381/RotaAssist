@@ -14,12 +14,7 @@ RA:RegisterModule("APLEngine", APLEngine)
 
 -- 已知的被动/不可施放技能黑名单（API 查询的快速路径备份）
 -- Known passive/non-castable spell blacklist (fast-path backup for API queries)
-local PASSIVE_BLACKLIST = {
-    [203555] = true,  -- Demon Blades (Havoc DH passive)
-    [290271] = true,  -- Demon Blades AI Passive variant
-    [412713] = true,  -- Interwoven Threads / 丝缕交织 (Evoker Aug passive)
-    -- 后续如有更多可在此添加
-}
+local PASSIVE_BLACKLIST = RA.Registry.PASSIVE_BLACKLIST
 
 ------------------------------------------------------------------------
 -- Internal State

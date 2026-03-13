@@ -25,6 +25,7 @@ local TOP_K             = 3     -- 马尔可夫返回候选数 / Markov top-K
 local PERSONAL_BLEND    = 0.40  -- 个人矩阵混合比例 / personal matrix blend ratio
 local DEFAULT_BLEND     = 0.60  -- 默认矩阵混合比例 / default matrix blend ratio
 local PERSONAL_MIN_TRANS = 100  -- 个人矩阵混合最小转移数 / min transitions for blending
+local PASSIVE_BLACKLIST = RA.Registry.PASSIVE_BLACKLIST
 
 ------------------------------------------------------------------------
 -- Internal State
@@ -297,12 +298,7 @@ function NeuralPredictor:GetCombinedPrediction()
         -- 1. 被动技能过滤（API + 黑名单）
         -- Filter passive spells (API + hardcoded blacklist)
         if RA:IsSpellPassive(spellID) then return end
-        local SQM_BLACKLIST = {
-            [203555] = true,  -- Demon Blades
-            [290271] = true,  -- Demon Blades AI
-            [412713] = true,  -- Interwoven Threads / 丝缕交织
-        }
-        if SQM_BLACKLIST[spellID] then return end
+        if PASSIVE_BLACKLIST[spellID] then return end
 
         -- 1.5. 覆盖解析：处理天赋替换产生的新被动
         if RA.ResolveSpellOverride then
