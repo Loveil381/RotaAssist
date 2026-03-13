@@ -147,16 +147,21 @@ RA.SpecEnhancements[581] = {
 ------------------------------------------------------------------------
 RA.SpecEnhancements[1480] = {
     majorCooldowns = {
-        -- VERIFY: Placeholder spellID, needs live server verification
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         { spellID = 442508, alertThreshold = 5,  name = "Void Metamorphosis" },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         { spellID = 442525, alertThreshold = 10, name = "Soul Immolation"    },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         { spellID = 442520, alertThreshold = 5,  name = "Voidblade"          },
     },
 
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     interruptSpell = { spellID = 183752, name = "Disrupt", cooldown = 15 },
 
     defensives = {
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         { spellID = 196718, hpThreshold = 0.35, name = "Darkness" },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         { spellID = 198589, hpThreshold = 0.50, name = "Blur" },
     },
 
@@ -164,36 +169,52 @@ RA.SpecEnhancements[1480] = {
         powerType = 17,  -- Enum.PowerType.Fury (Assuming Devourer uses Fury)
         maxBase   = 100,
         spellCosts = {
-            -- VERIFY: Placeholder spellID, needs live server verification
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442507] = { cost = 30 },   -- Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442501] = { cost = 0  },   -- Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442515] = { cost = 0  },   -- Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442510] = { cost = 0  },   -- Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442525] = { gen  = 10 },   -- Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442520] = { cost = 0  },   -- Voidblade
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [370965] = { cost = 0  },   -- The Hunt
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [198793] = { cost = 0, gen = 0 },  -- Vengeful Retreat
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
             [442530] = { cost = 0  },   -- Shift
         },
     },
 
     burstWindows = {
-        -- VERIFY: Placeholder spellID, needs live server verification
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         meta = { trigger = 442508, duration = 20, label = "Void Phase" }
     },
 
     prePullChecks = {
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         flask  = { type = "aura", spellID = 428484, name = "Flask of Tempered Mastery" },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         food   = { type = "aura", spellID = 104273, name = "Well Fed" },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         rune   = { type = "aura", spellID = 270058, name = "Crystallized Augment Rune" },
     },
 
     inferenceRules = {
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         aoeSpells = { 442507, 258920 },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         singleTargetSpells = { 442501, 442515 },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         generatorSpells = { 442501, 442515 },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         spenderSpells = { 442507, 442510 },
         burstIndicatorSpells = {},
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         burstCooldownSpell = 442508,  -- Void Metamorphosis
         burstDuration = 20,
         executeSpells = {},

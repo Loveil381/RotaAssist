@@ -10,67 +10,122 @@ TM.specID = 1480
 TM.generatedDate = "2026-02-25"
 
 TM.matrix = {
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442501] = {  -- Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.30,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.20,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.18,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.12,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.10,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.10,  -- -> Soul Immolation
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442515] = {  -- Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.30,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.25,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.15,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.12,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.10,  -- -> Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.08,  -- -> Reap
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442507] = {  -- Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.30,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.25,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.15,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.12,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.10,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.08,  -- -> Soul Immolation
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442510] = {  -- Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.35,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.20,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.15,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.12,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.10,  -- -> Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.08,  -- -> Collapsing Star
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [258920] = {  -- Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.30,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.25,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.15,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.12,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.10,  -- -> Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.08,  -- -> Immolation Aura
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442508] = {  -- Void Metamorphosis
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.30,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.25,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.20,  -- -> Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.15,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.10,  -- -> Immolation Aura
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442525] = {  -- Soul Immolation
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.30,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.25,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.15,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.12,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.10,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.08,  -- -> Soul Immolation
     },
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
     [442520] = {  -- Voidblade
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442501] = 0.30,  -- -> Consume
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442507] = 0.25,  -- -> Void Ray
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442515] = 0.15,  -- -> Reap
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442510] = 0.12,  -- -> Collapsing Star
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [258920] = 0.10,  -- -> Immolation Aura
+-- ⚠ UNVERIFIED: Placeholder spellID, needs 12.0 live verification
         [442525] = 0.08,  -- -> Soul Immolation
     },
 }
