@@ -186,6 +186,7 @@ local scored_reuse = {}
 local toRemove_reuse = {}
 local passiveRemove_reuse = {}
 local sbRemove_reuse = {}
+local unlearnedRemove_reuse = {}
 -- 最近一帧的 APL 预测结果（模块级，供 CHANNEL_START 闭包读取）
 -- Most-recent APL predictions at module level so the CHANNEL_START closure can read them.
 local aplPredictions = {}
@@ -586,7 +587,8 @@ local function AssembleQueue()
     -- 过滤未学习的技能：动态检查玩家当前天赋，只推荐已学技能
     -- Filter unlearned spells: dynamically check current talents, only recommend known spells
     do
-        local unlearnedRemove = {}
+        wipe(unlearnedRemove_reuse)
+        local unlearnedRemove = unlearnedRemove_reuse
         for sid, _ in pairs(candidates) do
             if IsPlayerSpell then
                 local okK, isK = pcall(IsPlayerSpell, sid)

@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-$(grep "## Version:" addon/RotaAssist.toc | sed 's/## Version: //')}"
+VERSION="${1:-$(awk '/^## Version:/{gsub(/^## Version: */, ""); print}' addon/RotaAssist.toc)}"
 ADDON_NAME="RotaAssist"
 BUILD_DIR="build"
 PACKAGE_DIR="${BUILD_DIR}/${ADDON_NAME}"
