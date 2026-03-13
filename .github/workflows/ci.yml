@@ -36,3 +36,15 @@ jobs:
         run: |
           python training/simc_apl_to_dataset.py --spec vengeance --output /tmp/test_veng.csv --samples 10
           test -f /tmp/test_veng.csv
+
+  lua-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua and busted
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 luarocks
+          sudo luarocks install busted
+      - name: Run Lua unit tests
+        run: busted tests/ --verbose
