@@ -65,16 +65,15 @@ describe("E2E Combat Flow", function()
         _G.Enum.LuaCurveType = _G.Enum.LuaCurveType or { Step = 1, Linear = 0 }
 
         -- Mock bit library (for CastHistoryRecorder:GetCastSequenceHash)
+        -- Lua 5.1 has no native bitwise operators; use simple stubs
         if not _G.bit then
             _G.bit = {
-                bxor = function(a, b) return a ~ b end,  -- Lua 5.3+ bitwise XOR
-                lshift = function(a, n) return a << n end,
+                bxor   = function(a, b) return 0 end,
+                bor    = function(a, b) return 0 end,
+                band   = function(a, b) return 0 end,
+                lshift = function(a, n) return 0 end,
+                rshift = function(a, n) return 0 end,
             }
-            -- Fallback for Lua 5.1 (busted may use 5.1)
-            if not pcall(function() return 1 ~ 2 end) then
-                _G.bit.bxor = function(a, b) return 0 end
-                _G.bit.lshift = function(a, b) return 0 end
-            end
         end
 
         -- Mock date/time for AccuracyTracker:SaveSession
