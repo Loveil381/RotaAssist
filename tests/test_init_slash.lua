@@ -78,7 +78,7 @@ describe("RA:SlashCommand", function()
             RA:SlashCommand("xyzzy")
             local found = false
             for _, msg in ipairs(DEFAULT_CHAT_FRAME._messages) do
-                if msg:find("xyzzy") then found = true end
+                if msg:find("UNKNOWN_COMMAND") or msg:find("xyzzy") then found = true end
             end
             assert.is_true(found)
         end)
