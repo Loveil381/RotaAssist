@@ -67,6 +67,11 @@ function M.loadRegistry(ns)
     M.ensureMockLoaded()
     local ok, err = M.loadAddonFile("addon/Data/Registry.lua", "RotaAssist", ns)
     if not ok then error("loadRegistry failed: " .. tostring(err)) end
+    -- Sync aliases that Init.lua sets at file-load time before Registry existed
+    local RA = ns.RA
+    if RA and RA.Registry then
+        RA.KNOWN_OVERRIDE_PAIRS = RA.Registry.OVERRIDE_PAIRS or {}
+    end
 end
 
 return M
