@@ -14,8 +14,8 @@ jobs:
       - name: Install Luacheck
         run: |
           sudo apt-get update
-          sudo apt-get install -y luarocks
-          sudo luarocks install luacheck
+          sudo apt-get install -y lua5.1 liblua5.1-0-dev luarocks
+          sudo luarocks --lua-version=5.1 install luacheck
       - name: Run Luacheck
         run: luacheck addon/ --config .luacheckrc
 
@@ -41,10 +41,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Lua and busted
+      - name: Install Lua 5.1 and busted
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.1 luarocks
-          sudo luarocks install busted
+          sudo apt-get install -y lua5.1 liblua5.1-0-dev luarocks
+          sudo luarocks --lua-version=5.1 install busted
       - name: Run Lua unit tests
-        run: busted tests/ --verbose
+        run: |
+          eval $(luarocks --lua-version=5.1 path)
+          busted tests/ --verbose
