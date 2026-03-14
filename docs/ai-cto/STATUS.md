@@ -100,3 +100,20 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
   14. Event propagation reaches multiple subscribers correctly
   15. CastHistoryRecorder save/load round-trip preserves data
   16. AccuracyTracker session records persist to SavedVariables
+## Round 10 — Edge Cases, Override Pairs & Python Pipeline (2026-03-14)
+
+**Branch**: `improve/round10-edge-and-python`
+**Base**: `main@2055c49`
+
+### Changes
+- Added `tests/test_edge_cases.lua` — nil/zero inputs, empty APL, missing RA.db, passive blacklist
+- Added `tests/test_override_pairs.lua` — bidirectional mapping, SharesCooldown, APL CD mirroring, SQM paired check, passive partner
+- Added `training/test_apl_parser.py` — SPELL_MAP integrity, APL parser, constraint extraction, scenario generation, CSV round-trip
+- Updated `.github/workflows/ci.yml` — added pytest step to python-training job
+
+### Coverage
+- Test files: 23 → 25 Lua + 1 Python = 26
+- Estimated test cases: ~287 Lua + ~30 Python = ~317+
+- New areas validated: safe wrapper nil handling, APL empty/nil states, override pair CD mirroring,
+  passive blacklist partner detection, Python SPELL_MAP/SPEC_IDS integrity, APL parser correctness,
+  constraint extraction, dataset generation field validation, CSV output format
