@@ -69,3 +69,34 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 ### Notes
 - RecommendationManager is marked DEPRECATED and commented out of TOC; not tested
 - Mock additions: GetCVar, GetSpecialization, GetSpecializationInfo, UnitClass, C_UnitAuras
+
+## Round 9 — End-to-End Integration Tests (2026-03-14)
+
+**Branch**: `improve/round9-e2e-integration`
+**Base**: `main@0fc95ad`
+
+### Changes
+- Added `tests/test_e2e_combat_flow.lua` — full combat lifecycle integration test
+- Updated `tests/mock_wow_api.lua` — added bit library, C_AssistedCombat, C_UnitAuras,
+  C_CurveUtil, CreateColor, UnitClass, GetSpecialization mocks for E2E test support
+
+### Test Coverage
+- Test files: 22 → 23
+- Estimated test cases: ~264 → ~290+
+- E2E scenarios validated:
+  1. All 14 Engine modules load and initialize without errors
+  2. OnInitialize → OnEnable chain for all modules
+  3. Combat start (PLAYER_REGEN_DISABLED) activates AccuracyTracker session
+  4. ROTAASSIST_SPELLCAST_SUCCEEDED records to CastHistoryRecorder ring buffer
+  5. AccuracyTracker matches casts against Blizzard recommendation
+  6. Non-matching casts correctly reduce accuracy percentage
+  7. Multiple casts build ring buffer with correct ordering (newest first)
+  8. Combat end (PLAYER_REGEN_ENABLED) triggers AccuracyTracker:SaveSession
+  9. CastHistoryRecorder resets session accuracy on combat end
+  10. APLEngine predicts next steps from loaded APL data
+  11. APL predictions skip passive-blacklisted spells
+  12. Meta state (Metamorphosis) changes APL prediction selection
+  13. SmartQueueManager returns valid queue and display data structures
+  14. Event propagation reaches multiple subscribers correctly
+  15. CastHistoryRecorder save/load round-trip preserves data
+  16. AccuracyTracker session records persist to SavedVariables

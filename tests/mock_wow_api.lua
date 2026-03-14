@@ -304,6 +304,9 @@ local function makeAceAddon(name, ...)
     function addon:SendMessage(eventName, ...)
         local cb = self._messageCallbacks[eventName]
         if cb then cb(eventName, ...) end
+        -- Also dispatch to event callbacks so EH:Fire works for native events
+        local ecb = self._eventCallbacks[eventName]
+        if ecb and ecb ~= cb then ecb(eventName, ...) end
     end
 
     function addon:RegisterEvent(eventName, callback)
@@ -360,3 +363,73 @@ function LibStub(libName, optional)
     return lib
 end
 _G.LibStub = LibStub
+
+-- ============================================================
+-- Additional mocks for E2E integration tests
+-- ============================================================
+
+-- bit library (Lua 5.1 may not have it)
+if not _G.bit then
+    _G.bit = {
+        bxor   = function(a, b) return 0 end,
+        bor    = function(a, b) return 0 end,
+        band   = function(a, b) return 0 end,
+        lshift = function(a, b) return 0 end,
+        rshift = function(a, b) return 0 end,
+    }
+end
+
+-- C_AssistedCombat namespace mock
+if not _G.C_AssistedCombat then
+    _G.C_AssistedCombat = {
+        GetSpellRecommendation = function() return nil end,
+        IsAvailable = function() return false end,
+        GetRotationSpells = function() return {} end,
+    }
+end
+
+-- C_UnitAuras namespace mock
+if not _G.C_UnitAuras then
+    _G.C_UnitAuras = {}
+end
+_G.C_UnitAuras.GetBuffDataByIndex = _G.C_UnitAuras.GetBuffDataByIndex or function() return nil end
+_G.C_UnitAuras.GetAuraDataBySpellName = _G.C_UnitAuras.GetAuraDataBySpellName or function() return nil end
+
+-- AuraUtil namespace mock
+_G.AuraUtil = _G.AuraUtil or {}
+
+-- GetCVar mock
+_G.GetCVar = _G.GetCVar or function(name) return "0" end
+
+-- C_CurveUtil mock (for DefensiveAdvisor)
+_G.C_CurveUtil = _G.C_CurveUtil or {}
+_G.C_CurveUtil.CreateColorCurve = _G.C_CurveUtil.CreateColorCurve or function()
+    return { SetType = function() end, AddPoint = function() end }
+end
+
+-- CreateColor mock
+_G.CreateColor = _G.CreateColor or function(r, g, b, a)
+    return { GetRGBA = function() return r, g, b, a end }
+end
+
+-- Enum extensions
+_G.Enum.LuaCurveType = _G.Enum.LuaCurveType or { Step = 1, Linear = 0 }
+
+-- UnitClass mock
+_G.UnitClass = _G.UnitClass or function() return "Unknown", "UNKNOWN", 1 end
+
+-- GetSpecialization / GetSpecializationInfo mocks
+_G.GetSpecialization = _G.GetSpecialization or function() return 1 end
+_G.GetSpecializationInfo = _G.GetSpecializationInfo or function()
+    return 577, "Havoc", "", 0, "DAMAGER"
+end
+
+-- date / time fallbacks
+_G.time = _G.time or os.time
+_G.date = _G.date or os.date
+
+-- UnitHealthPercent mock (12.0 curve API)
+_G.UnitHealthPercent = _G.UnitHealthPercent or function() return nil end
+
+-- GetSpecialization for multi-spec mock support
+_G.GetNumSpecializations = _G.GetNumSpecializations or function() return 2 end
