@@ -304,6 +304,9 @@ local function makeAceAddon(name, ...)
     function addon:SendMessage(eventName, ...)
         local cb = self._messageCallbacks[eventName]
         if cb then cb(eventName, ...) end
+        -- Also dispatch to event callbacks so EH:Fire works for native events
+        local ecb = self._eventCallbacks[eventName]
+        if ecb and ecb ~= cb then ecb(eventName, ...) end
     end
 
     function addon:RegisterEvent(eventName, callback)
