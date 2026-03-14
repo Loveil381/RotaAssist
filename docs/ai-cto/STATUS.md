@@ -43,3 +43,29 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 - Branch: improve/round7-test-and-ci
 - Tests added: test_cooldown_overlay, test_assisted_combat_bridge, test_defensive_advisor, test_saved_vars
 - CI status: Upgraded actions to Node 24 to fix deprecation errors.
+
+## Round 8 — Final Test Expansion (2026-03-14)
+
+**Branch**: `improve/round8-test-expansion`  
+**Base**: `main@be12243`
+
+### Changes
+- Added `tests/test_interrupt_advisor.lua` — interrupt state, cooldown check, lifecycle
+- Added `tests/test_neural_predictor.lua` — module load, Markov API, save/load matrix
+- Added `tests/test_prepull_checker.lua` — consumable buff checks, RunChecks/IsReady API
+- Added `tests/test_whitelist_spells.lua` — data integrity, 13-class coverage, cd >= 30
+- Added `tests/test_spec_detector.lua` — spec detection, role check, spec change event
+- Added `tests/test_ai_inference.lua` — InferredState structure, GetContext, default values
+
+### Coverage
+- Test files: 16 → 22
+- Estimated test cases: ~190 → ~260+
+- All Engine modules now covered: Init, Registry, SpecData, EventHandler, CastHistoryRecorder,
+  AccuracyTracker, PatternDetector, APLEngine, SmartQueueManager, CooldownOverlay,
+  AssistedCombatBridge, DefensiveAdvisor, SavedVars, InterruptAdvisor, NeuralPredictor,
+  PrePullChecker, SpecDetector, AIInference
+- Data modules covered: WhitelistSpells
+
+### Notes
+- RecommendationManager is marked DEPRECATED and commented out of TOC; not tested
+- Mock additions: GetCVar, GetSpecialization, GetSpecializationInfo, UnitClass, C_UnitAuras
