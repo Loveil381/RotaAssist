@@ -130,8 +130,6 @@ function Bridge:GetCurrentRecommendation()
     -- 仅在推荐技能发生变化时更新 previousRec，避免无意义覆盖
     if cachedRec and cachedRec.spellID ~= spellID then
         previousRec = cachedRec
-    elseif not cachedRec then
-        previousRec = nil
     end
 
     -- Fetch texture and name safely
