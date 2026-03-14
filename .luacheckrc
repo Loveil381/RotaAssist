@@ -43,9 +43,10 @@ read_globals = {
     "GetActionInfo", "GetBindingKey",
 
     -- Frame / UI
-    "CreateFrame", "PlaySound", "GameTooltip",
+    "CreateFrame", "PlaySound", "PlaySoundFile", "GameTooltip",
     "hooksecurefunc",
     "ActionButton_ShowOverlayGlow", "ActionButton_HideOverlayGlow",
+    "UIFrameFadeIn", "UIFrameFadeOut",
     "AuraUtil",
     "BackdropTemplateMixin",
 
@@ -67,8 +68,15 @@ read_globals = {
 self = false
 
 ignore = {
+    "211",  -- unused variable
     "212",  -- unused argument (common in WoW event handlers)
+    "213",  -- unused loop variable
+    "311",  -- value assigned to variable is unused
     "431",  -- shadowing upvalue
+    "611",  -- line contains only whitespace
+    "612",  -- line contains trailing whitespace
+    "613",  -- trailing whitespace in string
+    "614",  -- trailing whitespace in comment
 }
 
 exclude_files = {
