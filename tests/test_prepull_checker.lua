@@ -8,14 +8,15 @@ describe("PrePullChecker", function()
     setup(function()
         helpers.ensureMockLoaded()
 
-        -- PrePullChecker uses C_UnitAuras; mock it
+        -- PrePullChecker uses C_UnitAuras.GetBuffDataByIndex and AuraUtil
         _G.C_UnitAuras = _G.C_UnitAuras or {}
+        _G.C_UnitAuras.GetBuffDataByIndex = _G.C_UnitAuras.GetBuffDataByIndex or function()
+            return nil
+        end
         _G.C_UnitAuras.GetAuraDataBySpellName = _G.C_UnitAuras.GetAuraDataBySpellName or function()
             return nil
         end
-        -- Fallback aura iteration mock
-        _G.UnitBuff = _G.UnitBuff or function() return nil end
-        _G.UnitAura = _G.UnitAura or function() return nil end
+        _G.AuraUtil = _G.AuraUtil or {}
 
         RA, ns = helpers.loadAddon()
         helpers.loadRegistry(ns)
@@ -57,11 +58,11 @@ describe("PrePullChecker", function()
             end
         end)
 
-        it("returns empty or skips when in combat", function()
+        it("returns empty when in combat", function()
             _G.InCombatLockdown = function() return true end
             local results = PPC:RunChecks()
-            -- Should either return empty table or skip checks
             assert.is_table(results)
+            assert.equals(0, #results)
             _G.InCombatLockdown = function() return false end
         end)
     end)
@@ -75,24 +76,32 @@ describe("PrePullChecker", function()
 
         it("returns false when no buffs are active (mock returns nil)", function()
             _G.InCombatLockdown = function() return false end
-            -- With our mock returning nil for all aura lookups, no buff will be found
             local ready = PPC:IsReady()
             assert.is_false(ready)
         end)
 
-        it("returns true when all buffs are mocked as present", function()
-            -- Mock C_UnitAuras to always find the buff
-            local origFunc = _G.C_UnitAuras.GetAuraDataBySpellName
-            _G.C_UnitAuras.GetAuraDataBySpellName = function(unit, name)
-                return { name = name, duration = 3600, expirationTime = GetTime() + 3600 }
+        it("returns true when all buffs are mocked via GetBuffDataByIndex", function()
+            -- hasAura iterates C_UnitAuras.GetBuffDataByIndex("player", i)
+            -- and checks data.spellId. Mock it to return all 3 consumable buff IDs.
+            local buffList = {
+                { spellId = 104273, name = "Well Fed" },
+                { spellId = 428484, name = "Flask" },
+                { spellId = 270058, name = "Augment Rune" },
+            }
+
+            local origGetBuff = _G.C_UnitAuras.GetBuffDataByIndex
+            _G.C_UnitAuras.GetBuffDataByIndex = function(unit, index)
+                if buffList[index] then
+                    return buffList[index]
+                end
+                return nil
             end
 
             _G.InCombatLockdown = function() return false end
             local ready = PPC:IsReady()
             assert.is_true(ready)
 
-            -- Restore
-            _G.C_UnitAuras.GetAuraDataBySpellName = origFunc
+            _G.C_UnitAuras.GetBuffDataByIndex = origGetBuff
         end)
     end)
 

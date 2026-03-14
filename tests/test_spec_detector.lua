@@ -121,18 +121,16 @@ describe("SpecDetector", function()
     end)
 
     describe("spec change simulation", function()
-        it("detects spec change when mock values change", function()
-            -- Switch to Vengeance
+        it("detects spec change after OnEnable and event fire", function()
+            -- Ensure OnEnable is called so the event subscriber is registered
+            pcall(function() SD:OnEnable() end)
+
+            -- Switch mock to Vengeance
             _G.GetSpecializationInfo = function(index)
                 return 581, "Vengeance", "", 1247265, "TANK"
             end
-            _G.UnitClass = function(unit)
-                return "Demon Hunter", "DEMONHUNTER", 12
-            end
 
-            -- Force a re-detection by calling GetCurrentSpec with cleared cache
-            -- SpecDetector uses local currentSpec; calling the public method triggers refreshSpec
-            -- We need to simulate the PLAYER_SPECIALIZATION_CHANGED event
+            -- Fire the event that SpecDetector subscribes to
             local eh = RA:GetModule("EventHandler")
             if eh then
                 eh:Fire("PLAYER_SPECIALIZATION_CHANGED")
@@ -143,9 +141,13 @@ describe("SpecDetector", function()
             assert.equals("Vengeance", spec.specName)
             assert.equals("TANK", spec.role)
 
-            -- Restore for other tests
+            -- Restore mock for other tests
             _G.GetSpecializationInfo = function(index)
                 return 577, "Havoc", "", 1247264, "DAMAGER"
+            end
+            -- Re-trigger to restore internal state
+            if eh then
+                eh:Fire("PLAYER_SPECIALIZATION_CHANGED")
             end
         end)
     end)

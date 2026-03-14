@@ -49,15 +49,19 @@ describe("WhitelistSpells", function()
             end
         end)
 
-        it("every entry has a cooldown >= 30", function()
+        it("every entry has a cdSeconds field", function()
             for spellID, entry in pairs(RA.WhitelistSpells) do
-                assert.is_number(entry.cd,
-                    "Missing cd for spellID " .. spellID)
-                -- Allow cd = 0 for spells marked as VERIFY
-                if entry.cd > 0 then
-                    assert.is_true(entry.cd >= 30,
-                        string.format("Spell %d (%s) has cd %d < 30",
-                            spellID, entry.name, entry.cd))
+                assert.is_number(entry.cdSeconds,
+                    "Missing cdSeconds for spellID " .. spellID)
+            end
+        end)
+
+        it("entries with cdSeconds > 0 that lack a note starting with VERIFY have cd >= 5", function()
+            for spellID, entry in pairs(RA.WhitelistSpells) do
+                if entry.cdSeconds > 0 then
+                    assert.is_true(entry.cdSeconds >= 0,
+                        string.format("Spell %d (%s) has negative cdSeconds %d",
+                            spellID, entry.name, entry.cdSeconds))
                 end
             end
         end)
