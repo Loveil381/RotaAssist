@@ -2,7 +2,6 @@
 std = "lua51"
 max_line_length = 160
 
--- WoW global functions and objects
 globals = {
     "RotaAssist",
     "LibStub",
@@ -16,33 +15,30 @@ globals = {
 }
 
 read_globals = {
-    -- WoW API
     "C_AssistedCombat", "C_Spell", "C_Timer", "C_AddOns",
+    "C_CurveUtil", "CreateColor",
     "GetTime", "GetCVar", "InCombatLockdown",
-    "UnitExists", "UnitCanAttack", "UnitIsDead", "UnitHealth", "UnitHealthMax",
+    "UnitExists", "UnitCanAttack", "UnitIsDead",
+    "UnitHealth", "UnitHealthMax", "UnitHealthPercent",
     "UnitPower", "UnitPowerMax",
-    "IsPlayerSpell", "IsPassiveSpell", "FindSpellOverrideByID",
+    "UnitCastingInfo", "UnitChannelInfo",
+    "IsPlayerSpell", "IsSpellKnown", "IsPassiveSpell", "FindSpellOverrideByID",
     "GetActionInfo", "GetBindingKey",
-    "CreateFrame", "PlaySound",
+    "CreateFrame", "PlaySound", "GameTooltip",
     "GetAddOnMetadata",
-    "strsplit",
-    "issecretvalue",
+    "strsplit", "wipe", "issecretvalue",
+    "date", "time",
     "Enum",
-    -- WoW Frame API
-    "GameTooltip",
-    -- Ace3
     "AceGUIWidgetLayoutHeap",
 }
 
--- Ignore unused self in methods
 self = false
 
--- Ignore some warnings for WoW addon patterns
 ignore = {
-    "212",  -- unused argument (common in WoW event handlers)
+    "212",  -- unused argument
+    "431",  -- shadowing upvalue
 }
 
--- Exclude generated files
 exclude_files = {
     "addon/Data/DecisionTrees/*",
     "addon/Data/TransitionMatrix/*",
