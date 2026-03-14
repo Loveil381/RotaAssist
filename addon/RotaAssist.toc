@@ -57,6 +57,8 @@ Data\DecisionTrees\DH_Vengeance_DT.lua
 Data\DecisionTrees\DH_Devourer_DT.lua
 Data\DecisionTrees\ROG_Subtlety_DT.lua
 Data\DecisionTrees\SHA_Elemental_DT.lua
+Data\DecisionTrees\WAR_Arms_DT.lua
+Data\DecisionTrees\WAR_Fury_DT.lua
 Data\DecisionTrees\DRU_Balance_DT.lua
 Data\DecisionTrees\EVO_Augmentation_DT.lua
 Data\DecisionTrees\EVO_Devastation_DT.lua
@@ -67,6 +69,8 @@ Data\TransitionMatrix\DH_Vengeance_TM.lua
 Data\TransitionMatrix\DH_Devourer_TM.lua
 Data\TransitionMatrix\ROG_Subtlety_TM.lua
 Data\TransitionMatrix\SHA_Elemental_TM.lua
+Data\TransitionMatrix\WAR_Arms_TM.lua
+Data\TransitionMatrix\WAR_Fury_TM.lua
 Data\TransitionMatrix\DRU_Balance_TM.lua
 Data\TransitionMatrix\EVO_Augmentation_TM.lua
 Data\TransitionMatrix\EVO_Devastation_TM.lua
