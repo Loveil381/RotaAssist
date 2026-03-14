@@ -76,6 +76,27 @@ SPELL_MAP: Dict[str, int] = {
     "temporal_anomaly":   382731,
     "echo":               364343,
     "verdant_embrace":    360995,
+    # ---- Warrior: Arms ----
+    "mortal_strike":      12294,
+    "overpower":          7384,
+    "slam":               1464,
+    "execute_arms":       163201,
+    "colossus_smash":     167105,
+    "bladestorm_arms":    227847,
+    "avatar":             107574,
+    "skullsplitter":      260643,
+    "rend":               772,
+    "cleave":             845,
+    # ---- Warrior: Fury ----
+    "rampage":            184367,
+    "raging_blow":        85288,
+    "bloodthirst":        23881,
+    "whirlwind":          190411,
+    "execute_fury":       5308,
+    "ravager":            228920,
+    "recklessness":       1719,
+    "onslaught":          315720,
+    "thunder_clap":       6343,
 }
 
 SPEC_IDS = {
@@ -85,6 +106,8 @@ SPEC_IDS = {
     "devastation": 1467,
     "augmentation": 1473,
     "preservation": 1468,
+    "arms": 71,
+    "fury": 72,
 }
 
 SPEC_SPELLS: Dict[str, List[str]] = {
@@ -113,6 +136,14 @@ SPEC_SPELLS: Dict[str, List[str]] = {
         "fire_breath", "living_flame", "azure_strike", "dream_breath",
         "spiritbloom", "reversion", "emerald_blossom", "temporal_anomaly",
         "echo", "verdant_embrace",
+    ],
+    "arms": [
+        "mortal_strike", "overpower", "slam", "execute_arms", "colossus_smash",
+        "bladestorm_arms", "avatar", "skullsplitter", "rend", "cleave",
+    ],
+    "fury": [
+        "rampage", "raging_blow", "bloodthirst", "whirlwind", "execute_fury",
+        "ravager", "recklessness", "avatar", "onslaught", "thunder_clap",
     ],
 }
 
@@ -184,6 +215,26 @@ actions+=/verdant_embrace
 actions+=/fire_breath
 actions+=/azure_strike,if=active_enemies>=2
 actions+=/living_flame
+""",
+    "arms": """
+actions+=/colossus_smash
+actions+=/avatar
+actions+=/bladestorm_arms,if=debuff.colossus_smash.up
+actions+=/mortal_strike
+actions+=/execute_arms,if=target.health.pct<20
+actions+=/overpower
+actions+=/rend,if=!dot.rend.ticking
+actions+=/slam
+""",
+    "fury": """
+actions+=/recklessness
+actions+=/avatar
+actions+=/ravager
+actions+=/rampage,if=buff.enrage.down
+actions+=/execute_fury,if=target.health.pct<20
+actions+=/bloodthirst
+actions+=/raging_blow
+actions+=/whirlwind
 """,
 }
 
