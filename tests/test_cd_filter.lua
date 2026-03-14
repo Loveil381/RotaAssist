@@ -45,6 +45,8 @@ describe("CD Filter regression (Round 14)", function()
             if name == "CooldownOverlay" then return fakeCooldownOverlay end
             return origGetModule(self, name)
         end
+        -- Trigger OnEnable to refresh cached module references with our mock
+        SQM:OnEnable()
 
         -- IsSpellOnCooldown should now return true for this spell
         -- 验证 IsSpellOnCooldown 对该技能返回 true
@@ -80,6 +82,7 @@ describe("CD Filter regression (Round 14)", function()
             if name == "CooldownOverlay" then return fakeEmpty end
             return origGetModule(self, name)
         end
+        SQM:OnEnable()
 
         -- Mock RA:GetSpellCooldownSafe to return remaining = 8.0 for this spell
         -- 模拟 GetSpellCooldownSafe 为该技能返回 remaining = 8.0
@@ -139,6 +142,7 @@ describe("CD Filter regression (Round 14)", function()
             if name == "CooldownOverlay" then return fakeCO end
             return origGetModule(self, name)
         end
+        APL:OnEnable()
 
         local simState = {
             resource    = 80,
@@ -200,6 +204,7 @@ describe("CD Filter regression (Round 14)", function()
             if name == "CooldownOverlay" then return fakeCO end
             return origGetModule(self, name)
         end
+        APL:OnEnable()
 
         -- Sim state: cooldowns[SPELL_ID] = 0 (simulation believes spell is ready at step 2)
         -- 模拟状态：simState 认为 SPELL_ID CD = 0（模拟信任该技能在第 2 步已就绪）
