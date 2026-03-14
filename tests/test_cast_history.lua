@@ -9,7 +9,7 @@ describe("CastHistoryRecorder", function()
         RA, ns = helpers.loadAddon()
         helpers.loadRegistry(ns)
         -- EventHandler is needed by CastHistoryRecorder during load
-        helpers.loadAddonFile("addon/Engine/EventHandler.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/Core/EventHandler.lua", "RotaAssist", ns)
         helpers.loadAddonFile("addon/Engine/CastHistoryRecorder.lua", "RotaAssist", ns)
         CHR = RA:GetModule("CastHistoryRecorder")
         -- Manually call OnInitialize to pre-allocate ring buffer

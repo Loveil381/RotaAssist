@@ -1,5 +1,5 @@
 -- tests/test_event_handler.lua
--- Unit tests for addon/Engine/EventHandler.lua subscribe/fire/unsubscribe.
+-- Unit tests for addon/Core/EventHandler.lua subscribe/fire/unsubscribe.
 local helpers = require("tests.helpers")
 
 describe("EventHandler", function()
@@ -8,7 +8,7 @@ describe("EventHandler", function()
     setup(function()
         RA, ns = helpers.loadAddon()
         helpers.loadRegistry(ns)
-        helpers.loadAddonFile("addon/Engine/EventHandler.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/Core/EventHandler.lua", "RotaAssist", ns)
         EH = RA:GetModule("EventHandler")
     end)
 
