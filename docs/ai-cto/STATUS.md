@@ -44,3 +44,8 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 - Tests added: test_registry, test_event_handler, test_cast_history,
   test_accuracy_tracker, test_pattern_detector, test_spec_data
 - Coverage target: >25% (from ~8%)
+
+## Round 6 – Test Expansion
+- Branch: improve/round6-test-expansion
+- Tests added: test_init_helpers, test_apl_engine, test_sqm_integration, test_init_slash
+- Coverage target: further expansion on core engine and command parsing
