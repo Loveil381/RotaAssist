@@ -73,6 +73,7 @@ ignore = {
     "213",  -- unused loop variable
     "311",  -- value assigned to variable is unused
     "431",  -- shadowing upvalue
+    "542",  -- empty if branch (placeholder logic in SQM/APL)
     "611",  -- line contains only whitespace
     "612",  -- line contains trailing whitespace
     "613",  -- trailing whitespace in string
