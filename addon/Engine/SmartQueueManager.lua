@@ -524,9 +524,14 @@ local function AssembleQueue()
         for sid, _ in pairs(candidates) do
             local onCD = false
             local cdState = cds[sid]
-            if cdState and not cdState.ready
-               and cdState.remaining and cdState.remaining > 1.0 then
-                onCD = true
+            if cdState then
+                if not cdState.ready and cdState.remaining and cdState.remaining > 1.0 then
+                    onCD = true
+                end
+            else
+                -- FIX (Round14-Bug2): 未被 CooldownOverlay 追踪的技能，用 API 直接检查
+                -- For spells not tracked by CooldownOverlay, fall back to direct API query
+                onCD = IsSpellOnCooldown(sid)
             end
             -- Check paired override ID as well
             -- 同时检查覆盖对配对 ID
