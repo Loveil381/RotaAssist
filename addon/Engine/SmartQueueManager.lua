@@ -304,7 +304,14 @@ local function AssembleQueue()
         elseif channelNextSpell then
             context.blizzSpell = channelNextSpell
         elseif lastKnownBlizzSpell then
-            context.blizzSpell = lastKnownBlizzSpell
+            -- FIX (Round14-Bug1): sticky fallback 必须验证技能是否仍然可施放
+            -- Sticky fallback must verify the spell is not on cooldown before reuse
+            if not IsSpellOnCooldown(lastKnownBlizzSpell) then
+                context.blizzSpell = lastKnownBlizzSpell
+            else
+                -- 技能已进 CD，清除 sticky，让队列自然降级到 APL/AI 推荐
+                lastKnownBlizzSpell = nil
+            end
         end
     end
 
