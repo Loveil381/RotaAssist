@@ -38,3 +38,9 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 - 使用 busted + mock_wow_api.lua 做 Lua 单元测试
 - Registry.lua 作为 PASSIVE_BLACKLIST/OVERRIDE_PAIRS 唯一真相来源
 - SpecEnhancements 统一使用 nested interruptSpell 和 powerType 字段
+
+## Round 5 – Unit Test Expansion
+- Branch: improve/unit-test-expansion
+- Tests added: test_registry, test_event_handler, test_cast_history,
+  test_accuracy_tracker, test_pattern_detector, test_spec_data
+- Coverage target: >25% (from ~8%)
