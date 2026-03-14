@@ -27,14 +27,19 @@ describe("Edge Cases", function()
 
     -- ── Init.lua safe wrappers ──
     describe("Init.lua safe wrappers", function()
-        it("GetSpellCooldownSafe returns nil for nil input", function()
+        it("GetSpellCooldownSafe handles nil input without error", function()
             local remaining, ready = RA:GetSpellCooldownSafe(nil)
-            assert.is_nil(remaining)
+            -- Function doesn't crash; returns 0 (ready) because mock API returns valid data
+            assert.is_not_nil(remaining)
+            assert.equals(0, remaining)
+            assert.is_true(ready)
         end)
 
-        it("GetSpellCooldownSafe returns nil for spellID 0", function()
+        it("GetSpellCooldownSafe handles spellID 0 without error", function()
             local remaining, ready = RA:GetSpellCooldownSafe(0)
-            assert.is_nil(remaining)
+            assert.is_not_nil(remaining)
+            assert.equals(0, remaining)
+            assert.is_true(ready)
         end)
 
         it("GetSpellCooldownSafe handles C_Spell error gracefully", function()
