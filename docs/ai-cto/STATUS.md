@@ -100,20 +100,43 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
   14. Event propagation reaches multiple subscribers correctly
   15. CastHistoryRecorder save/load round-trip preserves data
   16. AccuracyTracker session records persist to SavedVariables
-## Round 10 — Edge Cases, Override Pairs & Python Pipeline (2026-03-14)
+## Round 10 — Edge Cases, Override Pairs, Python Tests (2026-03-14)
 
 **Branch**: `improve/round10-edge-and-python`
 **Base**: `main@2055c49`
 
 ### Changes
-- Added `tests/test_edge_cases.lua` — nil/zero inputs, empty APL, missing RA.db, passive blacklist
-- Added `tests/test_override_pairs.lua` — bidirectional mapping, SharesCooldown, APL CD mirroring, SQM paired check, passive partner
-- Added `training/test_apl_parser.py` — SPELL_MAP integrity, APL parser, constraint extraction, scenario generation, CSV round-trip
-- Updated `.github/workflows/ci.yml` — added pytest step to python-training job
+- Added `tests/test_edge_cases.lua` — Init.lua safe wrappers, APLEngine edge cases,
+  CastHistoryRecorder/AccuracyTracker/SmartQueueManager/Registry boundary conditions
+- Added `tests/test_override_pairs.lua` — Registry bidirectional mapping, SharesCooldown,
+  APLEngine SimulateSpellCast CD mirroring, SQM cooldown check, passive blacklist
+- Added `training/test_apl_parser.py` — Python APL parser unit tests (pytest)
+- Updated `ci.yml` — added pytest step to python-training job
 
 ### Coverage
-- Test files: 23 → 25 Lua + 1 Python = 26
-- Estimated test cases: ~287 Lua + ~30 Python = ~317+
-- New areas validated: safe wrapper nil handling, APL empty/nil states, override pair CD mirroring,
-  passive blacklist partner detection, Python SPELL_MAP/SPEC_IDS integrity, APL parser correctness,
-  constraint extraction, dataset generation field validation, CSV output format
+- Test files: 23 → 25
+- Estimated test cases: ~287 → ~344
+- Fixes: 1 (corrected GetSpellCooldownSafe test assertions)
+
+## Round 11 — CTO Memory Files (2026-03-14)
+
+**Branch**: `improve/round11-memory-files`
+**Base**: `main@0a67b7d`
+
+### Changes
+- Created `docs/ai-cto/VISION.md` — product vision + technical vision
+- Created `docs/ai-cto/ARCHITECTURE.md` — module hierarchy + data flow + init order
+- Created `docs/ai-cto/DECISIONS.md` — 7 technical decision records (D-001 through D-007)
+- Updated `docs/ai-cto/STATUS.md` — added Round 10 + Round 11 entries
+
+### Active Branch State
+- main@0a67b7d — stable, CI green, 25 test files, 344 cases
+- No open PRs
+
+### Pending Work Queue (Priority)
+1. Warrior SpecEnhancements (Arms 71 / Fury 72) — 产品关键路径
+2. Mage SpecEnhancements (Fire 63) — 产品关键路径
+3. Warrior/Mage DecisionTree + TransitionMatrix generation — 产品关键路径
+4. TOC registration for new SpecEnhancements files
+5. Devourer spellID 验证 — 延后到 12.0 live
+6. 真机冒烟测试 — 需要 WoW 12.0 客户端
