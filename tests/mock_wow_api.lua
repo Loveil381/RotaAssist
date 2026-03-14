@@ -286,8 +286,34 @@ local function makeAceAddon(name, ...)
         _mixins   = { ... },
     }
 
-    -- Mixins listed (AceConsole-3.0, AceEvent-3.0, etc.) are no-ops in tests
+    -- AceEvent message system mock
+    -- Stores message callbacks: _messageCallbacks[eventName] = callback
+    addon._messageCallbacks = {}
+    addon._eventCallbacks = {}
+
     function addon:RegisterChatCommand(cmd, handler) end
+
+    function addon:RegisterMessage(eventName, callback)
+        self._messageCallbacks[eventName] = callback
+    end
+
+    function addon:UnregisterMessage(eventName)
+        self._messageCallbacks[eventName] = nil
+    end
+
+    function addon:SendMessage(eventName, ...)
+        local cb = self._messageCallbacks[eventName]
+        if cb then cb(eventName, ...) end
+    end
+
+    function addon:RegisterEvent(eventName, callback)
+        self._eventCallbacks[eventName] = callback
+    end
+
+    function addon:UnregisterEvent(eventName)
+        self._eventCallbacks[eventName] = nil
+    end
+
     function addon:Print(msg)
         DEFAULT_CHAT_FRAME:AddMessage(msg)
     end
