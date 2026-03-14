@@ -79,6 +79,15 @@ ignore = {
     "614",  -- trailing whitespace in comment
 }
 
+-- Data files contain long APL definition lines and inline comments;
+-- relax line-length checking for the entire Data directory.
+files["addon/Data/**/*.lua"] = {
+    max_line_length = false,
+}
+files["addon/Data/*.lua"] = {
+    max_line_length = false,
+}
+
 exclude_files = {
     "addon/Data/DecisionTrees/*",
     "addon/Data/TransitionMatrix/*",
