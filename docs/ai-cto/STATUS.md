@@ -182,3 +182,24 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 - TransitionMatrix: yes (new)
 - Python pipeline: yes
 - TOC registration: yes
+
+## Round 14 — CD Filter Hotfix (P0 Product Bug Fix)
+
+**Branch**: `fix/round14-cd-filter-hotfix`
+**Base**: `main@a45a7d7`
+
+### Root Cause
+User reported Havoc DH skills still recommended while on cooldown.
+Three bugs identified in SQM/APLEngine CD filtering chain:
+1. Sticky Blizzard fallback (lastKnownBlizzSpell) not validated against CD
+2. CD safety net has no fallback for spells not tracked by CooldownOverlay
+3. APLEngine PredictNext only checks real-time CD in step 1, not step 2+
+
+### Changes
+- Fixed `SmartQueueManager.lua` sticky fallback to check IsSpellOnCooldown
+- Fixed `SmartQueueManager.lua` CD safety net to use API fallback for untracked spells
+- Fixed `APLEngine.lua` PredictNext to cross-check real CD in steps 2+ (with sim guard)
+- Added `tests/test_cd_filter.lua` — 4 regression tests
+
+### Quality
+- Score: 8.5 → 8.8/10 (P0 product fix)

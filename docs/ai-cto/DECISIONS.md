@@ -44,3 +44,17 @@
 - 决策: 按 "APL → SpecEnhancements → DT/TM → TOC 注册" 顺序逐职业扩展
 - 理由: APL 是最轻量级的数据（纯优先级规则），SpecEnhancements 需要准确的 spellID/cost 数据
 - 当前状态: Warrior Arms/Fury 已有 APL 但缺 SpecEnhancements
+
+## D-008: Sticky Blizzard fallback CD 验证
+- 日期: Round 14
+- 决策: lastKnownBlizzSpell 在作为 fallback 使用前必须经过 IsSpellOnCooldown 检查
+- 理由: 用户实测发现技能进 CD 后仍被推荐，根因是 GCD 期间 Blizzard API 返回 nil，
+        SQM 使用旧的 sticky 缓存而不检查 CD 状态
+- 影响: 消除"技能CD了还推荐"的最主要路径
+
+## D-009: CD 安全网 API fallback
+- 日期: Round 14
+- 决策: CD 安全网中 cdStates[sid] 不存在时，调用 IsSpellOnCooldown(sid) 作为 fallback
+- 理由: CooldownOverlay 只追踪 SpecEnhancements + WhitelistSpells 中的技能，
+        其余技能（如短 CD 非白名单技能）缺乏 CD 过滤
+- 影响: 堵住第二条 CD 过滤漏洞

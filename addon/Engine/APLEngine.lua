@@ -320,14 +320,23 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                 -- FIX (OverridePair): Also check paired override ID in real CD guard.
                 -- 覆盖对实时 CD 检查：同时检查配对 ID 的 CD 状态。
                 local realCD = false
-                if step == 1 and not skipCurrent and not notKnown then
+                if not skipCurrent and not notKnown then
                     local cdOverlay = RA:GetModule("CooldownOverlay")
                     if cdOverlay then
                         local cds = cdOverlay:GetCooldownStates()
                         local cdState = cds[rule.spellID]
                         if cdState and not cdState.ready
                            and cdState.remaining and cdState.remaining > 1.0 then
-                            realCD = true
+                            if step == 1 then
+                                realCD = true
+                            else
+                                -- Step 2+: 仅当 simState 也认为该技能在 CD 时才拒绝（避免过度过滤）
+                                -- Trust simulation for future steps, but cross-check with reality
+                                local simCD = simState.cooldowns[rule.spellID]
+                                if simCD and simCD > 0 then
+                                    realCD = true
+                                end
+                            end
                         end
                         -- Check paired override ID
                         if not realCD then
@@ -336,7 +345,14 @@ function APLEngine:PredictNext(currentSpellID, limitedState, depth)
                                 local pairedState = cds[pairedID]
                                 if pairedState and not pairedState.ready
                                    and pairedState.remaining and pairedState.remaining > 1.0 then
-                                    realCD = true
+                                    if step == 1 then
+                                        realCD = true
+                                    else
+                                        local simCD = simState.cooldowns[pairedID]
+                                        if simCD and simCD > 0 then
+                                            realCD = true
+                                        end
+                                    end
                                 end
                             end
                         end
