@@ -10,13 +10,13 @@ jobs:
   lua-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: leafo/gh-actions-lua@v10
+      - uses: leafo/gh-actions-lua@v12
         with:
           luaVersion: "5.1"
 
-      - uses: leafo/gh-actions-luarocks@v4
+      - uses: leafo/gh-actions-luarocks@v6
 
       - name: Install Luacheck
         run: luarocks install luacheck
@@ -27,8 +27,8 @@ jobs:
   python-training:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install dependencies
@@ -45,13 +45,13 @@ jobs:
   lua-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: leafo/gh-actions-lua@v10
+      - uses: leafo/gh-actions-lua@v12
         with:
           luaVersion: "5.1"
 
-      - uses: leafo/gh-actions-luarocks@v4
+      - uses: leafo/gh-actions-luarocks@v6
 
       - name: Install busted
         run: luarocks install busted
