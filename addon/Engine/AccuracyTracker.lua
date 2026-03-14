@@ -129,20 +129,20 @@ local function OnSpellCastSucceeded(_, unit, _, spellID)
         -- FIX (Bug2): Phase stats also use last-frame comparison
         -- 阶段统计同样使用上一帧比对逻辑
         if bridge then
-            local rec = bridge:GetCurrentRecommendation()
-            local prevRec = bridge.GetPreviousRecommendation and bridge:GetPreviousRecommendation()
-            local blizzMatch = (rec and rec.spellID == spellID)
-                or (prevRec and prevRec.spellID == spellID)
+            local phaseRec = bridge:GetCurrentRecommendation()
+            local phasePrevRec = bridge.GetPreviousRecommendation and bridge:GetPreviousRecommendation()
+            local blizzMatch = (phaseRec and phaseRec.spellID == spellID)
+                or (phasePrevRec and phasePrevRec.spellID == spellID)
             if blizzMatch then
                 pStats.blizzMatches = pStats.blizzMatches + 1
             end
         end
         if smartQ then
-            local qData = smartQ:GetFinalQueue()
-            local currentMain = qData and qData.main and qData.main.spellID
-            local lastMain = smartQ.GetLastRecommendedSpellID
+            local phaseQData = smartQ:GetFinalQueue()
+            local phaseCurrentMain = phaseQData and phaseQData.main and phaseQData.main.spellID
+            local phaseLastMain = smartQ.GetLastRecommendedSpellID
                 and smartQ:GetLastRecommendedSpellID()
-            if currentMain == spellID or lastMain == spellID then
+            if phaseCurrentMain == spellID or phaseLastMain == spellID then
                 pStats.smartMatches = pStats.smartMatches + 1
             end
         end

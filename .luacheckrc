@@ -2,7 +2,6 @@
 std = "lua51"
 max_line_length = 160
 
--- WoW global functions and objects
 globals = {
     "RotaAssist",
     "LibStub",
@@ -16,33 +15,81 @@ globals = {
 }
 
 read_globals = {
-    -- WoW API
+    -- Blizzard C_ namespaces
     "C_AssistedCombat", "C_Spell", "C_Timer", "C_AddOns",
+    "C_CurveUtil", "C_UnitAuras", "C_NamePlate",
+
+    -- Color / utility
+    "CreateColor",
+
+    -- Time / combat
     "GetTime", "GetCVar", "InCombatLockdown",
-    "UnitExists", "UnitCanAttack", "UnitIsDead", "UnitHealth", "UnitHealthMax",
+
+    -- Unit API
+    "UnitExists", "UnitCanAttack", "UnitIsDead",
+    "UnitHealth", "UnitHealthMax", "UnitHealthPercent",
     "UnitPower", "UnitPowerMax",
-    "IsPlayerSpell", "IsPassiveSpell", "FindSpellOverrideByID",
+    "UnitCastingInfo", "UnitChannelInfo",
+    "UnitClass",
+
+    -- Spec / talent
+    "GetSpecialization", "GetSpecializationInfo",
+
+    -- Spell API
+    "IsPlayerSpell", "IsSpellKnown", "IsPassiveSpell",
+    "FindSpellOverrideByID", "GetMacroSpell",
+
+    -- Action bar
     "GetActionInfo", "GetBindingKey",
-    "CreateFrame", "PlaySound",
+
+    -- Frame / UI
+    "CreateFrame", "PlaySound", "PlaySoundFile", "GameTooltip",
+    "hooksecurefunc",
+    "ActionButton_ShowOverlayGlow", "ActionButton_HideOverlayGlow",
+    "UIFrameFadeIn", "UIFrameFadeOut",
+    "AuraUtil",
+    "BackdropTemplateMixin",
+
+    -- Addon metadata
     "GetAddOnMetadata",
-    "strsplit",
-    "issecretvalue",
+
+    -- WoW Lua extensions
+    "strsplit", "wipe", "issecretvalue",
+    "bit",
+
+    -- Lua builtins that luacheck may flag in some configs
+    "date", "time",
+
+    -- Enums / misc
     "Enum",
-    -- WoW Frame API
-    "GameTooltip",
-    -- Ace3
     "AceGUIWidgetLayoutHeap",
 }
 
--- Ignore unused self in methods
 self = false
 
--- Ignore some warnings for WoW addon patterns
 ignore = {
+    "211",  -- unused variable
     "212",  -- unused argument (common in WoW event handlers)
+    "213",  -- unused loop variable
+    "311",  -- value assigned to variable is unused
+    "431",  -- shadowing upvalue
+    "512",  -- loop is executed at most once
+    "542",  -- empty if branch (placeholder logic in SQM/APL)
+    "611",  -- line contains only whitespace
+    "612",  -- line contains trailing whitespace
+    "613",  -- trailing whitespace in string
+    "614",  -- trailing whitespace in comment
 }
 
--- Exclude generated files
+-- Data files contain long APL definition lines and inline comments;
+-- relax line-length checking for the entire Data directory.
+files["addon/Data/**/*.lua"] = {
+    max_line_length = false,
+}
+files["addon/Data/*.lua"] = {
+    max_line_length = false,
+}
+
 exclude_files = {
     "addon/Data/DecisionTrees/*",
     "addon/Data/TransitionMatrix/*",

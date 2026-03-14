@@ -32,6 +32,13 @@ local PASSIVE_BLACKLIST = RA.Registry.PASSIVE_BLACKLIST
 local FLICKER_THRESHOLD = 2
 local previousNextSpells = {} -- [index] = spellID
 local flickerCounters   = {}  -- [index] = count
+-- Engine Module References (cached for speed)
+local mBridge
+local mAIInference
+local mAPLEngine
+local mCooldownOverlay
+local mDefensiveAdvisor
+local mNeuralPredictor
 
 --- Check if a spell is currently on significant cooldown (> 1.0s remaining).
 --- 检查技能是否在有效 CD 中（超过 1.0秒），用于过滤 next[] 中的预测。
@@ -136,14 +143,6 @@ SmartQueueManager._IsSpellCastable = IsSpellCastable
 
 local updateFrame = nil
 local lastUpdate  = 0
-
--- Engine Module References (cached for speed)
-local mBridge
-local mAIInference
-local mAPLEngine
-local mCooldownOverlay
-local mDefensiveAdvisor
-local mNeuralPredictor
 
 -- Outputs (zero-allocation recycle)
 local finalQueue = {
