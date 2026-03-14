@@ -140,3 +140,23 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 4. TOC registration for new SpecEnhancements files
 5. Devourer spellID 验证 — 延后到 12.0 live
 6. 真机冒烟测试 — 需要 WoW 12.0 客户端
+
+## Round 12 — Warrior SpecEnhancements (2026-03-14)
+
+**Branch**: `improve/round12-warrior-spec`
+**Base**: `main@868ffa0`
+
+### Changes
+- Created `addon/Data/SpecEnhancements/Warrior.lua` — Arms (71) + Fury (72)
+- Updated `addon/RotaAssist.toc` — registered Warrior.lua
+- Updated `training/simc_apl_to_dataset.py` — added arms/fury to SPEC_IDS, SPEC_SPELLS, SPELL_MAP, DEFAULT_APLS
+- Updated `.github/workflows/ci.yml` — added arms/fury CSV generation tests
+- Added `tests/test_warrior_spec.lua` — data integrity tests for both specs
+- Updated `docs/ai-cto/STATUS.md`
+
+### Warrior Support Status
+- APL: ✅ (existed: Warrior_Arms.lua, Warrior_Fury.lua)
+- SpecEnhancements: ✅ (new: Warrior.lua)
+- DecisionTree: ❌ (pending generation)
+- TransitionMatrix: ❌ (pending generation)
+- Python training: ✅ (arms/fury added to pipeline)

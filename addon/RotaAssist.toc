@@ -50,6 +50,7 @@ Data\SpecEnhancements\Evoker.lua
 Data\SpecEnhancements\Rogue.lua
 Data\SpecEnhancements\Shaman.lua
 Data\SpecEnhancements\Druid.lua
+Data\SpecEnhancements\Warrior.lua
 # DecisionTrees (auto-generated or hand-crafted)
 Data\DecisionTrees\DH_Havoc_DT.lua
 Data\DecisionTrees\DH_Vengeance_DT.lua

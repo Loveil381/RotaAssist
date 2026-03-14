@@ -43,6 +43,14 @@ jobs:
         run: |
           python training/simc_apl_to_dataset.py --spec vengeance --output /tmp/test_veng.csv --samples 10
           test -f /tmp/test_veng.csv
+      - name: Test simc_apl_to_dataset (arms)
+        run: |
+          python training/simc_apl_to_dataset.py --spec arms --output /tmp/test_arms.csv --samples 10
+          test -f /tmp/test_arms.csv
+      - name: Test simc_apl_to_dataset (fury)
+        run: |
+          python training/simc_apl_to_dataset.py --spec fury --output /tmp/test_fury.csv --samples 10
+          test -f /tmp/test_fury.csv
       - name: Run Python unit tests
         run: python -m pytest training/test_apl_parser.py -v
 
