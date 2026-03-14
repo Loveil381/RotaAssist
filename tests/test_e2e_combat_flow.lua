@@ -563,14 +563,15 @@ describe("E2E Combat Flow", function()
                 SD.GetSpecID = function() return 577 end
             end
 
-            -- Record some casts
+            -- Record some casts using real rotation spell IDs
             CHR:Reset()
             _G.InCombatLockdown = function() return true end
             EH:Fire("PLAYER_REGEN_DISABLED")
 
-            for i = 1, 5 do
+            local rotationSpells = { 162243, 188499, 198013, 258920, 162243 }
+            for i, sid in ipairs(rotationSpells) do
                 mockTime = 1000.0 + i
-                EH:Fire("ROTAASSIST_SPELLCAST_SUCCEEDED", "player", "g" .. i, 162243 + i)
+                EH:Fire("ROTAASSIST_SPELLCAST_SUCCEEDED", "player", "g" .. i, sid)
             end
 
             -- Save
