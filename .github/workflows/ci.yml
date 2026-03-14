@@ -53,6 +53,26 @@ jobs:
           test -f /tmp/test_fury.csv
       - name: Run Python unit tests
         run: python -m pytest training/test_apl_parser.py -v
+      - name: Train Arms DT+TM (validation)
+        run: |
+          python training/simc_apl_to_dataset.py --spec arms --output /tmp/arms_train.csv --samples 50
+          python training/train_decision_tree.py \
+            --input /tmp/arms_train.csv \
+            --output-lua /tmp/WAR_Arms_DT.lua \
+            --output-markov /tmp/WAR_Arms_TM.lua \
+            --spec-id 71 --max-depth 5 --min-samples-leaf 5
+          test -f /tmp/WAR_Arms_DT.lua
+          test -f /tmp/WAR_Arms_TM.lua
+      - name: Train Fury DT+TM (validation)
+        run: |
+          python training/simc_apl_to_dataset.py --spec fury --output /tmp/fury_train.csv --samples 50
+          python training/train_decision_tree.py \
+            --input /tmp/fury_train.csv \
+            --output-lua /tmp/WAR_Fury_DT.lua \
+            --output-markov /tmp/WAR_Fury_TM.lua \
+            --spec-id 72 --max-depth 5 --min-samples-leaf 5
+          test -f /tmp/WAR_Fury_DT.lua
+          test -f /tmp/WAR_Fury_TM.lua
 
   lua-tests:
     runs-on: ubuntu-latest

@@ -160,3 +160,25 @@ WoW 12.0 AI 战斗辅助插件，融合 Blizzard Assisted Combat + APL 预测 + 
 - DecisionTree: ❌ (pending generation)
 - TransitionMatrix: ❌ (pending generation)
 - Python training: ✅ (arms/fury added to pipeline)
+
+## Round 13 ? Warrior DecisionTree + TransitionMatrix (2026-03-14)
+
+**Branch**: `improve/round13-warrior-dt-tm`
+**Base**: `main@0d80062`
+
+### Changes
+- Generated `addon/Data/DecisionTrees/WAR_Arms_DT.lua` via training pipeline
+- Generated `addon/Data/DecisionTrees/WAR_Fury_DT.lua` via training pipeline
+- Generated `addon/Data/TransitionMatrix/WAR_Arms_TM.lua` via training pipeline
+- Generated `addon/Data/TransitionMatrix/WAR_Fury_TM.lua` via training pipeline
+- Updated `addon/RotaAssist.toc` - registered 4 new data files
+- Updated `.github/workflows/ci.yml` - end-to-end DT+TM generation validation
+- Updated `docs/ai-cto/STATUS.md`
+
+### Warrior Support Status (COMPLETE)
+- APL: yes
+- SpecEnhancements: yes
+- DecisionTree: yes (new)
+- TransitionMatrix: yes (new)
+- Python pipeline: yes
+- TOC registration: yes
