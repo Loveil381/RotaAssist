@@ -212,6 +212,8 @@ local function makeFrame(frameType, name, parent, template)
     function frame:SetJustifyH(j) end
     function frame:SetJustifyV(j) end
     function frame:SetTexture(t) self._texture = t end
+    function frame:SetTexCoord(...) end
+    function frame:SetDesaturated(b) end
     function frame:SetVertexColor(...) end
     function frame:SetAllPoints(parent) end
     function frame:SetMinMaxValues(min, max) self._min, self._max = min, max end
