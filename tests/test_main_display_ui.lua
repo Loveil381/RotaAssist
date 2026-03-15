@@ -89,15 +89,15 @@ describe("MainDisplay UI Overhaul", function()
         -- We will spy on IconWidget:SetOutOfRange.
         local IconWidget = RA.UI.IconWidget
         local oldSetOutOfRange = IconWidget.SetOutOfRange
-        local called_oor = nil
+        local called_true = false
         IconWidget.SetOutOfRange = function(self, oor)
-            called_oor = oor
+            if oor == true then called_true = true end
             oldSetOutOfRange(self, oor)
         end
         
         eh:Fire("ROTAASSIST_QUEUE_UPDATED")
         
-        assert.is_true(called_oor)
+        assert.is_true(called_true)
         
         -- Restore
         IconWidget.SetOutOfRange = oldSetOutOfRange
