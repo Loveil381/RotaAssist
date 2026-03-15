@@ -70,6 +70,20 @@ function IconWidget:Create(parent, size, name)
     a2:SetDuration(0.5)
     a2:SetOrder(2)
     
+    -- Out of Range Animation
+    obj.oorAnim = obj.frame:CreateAnimationGroup()
+    obj.oorAnim:SetLooping("REPEAT")
+    local o1 = obj.oorAnim:CreateAnimation("Alpha")
+    o1:SetFromAlpha(0.4)
+    o1:SetToAlpha(0.8)
+    o1:SetDuration(0.4)
+    o1:SetOrder(1)
+    local o2 = obj.oorAnim:CreateAnimation("Alpha")
+    o2:SetFromAlpha(0.8)
+    o2:SetToAlpha(0.4)
+    o2:SetDuration(0.4)
+    o2:SetOrder(2)
+    
     obj.currentSpellID = nil
     
     return obj
@@ -162,6 +176,21 @@ function IconWidget:SetAlert(enabled)
     end
 end
 
+---Toggle out of range pulsing red state
+---@param outOfRange boolean
+function IconWidget:SetOutOfRange(outOfRange)
+    if outOfRange then
+        self.icon:SetVertexColor(0.8, 0.2, 0.2)
+        if not self.oorAnim:IsPlaying() then self.oorAnim:Play() end
+    else
+        self.icon:SetVertexColor(1, 1, 1)
+        if self.oorAnim:IsPlaying() then
+            self.oorAnim:Stop()
+            self.frame:SetAlpha(1.0)
+        end
+    end
+end
+
 ---Apply desaturation (greyscale) to the icon.
 ---@param desaturated boolean
 function IconWidget:SetDesaturated(desaturated)
@@ -177,5 +206,6 @@ function IconWidget:Clear()
     self:SetConfidence(nil)
     self:SetGlow(false)
     self:SetAlert(false)
+    self:SetOutOfRange(false)
     self:SetDesaturated(false)
 end
