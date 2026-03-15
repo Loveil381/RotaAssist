@@ -6,21 +6,26 @@
 require("busted.runner")()
 require("tests.mock_wow_api")
 
+local helpers = require("tests.helpers")
+
 describe("MainDisplay UI Overhaul", function()
-    local RA
+    local RA, ns
     
     setup(function()
         _G.SLASH_ROTAASSIST1 = nil
-        dofile("addon/Core/Init.lua")
-        RA = _G.RotaAssist
+        RA, ns = helpers.loadAddon()
+        helpers.loadRegistry(ns)
+        helpers.loadAddonFile("addon/Core/EventHandler.lua", "RotaAssist", ns)
         
         -- Load required widgets and modules
-        dofile("addon/UI/Widgets.lua")
-        dofile("addon/UI/Widgets/IconWidget.lua")
-        dofile("addon/UI/Widgets/DefensiveAlert.lua")
-        dofile("addon/UI/Widgets/InterruptAlert.lua")
-        dofile("addon/Engine/SmartQueueManager.lua")
-        dofile("addon/UI/MainDisplay.lua")
+        helpers.loadAddonFile("addon/UI/Widgets.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/UI/Widgets/IconWidget.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/UI/Widgets/DefensiveAlert.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/UI/Widgets/InterruptAlert.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/Engine/SmartQueueManager.lua", "RotaAssist", ns)
+        helpers.loadAddonFile("addon/UI/MainDisplay.lua", "RotaAssist", ns)
+        
+        RA.db = { profile = { display = { iconCount = 4 }, interrupt = {} } }
         
         RA:OnInitialize()
         local MD = RA:GetModule("MainDisplay")

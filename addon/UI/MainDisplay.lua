@@ -222,7 +222,7 @@ local function UpdateDisplay()
         -- Proc Glow
         local hasProc = false
         if showProc then
-            local pOk, pRes = pcall(C_SpellActivationOverlay.IsSpellOverlayed, data.main.spellID)
+            local pOk, pRes = pcall(_G.C_SpellActivationOverlay.IsSpellOverlayed, data.main.spellID)
             if pOk and pRes then hasProc = true end
         end
         elements.mainIcon:SetGlow(hasProc or (data.main.source ~= "DEFENSIVE"))

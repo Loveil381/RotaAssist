@@ -23,12 +23,12 @@ function InterruptAlert:Create()
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", function(self)
+    f:SetScript("OnDragStart", function(frame)
         if RA.db and RA.db.profile.display and RA.db.profile.display.locked then return end
-        self:StartMoving()
+        frame:StartMoving()
     end)
-    f:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
+    f:SetScript("OnDragStop", function(frame)
+        frame:StopMovingOrSizing()
     end)
     
     obj.container = f
