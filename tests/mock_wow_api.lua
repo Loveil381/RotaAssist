@@ -130,8 +130,19 @@ C_Spell = {
     GetSpellInfo = function(spellID)
         return { name = "MockSpell" .. tostring(spellID), castTime = 0 }
     end,
+    --- IsSpellInRange: returns true by default
+    IsSpellInRange = function(spellID, unit) return true end,
 }
 _G.C_Spell = C_Spell
+
+-- ============================================================
+-- C_SpellActivationOverlay namespace mock
+-- ============================================================
+
+C_SpellActivationOverlay = {
+    IsSpellOverlayed = function(spellID) return false end,
+}
+_G.C_SpellActivationOverlay = C_SpellActivationOverlay
 
 -- ============================================================
 -- C_AddOns namespace mock
