@@ -159,8 +159,9 @@ function IconWidget:SetGlow(enabled)
     else
         if ActionButton_HideOverlayGlow then
             ActionButton_HideOverlayGlow(self.frame)
+        else
+            RA.UI.GlowWidget:Stop(self.frame)
         end
-        RA.UI.GlowWidget:Stop(self.frame)
     end
 end
 
