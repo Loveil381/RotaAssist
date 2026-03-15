@@ -41,33 +41,30 @@ describe("MainDisplay UI Overhaul", function()
         local eh = RA:GetModule("EventHandler")
         local sqm = RA:GetModule("SmartQueueManager")
         
+        local mockData = {
+            main = { spellID = 1000, source = "APL" },
+            next = {
+                { spellID = 1001, confidence = 1.0 },
+                { spellID = 1002, confidence = 1.0 }
+            }
+        }
+        sqm.GetFinalQueue = function() return mockData end
+        
         -- Mock C_Spell.GetSpellCooldown
         _G.C_Spell.GetSpellCooldown = function(spellID)
             if spellID == 1001 then
                 return { startTime = 0, duration = 0 } -- Ready
             elseif spellID == 1002 then
-                return { startTime = 1000, duration = 10 } -- On CD
+                return { startTime = GetTime() or 0, duration = 10 } -- On CD
             end
             return { startTime = 0, duration = 0 }
         end
         
-        -- Force mock the SQM final queue
-        sqm.GetFinalQueue = function()
-            return {
-                main = { spellID = 1000, source = "APL" },
-                next = {
-                    { spellID = 1001, confidence = 1.0 },
-                    { spellID = 1002, confidence = 1.0 }
-                }
-            }
-        end
-        
         eh:Fire("ROTAASSIST_QUEUE_UPDATED")
         
-        -- Wait, the UpdateDisplay modifies the data array in place, so let's verify What SQM returned was filtered
-        local data = sqm:GetFinalQueue()
-        assert.are.equal(1, #data.next)
-        assert.are.equal(1001, data.next[1].spellID)
+        -- The UpdateDisplay modifies the data array in place, so verify it was filtered
+        assert.are.equal(1, #mockData.next)
+        assert.are.equal(1001, mockData.next[1].spellID)
     end)
 
     it("should set SetOutOfRange when spell is out of range", function()
@@ -76,23 +73,20 @@ describe("MainDisplay UI Overhaul", function()
         local md = RA:GetModule("MainDisplay")
         
         -- Override display config
-        RA.db.profile.display = { showRangeIndicator = true, showProcGlow = true }
+        RA.db.profile.display = { iconCount = 4, showRangeIndicator = true, showProcGlow = true }
 
         -- Mock out of range
         _G.C_Spell.IsSpellInRange = function(spellID, unit)
             return false
         end
         
-        sqm.GetFinalQueue = function()
-            return {
-                main = { spellID = 2000, source = "APL" },
-                next = {}
-            }
-        end
+        local mockData = {
+            main = { spellID = 2000, source = "APL" },
+            next = {}
+        }
+        sqm.GetFinalQueue = function() return mockData end
         
         -- We will spy on IconWidget:SetOutOfRange.
-        local mainIconWidget = nil
-        -- Find the widget in upvalues or we can just spy the class
         local IconWidget = RA.UI.IconWidget
         local oldSetOutOfRange = IconWidget.SetOutOfRange
         local called_oor = nil
