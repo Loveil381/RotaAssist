@@ -203,3 +203,18 @@ Three bugs identified in SQM/APLEngine CD filtering chain:
 
 ### Quality
 - Score: 8.5 → 8.8/10 (P0 product fix)
+
+## Round 15 — UI Overhaul (HekiLight-style)
+
+**Branch**: `improve/round15-ui-overhaul`
+
+### Changes
+- Rewrote `MainDisplay.lua` from T-shaped dashboard to a clean horizontal icon strip
+- Refactored `DefensiveAlert` and `InterruptAlert` into standalone floating frames
+- Added range check (red pulse) and proc glow support
+- Filtered out CD spells from prediction slots
+- Added MainDisplay layout UI tests
+
+### Quality
+- Score remains 8.8 (Engine), UI Experience goal jumps to 7/10
+

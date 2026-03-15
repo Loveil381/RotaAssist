@@ -36,8 +36,8 @@
 - PrePullChecker — 战斗前消耗品检查
 
 ### UI 层
-- Widgets/ — 7 个可复用组件 (Glow/Icon/ResourceBar/PhaseIndicator/AccuracyMeter/PrePullPanel/DefensiveAlert/CooldownBar)
-- MainDisplay — 主推荐面板
+- Widgets/ — 可复用组件 (Glow/Icon/ResourceBar/PhaseIndicator/AccuracyMeter/PrePullPanel/DefensiveAlert/InterruptAlert/CooldownBar)
+- MainDisplay — 主推荐面板 (水平图标条)
 - CooldownPanel — 冷却追踪面板
 - MinimapButton — 小地图图标
 - ConfigPanel — AceConfigDialog 设置

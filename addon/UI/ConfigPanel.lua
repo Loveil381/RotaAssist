@@ -71,11 +71,18 @@ local function GetOptions()
                 set = function(info, value) RA.db.profile.display[info[#info]] = value end,
                 args = {
                     iconCount = {
-                        name = L["CONFIG_ICON_COUNT"],
-                        desc = L["CONFIG_ICON_COUNT_DESC"],
+                        name = L["CONFIG_ICON_COUNT"] or "Icon Count",
+                        desc = L["CONFIG_ICON_COUNT_DESC"] or "Number of icons to display",
                         type = "range",
                         min = 1, max = 5, step = 1,
                         order = 10,
+                    },
+                    iconSpacing = {
+                        name = L["CONFIG_ICON_SPACING"] or "Icon Spacing",
+                        desc = L["CONFIG_ICON_SPACING_DESC"] or "Spacing between icons in pixels",
+                        type = "range",
+                        min = 0, max = 16, step = 1,
+                        order = 15,
                     },
                     scale = {
                         name = L["CONFIG_SCALE"],
@@ -122,6 +129,18 @@ local function GetOptions()
                         desc = L["CONFIG_COOLDOWN_SWIRL_DESC"],
                         type = "toggle",
                         order = 80,
+                    },
+                    showRangeIndicator = {
+                        name = L["CONFIG_SHOW_RANGE"] or "Show Range Indicator",
+                        desc = L["CONFIG_SHOW_RANGE_DESC"] or "Pulse the main icon red if the target is out of range",
+                        type = "toggle",
+                        order = 90,
+                    },
+                    showProcGlow = {
+                        name = L["CONFIG_SHOW_PROC"] or "Show Proc Glow",
+                        desc = L["CONFIG_SHOW_PROC_DESC"] or "Show glowing border for procs",
+                        type = "toggle",
+                        order = 100,
                     },
                 },
             },
