@@ -164,6 +164,9 @@ C_Timer = {
         -- Return a mock ticker with a Cancel method
         return { Cancel = function(self) end }
     end,
+    NewTimer = function(delay, callback)
+        return { Cancel = function(self) end }
+    end,
     After = function(delay, callback)
         -- No-op in tests
     end,
@@ -201,10 +204,20 @@ local function makeFrame(frameType, name, parent, template)
     function frame:StartMoving() end
     function frame:StopMovingOrSizing() end
     function frame:SetClampedToScreen(b) end
-    function frame:SetWidth(w) self._w = w end
     function frame:SetHeight(h) self._h = h end
     function frame:GetWidth() return self._w or 0 end
     function frame:GetHeight() return self._h or 0 end
+    function frame:GetPoint() return "CENTER", nil, "CENTER", 0, 0 end
+    function frame:SetScale(s) self._scale = s end
+    function frame:GetScale() return self._scale or 1.0 end
+    function frame:SetFrameLevel(n) self._frameLevel = n end
+    function frame:GetFrameLevel() return self._frameLevel or 1 end
+    function frame:SetBackdrop(t) end
+    function frame:SetBackdropColor(...) end
+    function frame:SetBackdropBorderColor(...) end
+    function frame:SetDrawEdge(b) end
+    function frame:SetCooldown(start, dur) end
+    function frame:Clear() end
     function frame:SetText(t) self._text = t end
     function frame:GetText() return self._text or "" end
     function frame:SetTextColor(...) end
@@ -227,6 +240,27 @@ local function makeFrame(frameType, name, parent, template)
     function frame:CreateFontString(name, layer, template)
         return makeFrame("FontString", name, frame)
     end
+    function frame:CreateAnimationGroup()
+        local ag = {
+            _looping = "NONE",
+            _playing = false,
+            _animations = {},
+        }
+        function ag:SetLooping(mode) self._looping = mode end
+        function ag:Play() self._playing = true end
+        function ag:Stop() self._playing = false end
+        function ag:IsPlaying() return self._playing end
+        function ag:CreateAnimation(animType)
+            local anim = {}
+            function anim:SetFromAlpha(a) end
+            function anim:SetToAlpha(a) end
+            function anim:SetDuration(d) end
+            function anim:SetOrder(o) end
+            table.insert(ag._animations, anim)
+            return anim
+        end
+        return ag
+    end
     function frame:RegisterEvent(event) end
     function frame:UnregisterEvent(event) end
     function frame:UnregisterAllEvents() end
@@ -245,6 +279,23 @@ _G.CreateFrame = CreateFrame
 
 function PlaySound(soundID, channel, forceNoDuplicates) end
 _G.PlaySound = PlaySound
+
+function PlaySoundFile(file, channel) end
+_G.PlaySoundFile = PlaySoundFile
+
+function UIFrameFadeIn(frame, time, startAlpha, endAlpha)
+    if frame and frame.SetAlpha then frame:SetAlpha(endAlpha or 1) end
+end
+function UIFrameFadeOut(frame, time, startAlpha, endAlpha)
+    if frame and frame.SetAlpha then frame:SetAlpha(endAlpha or 0) end
+end
+_G.UIFrameFadeIn = UIFrameFadeIn
+_G.UIFrameFadeOut = UIFrameFadeOut
+
+function ActionButton_ShowOverlayGlow(frame) end
+function ActionButton_HideOverlayGlow(frame) end
+_G.ActionButton_ShowOverlayGlow = ActionButton_ShowOverlayGlow
+_G.ActionButton_HideOverlayGlow = ActionButton_HideOverlayGlow
 
 SOUNDKIT = setmetatable({}, { __index = function(_, k) return 0 end })
 _G.SOUNDKIT = SOUNDKIT
