@@ -58,3 +58,21 @@
 - 理由: CooldownOverlay 只追踪 SpecEnhancements + WhitelistSpells 中的技能，
         其余技能（如短 CD 非白名单技能）缺乏 CD 过滤
 - 影响: 堵住第二条 CD 过滤漏洞
+
+## D-010: MainDisplay 从 T 形仪表盘重构为水平图标条
+- 日期: Round 15
+- 决策: 移除 MainDisplay 中的进度条、准确率等元素，改为纯净的 HekiLight 风格水平图标条
+- 理由: 用户反馈 UI 糟糕，竞品分析显示简洁图标条是行业标准
+- 影响: MainDisplay 大幅简化，仅负责推荐展示
+
+## D-011: 警告类信息独立浮动
+- 日期: Round 15
+- 决策: DefensiveAlert 和 InterruptAlert 从推荐条独立出来成为可拖拽的浮动框
+- 理由: 推荐条应只做推荐，警告类信息混在其中会增加视觉噪音
+- 影响: UI 层级更清晰
+
+## D-012: 预测槽位过滤 CD 中技能
+- 日期: Round 15
+- 决策: 副槽位（预测）自动隐藏 CD > 1.5s 的技能
+- 理由: 遵循 HekiLight 标准行为，避免向玩家展示不可用的预测技能
+- 影响: UpdateDisplay 增加了针对 predictions 的 CD 过滤逻辑
