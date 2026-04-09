@@ -27,6 +27,9 @@ RA.WhitelistSpells = {
 
     ---------- Paladin ----------
     [31884]  = { name = "Avenging Wrath",      class = "PALADIN",      specID = nil,  cdSeconds = 120 },
+    [255937] = { name = "Wake of Ashes",       class = "PALADIN",      specID = 70,   cdSeconds = 45  },
+    [375576] = { name = "Divine Toll",         class = "PALADIN",      specID = 70,   cdSeconds = 60  },
+    [343527] = { name = "Execution Sentence",  class = "PALADIN",      specID = 70,   cdSeconds = 60  },
     [31850]  = { name = "Ardent Defender",      class = "PALADIN",      specID = 66,   cdSeconds = 120 },
     [86659]  = { name = "Guardian of Ancient Kings", class = "PALADIN", specID = 66,   cdSeconds = 300 },
     [642]    = { name = "Divine Shield",        class = "PALADIN",      specID = nil,  cdSeconds = 300 },
@@ -51,31 +54,52 @@ RA.WhitelistSpells = {
     [64843]  = { name = "Divine Hymn",          class = "PRIEST",       specID = 257,  cdSeconds = 180 },
     [228260] = { name = "Void Eruption",        class = "PRIEST",       specID = 258,  cdSeconds = 90  },
     [47585]  = { name = "Dispersion",           class = "PRIEST",       specID = 258,  cdSeconds = 120 },
+    [10060]  = { name = "Power Infusion",       class = "PRIEST",       specID = 258,  cdSeconds = 120 },
+    [263346] = { name = "Void Torrent",         class = "PRIEST",       specID = 258,  cdSeconds = 60  },
+    [120644] = { name = "Halo",                 class = "PRIEST",       specID = 258,  cdSeconds = 40  },
+    [451329] = { name = "Tentacle Slam",        class = "PRIEST",       specID = 258,  cdSeconds = 30  },
 
     ---------- Death Knight ----------
     [49028]  = { name = "Dancing Rune Weapon",  class = "DEATHKNIGHT",  specID = 250,  cdSeconds = 120 },
     [55233]  = { name = "Vampiric Blood",       class = "DEATHKNIGHT",  specID = 250,  cdSeconds = 90  },
     [152279] = { name = "Breath of Sindragosa", class = "DEATHKNIGHT",  specID = 251,  cdSeconds = 120 },
     [51271]  = { name = "Pillar of Frost",      class = "DEATHKNIGHT",  specID = 251,  cdSeconds = 60  },
+    [47568]  = { name = "Empower Rune Weapon",  class = "DEATHKNIGHT",  specID = 251,  cdSeconds = 120 },
+    [279302] = { name = "Frostwyrm's Fury",     class = "DEATHKNIGHT",  specID = 251,  cdSeconds = 90  },
     [275699] = { name = "Apocalypse",           class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 75  },
     [42650]  = { name = "Army of the Dead",     class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 480 },
+    [63560]  = { name = "Dark Transformation",  class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 45  },
+    [343294] = { name = "Soul Reaper",          class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 6   },
+    [455397] = { name = "Raise Abomination",    class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 90  },
+    [49206]  = { name = "Summon Gargoyle",      class = "DEATHKNIGHT",  specID = 252,  cdSeconds = 180 },
 
     ---------- Shaman ----------
     [198067] = { name = "Fire Elemental",       class = "SHAMAN",       specID = 262,  cdSeconds = 150 },
     [191634] = { name = "Stormkeeper",          class = "SHAMAN",       specID = 262,  cdSeconds = 60  },
     [51533]  = { name = "Feral Spirit",         class = "SHAMAN",       specID = 263,  cdSeconds = 90  },
+    [114051] = { name = "Ascendance",           class = "SHAMAN",       specID = 263,  cdSeconds = 180 },
+    [384352] = { name = "Doom Winds",           class = "SHAMAN",       specID = 263,  cdSeconds = 60  },
+    [197214] = { name = "Sundering",            class = "SHAMAN",       specID = 263,  cdSeconds = 40  },
+    [375982] = { name = "Primordial Wave",      class = "SHAMAN",       specID = 263,  cdSeconds = 45  },
+    [108271] = { name = "Astral Shift",         class = "SHAMAN",       specID = nil,  cdSeconds = 90  },
     [108280] = { name = "Healing Tide Totem",   class = "SHAMAN",       specID = 264,  cdSeconds = 180 },
     [98008]  = { name = "Spirit Link Totem",    class = "SHAMAN",       specID = 264,  cdSeconds = 180 },
 
     ---------- Mage ----------
     [12042]  = { name = "Arcane Power",         class = "MAGE",         specID = 62,   cdSeconds = 120 },
+    [365362] = { name = "Arcane Surge",         class = "MAGE",         specID = 62,   cdSeconds = 90  },
+    [321507] = { name = "Touch of the Magi",    class = "MAGE",         specID = 62,   cdSeconds = 45  },
     [190319] = { name = "Combustion",           class = "MAGE",         specID = 63,   cdSeconds = 120 },
     [12472]  = { name = "Icy Veins",            class = "MAGE",         specID = 64,   cdSeconds = 180 },
+    [205021] = { name = "Ray of Frost",         class = "MAGE",         specID = 64,   cdSeconds = 75  },
+    [84714]  = { name = "Frozen Orb",           class = "MAGE",         specID = 64,   cdSeconds = 60  },
     [45438]  = { name = "Ice Block",            class = "MAGE",         specID = nil,  cdSeconds = 240 },
 
     ---------- Warlock ----------
     [1122]   = { name = "Summon Infernal",      class = "WARLOCK",      specID = 267,  cdSeconds = 180 },
     [265187] = { name = "Summon Demonic Tyrant", class = "WARLOCK",     specID = 266,  cdSeconds = 90  },
+    [104316] = { name = "Call Dreadstalkers",    class = "WARLOCK",     specID = 266,  cdSeconds = 20  },
+    [111898] = { name = "Grimoire: Felguard",    class = "WARLOCK",     specID = 266,  cdSeconds = 120 },
     [205180] = { name = "Summon Darkglare",     class = "WARLOCK",      specID = 265,  cdSeconds = 120 },
     [104773] = { name = "Unending Resolve",     class = "WARLOCK",      specID = nil,  cdSeconds = 180 },
 

@@ -118,6 +118,17 @@ describe("SpecDetector", function()
             -- Cleanup
             RA.SpecEnhancements[577].resource = nil
         end)
+
+        it("supports the newer powerType field used by mainline spec data", function()
+            RA.SpecEnhancements = RA.SpecEnhancements or {}
+            RA.SpecEnhancements[577] = RA.SpecEnhancements[577] or {}
+            RA.SpecEnhancements[577].resource = { powerType = 17 } -- Fury
+
+            local pt = SD:GetPrimaryPowerType()
+            assert.equals(17, pt)
+
+            RA.SpecEnhancements[577].resource = nil
+        end)
     end)
 
     describe("nil spec handling", function()

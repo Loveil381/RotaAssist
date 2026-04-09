@@ -176,14 +176,14 @@ function SpecDetector:GetSpecID()
 end
 
 ---Get the primary power type for the current spec.
----Reads from SpecEnhancements[specID].resource.type.
+---Reads from SpecEnhancements[specID].resource.type or .resource.powerType.
 ---@return number|nil powerType  Enum.PowerType value, or nil if unknown
 function SpecDetector:GetPrimaryPowerType()
     if not currentSpec then return nil end
     if not RA.SpecEnhancements then return nil end
     local enhData = RA.SpecEnhancements[currentSpec.specID]
-    if enhData and enhData.resource and enhData.resource.type then
-        return enhData.resource.type
+    if enhData and enhData.resource then
+        return enhData.resource.type or enhData.resource.powerType
     end
     return nil
 end

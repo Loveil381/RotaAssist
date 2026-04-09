@@ -152,7 +152,7 @@ local function buildLimitedState()
     end
 
     if enhData and enhData.resource then
-        local powerType = enhData.resource.type
+        local powerType = enhData.resource.type or enhData.resource.powerType
         currentResource.powerType = powerType
         if powerType then
             local ok, power = pcall(UnitPower, "player", powerType)
