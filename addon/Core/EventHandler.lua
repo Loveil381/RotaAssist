@@ -204,12 +204,6 @@ end
 ---@param eventName string Custom event name
 ---@param ... any Payload arguments
 function EventHandler:Fire(eventName, ...)
-    -- FIX (Issue 5): Only build and print the debug string when debugMode
-    -- is actually on.  Previously the string was concatenated on every call
-    -- regardless, causing needless GC pressure on every assist/cooldown event.
-    if RA.debugMode then
-        RA:PrintDebug("Firing: " .. eventName)
-    end
     RA:SendMessage(eventName, ...)
 end
 
