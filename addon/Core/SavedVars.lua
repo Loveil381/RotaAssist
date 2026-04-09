@@ -22,7 +22,7 @@ local defaults = {
             minimapButton = true,
         },
         display = {
-            iconCount   = 3,         -- number of prediction icons (1-5)
+            iconCount   = 2,         -- number of prediction icons (1-2)
             iconSize    = 48,        -- pixels per icon
             iconSpacing = 4,         -- gap between icons
             scale       = 1.0,       -- overall scale (0.5 – 2.0)

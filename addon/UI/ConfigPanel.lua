@@ -21,6 +21,13 @@ RA:RegisterModule("ConfigPanel", ConfigPanel)
 local function GetOptions()
     local L = RA.L
 
+    local function notifySettingsChanged()
+        local eventHandler = RA:GetModule("EventHandler")
+        if eventHandler and eventHandler.Fire then
+            eventHandler:Fire("ROTAASSIST_SETTINGS_RESET")
+        end
+    end
+
     local options = {
         name = "RotaAssist",
         type = "group",
@@ -30,7 +37,10 @@ local function GetOptions()
                 type = "group",
                 order = 1,
                 get = function(info) return RA.db.profile.general[info[#info]] end,
-                set = function(info, value) RA.db.profile.general[info[#info]] = value end,
+                set = function(info, value)
+                    RA.db.profile.general[info[#info]] = value
+                    notifySettingsChanged()
+                end,
                 args = {
                     enabled = {
                         name = L["CONFIG_ENABLED"],
@@ -46,6 +56,7 @@ local function GetOptions()
                         set = function(info, value)
                             RA.db.profile.general.debugMode = value
                             RA.debugMode = value
+                            notifySettingsChanged()
                         end,
                     },
                     minimapButton = {
@@ -59,6 +70,7 @@ local function GetOptions()
                             if minimap then
                                 minimap:SetShown(value)
                             end
+                            notifySettingsChanged()
                         end,
                     },
                 },
@@ -68,13 +80,16 @@ local function GetOptions()
                 type = "group",
                 order = 2,
                 get = function(info) return RA.db.profile.display[info[#info]] end,
-                set = function(info, value) RA.db.profile.display[info[#info]] = value end,
+                set = function(info, value)
+                    RA.db.profile.display[info[#info]] = value
+                    notifySettingsChanged()
+                end,
                 args = {
                     iconCount = {
                         name = L["CONFIG_ICON_COUNT"],
                         desc = L["CONFIG_ICON_COUNT_DESC"],
                         type = "range",
-                        min = 1, max = 5, step = 1,
+                        min = 1, max = 2, step = 1,
                         order = 10,
                     },
                     scale = {
@@ -130,7 +145,10 @@ local function GetOptions()
                 type = "group",
                 order = 3,
                 get = function(info) return RA.db.profile.cooldowns[info[#info]] end,
-                set = function(info, value) RA.db.profile.cooldowns[info[#info]] = value end,
+                set = function(info, value)
+                    RA.db.profile.cooldowns[info[#info]] = value
+                    notifySettingsChanged()
+                end,
                 args = {
                     showPanel = {
                         name = L["CONFIG_CD_ENABLED"],

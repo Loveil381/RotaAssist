@@ -46,6 +46,41 @@ describe("APLEngine", function()
             assert.equals("fel_scarred", APL:GetProfileName())
             APL:SetProfile("default")
         end)
+
+        it("auto-selects profile from active talents", function()
+            _G._testTalentConfigID = 1
+            _G._testTalentConfigInfo = { [1] = { treeIDs = { 101 } } }
+            _G._testTalentTreeNodes = { [101] = { 201 } }
+            _G._testTalentNodeInfo = {
+                ["1:201"] = {
+                    activeRank = 1,
+                    activeEntry = { entryID = 301 },
+                    entryIDs = { 301 },
+                },
+            }
+            _G._testTalentEntryInfo = {
+                ["1:301"] = { definitionID = 401 },
+            }
+            _G._testTalentDefinitionInfo = {
+                [401] = { overrideName = "Demonsurge" },
+            }
+
+            APL:SetAPL(577, {
+                profiles = {
+                    ["default"] = { signatureTalentNames = { "Art of the Glaive" } },
+                    ["fel_scarred"] = { signatureTalentNames = { "Demonsurge" } },
+                },
+            }, 12)
+
+            assert.equals("fel_scarred", APL:GetProfileName())
+
+            _G._testTalentConfigID = nil
+            _G._testTalentConfigInfo = nil
+            _G._testTalentTreeNodes = nil
+            _G._testTalentNodeInfo = nil
+            _G._testTalentEntryInfo = nil
+            _G._testTalentDefinitionInfo = nil
+        end)
     end)
 
     -- ================================================================
@@ -133,6 +168,52 @@ describe("APLEngine", function()
             local sim = { cooldowns = {}, resource = 50, inMeta = false, lastCast = 300 }
             assert.is_false(APL:EvaluateCondition("after:200", 100, sim))
         end)
+
+        it("estimated_resource >= X supports spaced operators", function()
+            local sim = { cooldowns = {}, resource = 80, inMeta = false }
+            assert.is_true(APL:EvaluateCondition("estimated_resource >= 70", 100, sim))
+            assert.is_false(APL:EvaluateCondition("estimated_resource >= 90", 100, sim))
+        end)
+
+        it("estimated_resource <= X supports compact operators", function()
+            local sim = { cooldowns = {}, resource = 35, inMeta = false }
+            assert.is_true(APL:EvaluateCondition("estimated_resource<=40", 100, sim))
+            assert.is_false(APL:EvaluateCondition("estimated_resource<=20", 100, sim))
+        end)
+
+        it("target_count comparisons work", function()
+            local sim = { cooldowns = {}, resource = 50, inMeta = false, targetCount = 3 }
+            assert.is_true(APL:EvaluateCondition("target_count >= 2", 100, sim))
+            assert.is_false(APL:EvaluateCondition("target_count < 3", 100, sim))
+        end)
+
+        it("combat_time comparisons work", function()
+            local sim = { cooldowns = {}, resource = 50, inMeta = false, combatDuration = 4 }
+            assert.is_true(APL:EvaluateCondition("combat_time >= 3", 100, sim))
+            assert.is_false(APL:EvaluateCondition("combat_time < 2", 100, sim))
+        end)
+
+        it("window conditions work", function()
+            local sim = {
+                cooldowns = {},
+                resource = 50,
+                inMeta = false,
+                windows = { essence_break = true },
+            }
+            assert.is_true(APL:EvaluateCondition("window:essence_break", 100, sim))
+            assert.is_false(APL:EvaluateCondition("not_window:essence_break", 100, sim))
+        end)
+
+        it("charges comparisons work", function()
+            local sim = {
+                cooldowns = {},
+                resource = 50,
+                inMeta = false,
+                charges = { [100] = 2 },
+            }
+            assert.is_true(APL:EvaluateCondition("charges >= 2", 100, sim))
+            assert.is_false(APL:EvaluateCondition("charges < 2", 100, sim))
+        end)
     end)
 
     -- ================================================================
@@ -167,6 +248,37 @@ describe("APLEngine", function()
             assert.equals(10, sim.cooldowns[210152]) -- Death Sweep (override pair)
 
             RA.WhitelistSpells[188499] = nil
+        end)
+
+        it("activates simulated meta state for Demonic triggers", function()
+            local sim = { cooldowns = {}, resource = 50, inMeta = false }
+            APL:SimulateSpellCast(sim, 198013)
+            assert.is_true(sim.inMeta)
+        end)
+
+        it("activates simulated essence break window", function()
+            local sim = { cooldowns = {}, resource = 50, inMeta = false, windows = {} }
+            APL:SimulateSpellCast(sim, 258860)
+            assert.is_true(sim.windows.essence_break)
+        end)
+
+        it("expires simulated essence break window after two future casts", function()
+            local sim = {
+                cooldowns = {},
+                resource = 80,
+                inMeta = false,
+                windows = {},
+                windowSteps = {},
+            }
+
+            APL:SimulateSpellCast(sim, 258860)
+            assert.is_true(sim.windows.essence_break)
+
+            APL:SimulateSpellCast(sim, 162794)
+            assert.is_true(sim.windows.essence_break)
+
+            APL:SimulateSpellCast(sim, 162794)
+            assert.is_false(sim.windows.essence_break)
         end)
     end)
 
@@ -251,6 +363,31 @@ describe("APLEngine", function()
             if #result >= 2 then
                 assert.is_true(result[1].confidence >= result[2].confidence)
             end
+        end)
+
+        it("predicts Demonic follow-up after Eye Beam", function()
+            APL:SetAPL(577, {
+                profiles = {
+                    ["default"] = {
+                        singleTarget = {
+                            { spellID = 210152, priority = 1, condition = "in_meta" },
+                            { spellID = 162794, priority = 2, condition = "always" },
+                        },
+                    },
+                },
+            }, 12)
+
+            local state = {
+                resource = 60,
+                cooldowns = {},
+                inMeta = false,
+                targetCount = 1,
+                combatDuration = 4,
+            }
+            local result = APL:PredictNext(198013, state, 1)
+
+            assert.is_true(#result >= 1)
+            assert.equals(210152, result[1].spellID)
         end)
     end)
 end)

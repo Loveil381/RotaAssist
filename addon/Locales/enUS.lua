@@ -51,7 +51,7 @@ L["CONFIG_MINIMAP_DESC"]      = "Toggle the minimap icon."
 
 -- Display settings
 L["CONFIG_ICON_COUNT"]        = "Number of Icons"
-L["CONFIG_ICON_COUNT_DESC"]   = "How many prediction icons to show (1-5)."
+L["CONFIG_ICON_COUNT_DESC"]   = "How many future prediction icons to show below the main spell (1-2)."
 L["CONFIG_SCALE"]             = "Scale"
 L["CONFIG_SCALE_DESC"]        = "Overall display scale (50% - 200%)."
 L["CONFIG_ALPHA"]             = "Opacity"

@@ -47,7 +47,7 @@ L["CONFIG_MINIMAP"]           = "显示小地图按钮"
 L["CONFIG_MINIMAP_DESC"]      = "切换小地图图标显示。"
 
 L["CONFIG_ICON_COUNT"]        = "图标数量"
-L["CONFIG_ICON_COUNT_DESC"]   = "显示多少个预测技能图标 (1-5)。"
+L["CONFIG_ICON_COUNT_DESC"]   = "在主技能下方显示多少个后续预测图标 (1-2)。"
 L["CONFIG_SCALE"]             = "缩放比例"
 L["CONFIG_SCALE_DESC"]        = "整体显示缩放 (50% - 200%)。"
 L["CONFIG_ALPHA"]             = "透明度"

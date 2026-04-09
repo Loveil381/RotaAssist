@@ -145,6 +145,51 @@ C_AddOns = {
 _G.C_AddOns = C_AddOns
 
 -- ============================================================
+-- Talent API mocks
+-- ============================================================
+
+C_ClassTalents = {
+    GetActiveConfigID = function()
+        return _G._testTalentConfigID
+    end,
+}
+_G.C_ClassTalents = C_ClassTalents
+
+C_Traits = {
+    GetConfigInfo = function(configID)
+        if _G._testTalentConfigInfo then
+            return _G._testTalentConfigInfo[configID]
+        end
+        return nil
+    end,
+    GetTreeNodes = function(treeID)
+        if _G._testTalentTreeNodes then
+            return _G._testTalentTreeNodes[treeID]
+        end
+        return {}
+    end,
+    GetNodeInfo = function(configID, nodeID)
+        if _G._testTalentNodeInfo then
+            return _G._testTalentNodeInfo[configID .. ":" .. nodeID]
+        end
+        return nil
+    end,
+    GetEntryInfo = function(configID, entryID)
+        if _G._testTalentEntryInfo then
+            return _G._testTalentEntryInfo[configID .. ":" .. entryID]
+        end
+        return nil
+    end,
+    GetDefinitionInfo = function(definitionID)
+        if _G._testTalentDefinitionInfo then
+            return _G._testTalentDefinitionInfo[definitionID]
+        end
+        return nil
+    end,
+}
+_G.C_Traits = C_Traits
+
+-- ============================================================
 -- C_Timer namespace mock
 -- ============================================================
 
@@ -183,7 +228,10 @@ local function makeFrame(frameType, name, parent, template)
     function frame:ClearAllPoints() end
     function frame:SetAlpha(a) self._alpha = a end
     function frame:GetAlpha() return self._alpha end
+    function frame:SetScale(s) self._scale = s end
+    function frame:GetScale() return self._scale or 1 end
     function frame:SetFrameStrata(s) end
+    function frame:GetFrameLevel() return self._frameLevel or 1 end
     function frame:SetMovable(b) end
     function frame:EnableMouse(b) end
     function frame:RegisterForDrag(...) end
@@ -208,6 +256,18 @@ local function makeFrame(frameType, name, parent, template)
     function frame:GetValue() return self._value or 0 end
     function frame:SetStatusBarTexture(t) end
     function frame:SetStatusBarColor(...) end
+    function frame:SetBackdrop(backdrop) self._backdrop = backdrop end
+    function frame:GetBackdrop() return self._backdrop end
+    function frame:SetBackdropColor(...) self._backdropColor = { ... } end
+    function frame:SetBackdropBorderColor(...) self._backdropBorderColor = { ... } end
+    function frame:SetCooldown(start, duration)
+        self._cooldownStart = start
+        self._cooldownDuration = duration
+    end
+    function frame:Clear()
+        self._cooldownStart = nil
+        self._cooldownDuration = nil
+    end
     function frame:CreateTexture(name, layer)
         return makeFrame("Texture", name, frame)
     end

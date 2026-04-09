@@ -73,6 +73,23 @@ describe("RA:SlashCommand", function()
         end)
     end)
 
+    describe("toggle command", function()
+        it("toggles general enabled state via MainDisplay", function()
+            local called = 0
+            RA.db.profile.general.enabled = true
+            RA.modules["MainDisplay"] = {
+                Toggle = function()
+                    called = called + 1
+                    RA.db.profile.general.enabled = not RA.db.profile.general.enabled
+                end,
+            }
+
+            RA:SlashCommand("toggle")
+            assert.equals(1, called)
+            assert.is_false(RA.db.profile.general.enabled)
+        end)
+    end)
+
     describe("unknown command", function()
         it("prints a warning for unrecognized input", function()
             RA:SlashCommand("xyzzy")

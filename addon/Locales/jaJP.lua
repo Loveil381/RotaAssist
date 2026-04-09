@@ -47,7 +47,7 @@ L["CONFIG_MINIMAP"]           = "ミニマップボタンを表示"
 L["CONFIG_MINIMAP_DESC"]      = "ミニマップアイコンの表示を切り替えます。"
 
 L["CONFIG_ICON_COUNT"]        = "アイコン数"
-L["CONFIG_ICON_COUNT_DESC"]   = "予測スキルアイコンの表示数 (1-5)。"
+L["CONFIG_ICON_COUNT_DESC"]   = "メインスキルの下に表示する次手予測アイコン数 (1-2)。"
 L["CONFIG_SCALE"]             = "スケール"
 L["CONFIG_SCALE_DESC"]        = "全体の表示倍率 (50% - 200%)。"
 L["CONFIG_ALPHA"]             = "不透明度"

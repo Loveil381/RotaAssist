@@ -18,6 +18,18 @@ local THROTTLE_SIGNALS = 0.2
 local THROTTLE_INFER   = 0.3
 local HISTORY_SIZE     = 20
 local MAX_NAMEPLATES   = 40
+local TARGET_HYSTERESIS = 1.0
+
+local WINDOW_DURATIONS = {
+    demonic = 8.0,
+    essence_break = 4.0,
+}
+
+local WINDOW_TRIGGER_SPELLS = {
+    [198013] = "demonic",      -- Eye Beam
+    [191427] = "demonic",      -- Metamorphosis
+    [258860] = "essence_break",-- Essence Break
+}
 
 -- Persistent signal buffers
 local pastCasts = {}
@@ -27,13 +39,23 @@ local numPastCasts = 0
 local lastSignalTime = 0
 local lastInferTime  = 0
 local sessionStartTime = 0
+local lastMultiTargetTime = 0
+local windowExpiries = {
+    demonic = 0,
+    essence_break = 0,
+}
 
 -- Persistent contextual state output
 AIInference.InferredState = {
     targetCount = 1,
+    rawTargetCount = 1,
     timeSincePull = 0,
     blizzardRecommendation = 0,
     lastBlizzardChange = 0,
+    windows = {
+        demonic = false,
+        essence_break = false,
+    },
     
     inferred = {
         combatPhase = "NORMAL",
@@ -120,6 +142,11 @@ local function OnSpellCastSucceeded(_, unit, _, spellID)
     castIndex = castIndex + 1
     if castIndex > HISTORY_SIZE then castIndex = 1 end
     numPastCasts = math.min(numPastCasts + 1, HISTORY_SIZE)
+
+    local windowKey = WINDOW_TRIGGER_SPELLS[spellID]
+    if windowKey then
+        windowExpiries[windowKey] = GetTime() + (WINDOW_DURATIONS[windowKey] or 0)
+    end
 end
 
 local function CollectSignals(now)
@@ -133,8 +160,23 @@ local function CollectSignals(now)
         state.timeSincePull = 0
     end
     
-    -- Sync nameplates
-    state.targetCount = CountNameplates()
+    -- Sync nameplates with light hysteresis so targetCount does not flap
+    local rawTargetCount = CountNameplates()
+    state.rawTargetCount = rawTargetCount
+    if rawTargetCount >= 3 then
+        lastMultiTargetTime = now
+        state.targetCount = rawTargetCount
+    elseif rawTargetCount == 2 then
+        state.targetCount = 2
+    elseif (now - lastMultiTargetTime) <= TARGET_HYSTERESIS then
+        state.targetCount = math.max(state.targetCount or 1, 3)
+    else
+        state.targetCount = 1
+    end
+
+    for windowKey, expiry in pairs(windowExpiries) do
+        state.windows[windowKey] = expiry > now
+    end
     
     -- Sync Blizzard recommendation
     local bridge = RA:GetModule("AssistedCombatBridge")
@@ -209,6 +251,13 @@ local function InferBurstState(state, rules)
         state.inferred.burstActive = false
         state.inferred.burstConfidence = 0.0
         return
+    end
+
+    if state.windows.demonic then
+        score = score + 0.9
+    end
+    if state.windows.essence_break then
+        score = math.max(score, 0.99)
     end
     
     -- 1. Check native Cooldown data (SECRET VALUE SAFE)
@@ -318,6 +367,9 @@ local function InferCombatPhase(state)
     elseif state.timeSincePull > 0 and state.timeSincePull < 6 then
         inf.combatPhase = "OPENER"
         inf.phaseConfidence = 0.8
+    elseif state.windows.essence_break then
+        inf.combatPhase = "BURST_ACTIVE"
+        inf.phaseConfidence = 0.98
     elseif inf.burstActive and inf.burstConfidence > 0.7 then
         inf.combatPhase = "BURST_ACTIVE"
         inf.phaseConfidence = inf.burstConfidence
@@ -522,6 +574,9 @@ function AIInference:OnEnable()
             sessionStartTime = GetTime()
             prevAoeActive = false
             tipCooldowns = {}
+            lastMultiTargetTime = 0
+            windowExpiries.demonic = 0
+            windowExpiries.essence_break = 0
             
             uiFrame:Show()
         end)
@@ -530,7 +585,14 @@ function AIInference:OnEnable()
             uiFrame:Hide()
             AIInference.InferredState.inferred.combatPhase = "NORMAL"
             AIInference.InferredState.inferred.tip = nil
+            AIInference.InferredState.targetCount = 1
+            AIInference.InferredState.rawTargetCount = 1
+            AIInference.InferredState.windows.demonic = false
+            AIInference.InferredState.windows.essence_break = false
             ACTIVE_TIP = nil
+            lastMultiTargetTime = 0
+            windowExpiries.demonic = 0
+            windowExpiries.essence_break = 0
         end)
     end
     

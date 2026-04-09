@@ -47,6 +47,10 @@ describe("AIInference", function()
             assert.is_number(AI.InferredState.targetCount)
         end)
 
+        it("contains rawTargetCount", function()
+            assert.is_number(AI.InferredState.rawTargetCount)
+        end)
+
         it("contains timeSincePull", function()
             assert.is_number(AI.InferredState.timeSincePull)
         end)
@@ -57,6 +61,10 @@ describe("AIInference", function()
 
         it("contains inferred sub-table", function()
             assert.is_table(AI.InferredState.inferred)
+        end)
+
+        it("contains windows table", function()
+            assert.is_table(AI.InferredState.windows)
         end)
 
         it("inferred has combatPhase", function()

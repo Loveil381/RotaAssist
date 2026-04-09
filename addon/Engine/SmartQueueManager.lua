@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- RotaAssist - Smart Queue Manager
--- 智能队列管理器 / Smart Queue Manager
+-- 譎ｺ閭ｽ髦溷・邂｡逅・勣 / Smart Queue Manager
 -- The final fusion layer combining Blizzard, APL, AI Inference,
 -- Cooldowns, and Defensives into a single prioritized display queue.
 ------------------------------------------------------------------------
@@ -24,11 +24,11 @@ local defaultWeights = {
     defWeight      = 0.8
 }
 
--- 已知的被动/不可施放技能黑名单（API 查询的快速路径备份）
+-- 蟾ｲ遏･逧・｢ｫ蜉ｨ/荳榊庄譁ｽ謾ｾ謚閭ｽ鮟大錐蜊包ｼ・PI 譟･隸｢逧・ｿｫ騾溯ｷｯ蠕・､・ｻｽ・・
 -- Known passive/non-castable spell blacklist (fast-path backup for API queries)
 local PASSIVE_BLACKLIST = RA.Registry.PASSIVE_BLACKLIST
 
--- 抗抖动配置 / Anti-flicker config
+-- 謚玲竃蜉ｨ驟咲ｽｮ / Anti-flicker config
 local FLICKER_THRESHOLD = 2
 local previousNextSpells = {} -- [index] = spellID
 local flickerCounters   = {}  -- [index] = count
@@ -41,9 +41,9 @@ local mDefensiveAdvisor
 local mNeuralPredictor
 
 --- Check if a spell is currently on significant cooldown (> 1.0s remaining).
---- 检查技能是否在有效 CD 中（超过 1.0秒），用于过滤 next[] 中的预测。
+--- 譽譟･謚閭ｽ譏ｯ蜷ｦ蝨ｨ譛画譜 CD 荳ｭ・郁ｶ・ｿ・1.0遘抵ｼ会ｼ檎畑莠手ｿ・ｻ､ next[] 荳ｭ逧・｢・ｵ九・
 --- FIX (OverridePair): Also checks the paired override ID (e.g. Death Sweep for Blade Dance).
---- 同时检查覆盖对技能的 CD 状态（如 Blade Dance ↔ Death Sweep）。
+--- 蜷梧慮譽譟･隕・尠蟇ｹ謚閭ｽ逧・CD 迥ｶ諤・ｼ亥ｦ・Blade Dance 竊・Death Sweep・峨・
 local function IsSpellOnCooldown(spellID)
     if not spellID then return false end
     -- Primary: check CooldownOverlay tracked states
@@ -55,7 +55,7 @@ local function IsSpellOnCooldown(spellID)
                 return true
             end
             -- FIX (OverridePair): paired ID check when primary reports ready
-            -- 覆盖对检查：主 ID 就绪时查看配对 ID 是否在 CD
+            -- 隕・尠蟇ｹ譽譟･・壻ｸｻ ID 蟆ｱ扈ｪ譌ｶ譟･逵矩・蟇ｹ ID 譏ｯ蜷ｦ蝨ｨ CD
             local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
             if pairedID then
                 local pairedState = cds[pairedID]
@@ -74,7 +74,7 @@ local function IsSpellOnCooldown(spellID)
     end
 
     -- FIX (OverridePair): check paired ID via direct API when primary is not on CD
-    -- 覆盖对 API 回退：主 ID 未在 CD 时检查配对 ID
+    -- 隕・尠蟇ｹ API 蝗樣・壻ｸｻ ID 譛ｪ蝨ｨ CD 譌ｶ譽譟･驟榊ｯｹ ID
     if remaining ~= nil then
         local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[spellID]
         if pairedID then
@@ -86,7 +86,7 @@ local function IsSpellOnCooldown(spellID)
     end
 
     -- remaining == nil (secret value): estimate from cast history
-    -- 12.0 secret value 回退：从施法历史记录中估算冷却状态
+    -- 12.0 secret value 蝗樣・壻ｻ取命豕募紙蜿ｲ隶ｰ蠖穂ｸｭ莨ｰ邂怜・蜊ｴ迥ｶ諤・
     if remaining == nil then
         local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
         if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds > 1.5 then
@@ -111,26 +111,26 @@ end
 SmartQueueManager._IsSpellOnCooldown = IsSpellOnCooldown
 
 --- Unified castability gate: checks passive, unlearned, unusable, and cooldown.
---- 统一可施放性检查：被动、未学习、不可施放、冷却中四重过滤。
+--- 扈滉ｸ蜿ｯ譁ｽ謾ｾ諤ｧ譽譟･・夊｢ｫ蜉ｨ縲∵悴蟄ｦ荵縲∽ｸ榊庄譁ｽ謾ｾ縲∝・蜊ｴ荳ｭ蝗幃㍾霑・ｻ､縲・
 --- @param spellID number
 --- @return boolean castable
 local function IsSpellCastable(spellID)
     if not spellID or spellID == 0 then return false end
-    -- 1. 被动黑名单快速路径
+    -- 1. 陲ｫ蜉ｨ鮟大錐蜊募ｿｫ騾溯ｷｯ蠕・
     if PASSIVE_BLACKLIST[spellID] then return false end
-    -- 2. RA 被动检测
+    -- 2. RA 陲ｫ蜉ｨ譽豬・
     if RA.IsSpellPassive and RA:IsSpellPassive(spellID) then return false end
-    -- 3. 未学习检测
+    -- 3. 譛ｪ蟄ｦ荵譽豬・
     if IsPlayerSpell then
         local okL, known = pcall(IsPlayerSpell, spellID)
         if okL and not known then return false end
     end
-    -- 4. 不可施放检测（覆盖 Hero Talent 增强型被动等 IsSpellPassive 漏判的情况）
+    -- 4. 荳榊庄譁ｽ謾ｾ譽豬具ｼ郁ｦ・尠 Hero Talent 蠅槫ｼｺ蝙玖｢ｫ蜉ｨ遲・IsSpellPassive 貍丞愛逧・ュ蜀ｵ・・
     if C_Spell and C_Spell.IsSpellUsable then
         local okU, usable = pcall(C_Spell.IsSpellUsable, spellID)
         if okU and usable == false then return false end
     end
-    -- 5. 冷却中（>1.0秒）
+    -- 5. 蜀ｷ蜊ｴ荳ｭ・・1.0遘抵ｼ・
     if IsSpellOnCooldown(spellID) then return false end
     return true
 end
@@ -159,38 +159,38 @@ local finalQueue = {
 -- Previous main spell ID to fire event on change
 local prevMainSpellID = nil
 
--- 上一帧主推荐ID，供 AccuracyTracker 做上一帧比对。
+-- 荳贋ｸ蟶ｧ荳ｻ謗ｨ闕蝕D・御ｾ・AccuracyTracker 蛛壻ｸ贋ｸ蟶ｧ豈泌ｯｹ縲・
 local lastRecommendedSpellID = nil
 
 -- Sticky Blizzard recommendation (caches last known ID if Blizzard temporarily returns nil)
--- 记忆 Blizzard 推荐（防止 GCD 或延迟导致推荐瞬间消失引起预测抖动）
+-- 隶ｰ蠢・Blizzard 謗ｨ闕撰ｼ磯亟豁｢ GCD 謌門ｻｶ霑溷ｯｼ閾ｴ謗ｨ闕千椪髣ｴ豸亥､ｱ蠑戊ｵｷ鬚・ｵ区竃蜉ｨ・・
 local lastKnownBlizzSpell = nil
 
--- 施法后的软屏蔽：在真实 CD 数据到来前临时阻止刚施放的技能被推荐
+-- 譁ｽ豕募錘逧・ｽｯ螻剰反・壼惠逵溷ｮ・CD 謨ｰ謐ｮ蛻ｰ譚･蜑堺ｸｴ譌ｶ髦ｻ豁｢蛻壽命謾ｾ逧・橿閭ｽ陲ｫ謗ｨ闕・
 -- Soft-block: temporarily suppress the just-cast spell until SPELL_UPDATE_COOLDOWN confirms the real CD.
 local softBlockedSpells = {}
 local SOFT_BLOCK_DURATION = 0.6  -- seconds until soft-block auto-expires
 
--- 引导技能：施法成功后不清除 lastKnownBlizzSpell，保持引导结束后下一步推荐稳定
--- Channeled spells: don't clear sticky on success — keep showing next-spell during channel.
+-- 蠑募ｯｼ謚閭ｽ・壽命豕墓・蜉溷錘荳肴ｸ・勁 lastKnownBlizzSpell・御ｿ晄戟蠑募ｯｼ扈捺據蜷惹ｸ倶ｸ豁･謗ｨ闕千ｨｳ螳・
+-- Channeled spells: don't clear sticky on success 窶・keep showing next-spell during channel.
 local CHANNELED_SPELL_IDS = {
     [198013] = true,  -- Eye Beam (Havoc)
     [212084] = true,  -- Fel Devastation (Vengeance)
     [258920] = true,  -- Immolation Aura (channel phase)
 }
 
--- 引导期间捕获的「引导结束后下一步」spellID，用于 sticky fallback
+-- 蠑募ｯｼ譛滄龍謐戊執逧・悟ｼ募ｯｼ扈捺據蜷惹ｸ倶ｸ豁･縲行pellID・檎畑莠・sticky fallback
 -- Captured next-spell spellID during a channel, used as sticky fallback.
 local channelNextSpell = nil
 
-local context_reuse = { blizzSpell=nil, aplPred=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
+local context_reuse = { blizzSpell=nil, aplPred=nil, aplState=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
 local candidates_reuse = {}
 local scored_reuse = {}
 local toRemove_reuse = {}
 local passiveRemove_reuse = {}
 local sbRemove_reuse = {}
 local unlearnedRemove_reuse = {}
--- 最近一帧的 APL 预测结果（模块级，供 CHANNEL_START 闭包读取）
+-- 譛霑台ｸ蟶ｧ逧・APL 鬚・ｵ狗ｻ捺棡・域ｨ｡蝮礼ｺｧ・御ｾ・CHANNEL_START 髣ｭ蛹・ｯｻ蜿厄ｼ・
 -- Most-recent APL predictions at module level so the CHANNEL_START closure can read them.
 local aplPredictions = {}
 
@@ -199,7 +199,7 @@ local aplPredictions = {}
 ------------------------------------------------------------------------
 
 ---Calculate priority score for a spell candidate.
----计算候选技能的优先级得分。
+---隶｡邂怜咎画橿閭ｽ逧・ｼ伜・郤ｧ蠕怜・縲・
 ---@param spellID number
 ---@param context table
 ---@param weights table
@@ -216,9 +216,9 @@ local function CalculateScore(spellID, context, weights, aplPredictions)
     end
 
     -- 2. APL Engine Tiered Prediction Scoring
-    -- Step-1 gets full APL weight, step-2 gets 0.5×, step-3 gets 0.3×.
+    -- Step-1 gets full APL weight, step-2 gets 0.5ﾃ・ step-3 gets 0.3ﾃ・
     -- Skip if already scored as a blind-spot to avoid double-counting.
-    -- APL 分层评分：第1步全权重，第2步0.5×，第3步0.3×；盲区技能跳过避免双重计分
+    -- APL 蛻・ｱりｯ・・・夂ｬｬ1豁･蜈ｨ譚・㍾・檎ｬｬ2豁･0.5ﾃ暦ｼ檎ｬｬ3豁･0.3ﾃ暦ｼ帷峇蛹ｺ謚閭ｽ霍ｳ霑・∩蜈榊曙驥崎ｮ｡蛻・
     if aplPredictions and not (context.blindSpotCandidates and context.blindSpotCandidates[spellID]) then
         local APL_TIER = { 1.0, 0.5, 0.3 }
         for i, pred in ipairs(aplPredictions) do
@@ -234,9 +234,9 @@ local function CalculateScore(spellID, context, weights, aplPredictions)
     end
 
     -- 3. Blind-spot bonus: APL-prioritised CD that Blizzard's rotation omits.
-    -- 盲区加分：APL 优先级较高且 Blizzard 循环中缺少的就绪 CD，得分 >= 1.0 超越 Blizzard
+    -- 逶ｲ蛹ｺ蜉蛻・ｼ哂PL 莨伜・郤ｧ霎・ｫ倅ｸ・Blizzard 蠕ｪ邇ｯ荳ｭ郛ｺ蟆醍噪蟆ｱ扈ｪ CD・悟ｾ怜・ >= 1.0 雜・ｶ・Blizzard
     if context.blindSpotCandidates and context.blindSpotCandidates[spellID] then
-        score = score + 1.2  -- 必须超过 Blizzard 的 1.0，使盲区技能可以成为主推荐
+        score = score + 1.2  -- 蠢・｡ｻ雜・ｿ・Blizzard 逧・1.0・御ｽｿ逶ｲ蛹ｺ謚閭ｽ蜿ｯ莉･謌蝉ｸｺ荳ｻ謗ｨ闕・
         primarySource = "APL_BLINDSPOT"
     end
 
@@ -273,7 +273,7 @@ local function AssembleQueue()
         finalQueue.cooldowns = {}
         finalQueue.defensive = nil
         lastKnownBlizzSpell  = nil -- Clear cache out of combat
-        wipe(previousNextSpells)   -- 清空抗抖动缓存
+        wipe(previousNextSpells)   -- 貂・ｩｺ謚玲竃蜉ｨ郛灘ｭ・
         wipe(flickerCounters)
         return
     end
@@ -284,6 +284,7 @@ local function AssembleQueue()
     local context = context_reuse
     context.blizzSpell = nil
     context.aplPred = nil
+    context.aplState = nil
     wipe(context.cdReadyList)
     wipe(context.blindSpotCandidates)
     context.defSpell = nil
@@ -297,26 +298,26 @@ local function AssembleQueue()
 
         -- Sticky fallback priority:
         -- 1. Real Blizzard recommendation (always wins)
-        -- 2. channelNextSpell  — captured at channel start (引导中：显示引导后的下一个技能)
-        -- 3. lastKnownBlizzSpell — normal inter-GCD sticky
+        -- 2. channelNextSpell  窶・captured at channel start (蠑募ｯｼ荳ｭ・壽仞遉ｺ蠑募ｯｼ蜷守噪荳倶ｸ荳ｪ謚閭ｽ)
+        -- 3. lastKnownBlizzSpell 窶・normal inter-GCD sticky
         if context.blizzSpell then
             lastKnownBlizzSpell = context.blizzSpell
         elseif channelNextSpell then
             context.blizzSpell = channelNextSpell
         elseif lastKnownBlizzSpell then
-            -- FIX (Round14-Bug1): sticky fallback 必须验证技能是否仍然可施放
+            -- FIX (Round14-Bug1): sticky fallback 蠢・｡ｻ鬪瑚ｯ∵橿閭ｽ譏ｯ蜷ｦ莉咲┯蜿ｯ譁ｽ謾ｾ
             -- Sticky fallback must verify the spell is not on cooldown before reuse
             if not IsSpellOnCooldown(lastKnownBlizzSpell) then
                 context.blizzSpell = lastKnownBlizzSpell
             else
-                -- 技能已进 CD，清除 sticky，让队列自然降级到 APL/AI 推荐
+                -- 謚閭ｽ蟾ｲ霑・CD・梧ｸ・勁 sticky・瑚ｮｩ髦溷・閾ｪ辟ｶ髯咲ｺｧ蛻ｰ APL/AI 謗ｨ闕・
                 lastKnownBlizzSpell = nil
             end
         end
     end
 
     -- Build Blizzard rotation spell set for blind-spot detection
-    -- Blizzard 循环技能集合，用于检测盲区技能
+    -- Blizzard 蠕ｪ邇ｯ謚閭ｽ髮・粋・檎畑莠取｣豬狗峇蛹ｺ謚閭ｽ
     local rotationSpells = {}
     if mBridge then
         local list = mBridge:GetRotationSpells()
@@ -327,9 +328,9 @@ local function AssembleQueue()
 
     -- FIX (Bug1): PredictNext returns an ARRAY of predictions.
     -- Parse it correctly; the first element joins scoring, rest go to next[].
-    -- 修复：PredictNext 返回数组，第一个元素参与评分，其余填充 next[]。
+    -- 菫ｮ螟搾ｼ啀redictNext 霑泌屓謨ｰ扈・ｼ檎ｬｬ荳荳ｪ蜈・ｴ蜿ゆｸ手ｯ・・・悟・菴吝｡ｫ蜈・next[]縲・
     -- Reset APL predictions array (module-level, reused across frames)
-    -- 重置 APL 预测数组（模块级，跨帧复用）
+    -- 驥咲ｽｮ APL 鬚・ｵ区焚扈・ｼ域ｨ｡蝮礼ｺｧ・瑚ｷｨ蟶ｧ螟咲畑・・
     local currentTargetCount = 1
     if mAIInference then
         local aiCtx = mAIInference:GetContext()
@@ -345,12 +346,14 @@ local function AssembleQueue()
             cooldowns       = {},
             inMeta          = false,
             targetCount     = 1,
-            combatDuration  = 0,   -- 传递战斗时长给 APLEngine 用于 opener 检测
-            softBlocked     = softBlockedSpells,  -- 传递软屏蔽表给 APLEngine / pass soft-block map
+            combatDuration  = 0,
+            charges         = {},
+            windows         = {},
+            softBlocked     = softBlockedSpells,
         }
 
         -- Read the normalized SpecEnhancements resource config.
-        -- 读取统一后的 SpecEnhancements 资源配置。
+        -- 隸ｻ蜿也ｻ滉ｸ蜷守噪 SpecEnhancements 襍・ｺ宣・鄂ｮ縲・
         local powerType = 0  -- default to mana
         local specDetector = RA:GetModule("SpecDetector")
         if specDetector then
@@ -377,22 +380,34 @@ local function AssembleQueue()
             end
         end
 
+        if C_Spell and C_Spell.GetSpellCharges and RA.WhitelistSpells then
+            for sid in pairs(RA.WhitelistSpells) do
+                local okCharges, chargeInfo = pcall(C_Spell.GetSpellCharges, sid)
+                if okCharges and type(chargeInfo) == "table" and chargeInfo.currentCharges then
+                    limitedState.charges[sid] = chargeInfo.currentCharges
+                end
+            end
+        end
+
         -- Populate inMeta from APLEngine state
         limitedState.inMeta = mAPLEngine:IsMetaActive()
 
         -- Populate targetCount and combatDuration from AIInference if available
-        -- 同时读取 targetCount 和 timeSincePull，避免重复调用 GetContext()
+        -- 蜷梧慮隸ｻ蜿・targetCount 蜥・timeSincePull・碁∩蜈埼㍾螟崎ｰ・畑 GetContext()
         if mAIInference then
             local aiCtx = mAIInference:GetContext()
             if aiCtx then
                 if aiCtx.targetCount then
                     currentTargetCount = aiCtx.targetCount
                 end
-                -- 传递战斗时长给 APLEngine 用于 opener 检测
                 limitedState.combatDuration = aiCtx.timeSincePull or 0
+                if aiCtx.windows then
+                    limitedState.windows = aiCtx.windows
+                end
             end
         end
         limitedState.targetCount = currentTargetCount
+        context.aplState = limitedState
 
         -- Increase depth to 3 to get better lookahead for the prediction bar
         local ok, result = pcall(mAPLEngine.PredictNext, mAPLEngine, context.blizzSpell, limitedState, 3)
@@ -402,7 +417,7 @@ local function AssembleQueue()
     end
 
     -- First APL prediction participates in scoring
-    -- 第一个 APL 预测参与主推荐评分
+    -- 隨ｬ荳荳ｪ APL 鬚・ｵ句盾荳惹ｸｻ謗ｨ闕占ｯ・・
     if aplPredictions[1] then
         context.aplPred = aplPredictions[1]
     end
@@ -434,7 +449,7 @@ local function AssembleQueue()
                 if cd.ready then
                     context.cdReadyList[spellID] = true
                 end
-                -- 就绪和冷却中的大招都进入 cooldowns 列表供 CooldownBar 显示
+                -- 蟆ｱ扈ｪ蜥悟・蜊ｴ荳ｭ逧・､ｧ諡幃・霑帛・ cooldowns 蛻苓｡ｨ萓・CooldownBar 譏ｾ遉ｺ
                 -- Include both ready and on-cooldown major CDs in the bar
                 cd.spellID = spellID  -- inject spellID for downstream consumers
                 finalQueue.cooldowns[cIdx] = cd
@@ -467,7 +482,7 @@ local function AssembleQueue()
     for sid, _ in pairs(context.cdReadyList) do candidates[sid] = true end
 
     -- Blind-spot detection: APL rules that are CD-ready but absent from Blizzard's rotation list
-    -- 盲区检测：APL 中优先级较高且 CD 就绪、但 Blizzard 循环列表中缺失的技能
+    -- 逶ｲ蛹ｺ譽豬具ｼ哂PL 荳ｭ莨伜・郤ｧ霎・ｫ倅ｸ・CD 蟆ｱ扈ｪ縲∽ｽ・Blizzard 蠕ｪ邇ｯ蛻苓｡ｨ荳ｭ郛ｺ螟ｱ逧・橿閭ｽ
     if mAPLEngine and mAPLEngine:HasAPL() then
         local actionList = mAPLEngine:GetCurrentAPL()
         -- GetCurrentAPL returns the raw APL table; try to get a flat rule list
@@ -493,13 +508,28 @@ local function AssembleQueue()
             for _, rule in ipairs(rules) do
                 local sid = rule.spellID
                 if sid and not rotationSpells[sid] then
-                    -- 跳过未学习的天赋技能（避免因 unlearned spell CD = 0 被误判为就绪）
+                    -- 霍ｳ霑・悴蟄ｦ荵逧・､ｩ襍区橿閭ｽ・磯∩蜈榊屏 unlearned spell CD = 0 陲ｫ隸ｯ蛻､荳ｺ蟆ｱ扈ｪ・・
                     -- Skip unlearned talent spells (their CD returns 0, falsely appearing ready)
                     local isKnown = not IsPlayerSpell or IsPlayerSpell(sid)
                     if isKnown then
+                        local stateOk = true
+                        if rule.condition and mAPLEngine.EvaluateCondition and context.aplState then
+                            local blindSpotState = {
+                                cooldowns = context.aplState.cooldowns or {},
+                                resource = context.aplState.resource or 0,
+                                inMeta = context.aplState.inMeta or false,
+                                lastCast = nil,
+                                targetCount = context.aplState.targetCount or 1,
+                                combatDuration = context.aplState.combatDuration or 0,
+                                charges = context.aplState.charges or {},
+                                windows = context.aplState.windows or {},
+                            }
+                            stateOk = mAPLEngine:EvaluateCondition(rule.condition, sid, blindSpotState)
+                        end
+
                         -- Check if the CD is actually ready in the overlay
                         local cdState = cdStates[sid]
-                        if cdState and cdState.ready then
+                        if stateOk and cdState and cdState.ready then
                             context.blindSpotCandidates[sid] = true
                             candidates[sid] = true
                         end
@@ -511,12 +541,12 @@ local function AssembleQueue()
 
     for sid, _ in pairs(context.blindSpotCandidates) do candidates[sid] = true end
 
-    -- 安全网：过滤掉已知在 CD 中的候选（除 Blizzard 推荐和 defensive 以外）
+    -- 螳牙・鄂托ｼ夊ｿ・ｻ､謗牙ｷｲ遏･蝨ｨ CD 荳ｭ逧・咎会ｼ磯勁 Blizzard 謗ｨ闕仙柱 defensive 莉･螟厄ｼ・
     -- Safety net: drop candidates known to be on cooldown (> 1.0s remaining).
     -- Blizzard rec and defensive are exempt (may have charge/proc info we lack).
     -- FIX (OverridePair): CD safety net now also checks paired override IDs.
     -- If either spell in a pair is on CD, remove BOTH from candidates.
-    -- 覆盖对 CD 安全网：如果任一覆盖对技能在 CD 中，移除两者。
+    -- 隕・尠蟇ｹ CD 螳牙・鄂托ｼ壼ｦよ棡莉ｻ荳隕・尠蟇ｹ謚閭ｽ蝨ｨ CD 荳ｭ・檎ｧｻ髯､荳､閠・・
     if mCooldownOverlay then
         local cds = mCooldownOverlay:GetCooldownStates()
         wipe(toRemove_reuse)
@@ -529,12 +559,12 @@ local function AssembleQueue()
                     onCD = true
                 end
             else
-                -- FIX (Round14-Bug2): 未被 CooldownOverlay 追踪的技能，用 API 直接检查
+                -- FIX (Round14-Bug2): 譛ｪ陲ｫ CooldownOverlay 霑ｽ雕ｪ逧・橿閭ｽ・檎畑 API 逶ｴ謗･譽譟･
                 -- For spells not tracked by CooldownOverlay, fall back to direct API query
                 onCD = IsSpellOnCooldown(sid)
             end
             -- Check paired override ID as well
-            -- 同时检查覆盖对配对 ID
+            -- 蜷梧慮譽譟･隕・尠蟇ｹ驟榊ｯｹ ID
             if not onCD then
                 local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[sid]
                 if pairedID then
@@ -547,11 +577,11 @@ local function AssembleQueue()
             end
             if onCD then
                 -- Only exempt defensive spell
-                -- 仅排除防御技能
+                -- 莉・賜髯､髦ｲ蠕｡謚閭ｽ
                 if sid ~= context.defSpell then
                     toRemove[#toRemove + 1] = sid
                     -- Also mark paired ID for removal if it's a candidate
-                    -- 同时标记配对 ID 移除
+                    -- 蜷梧慮譬・ｮｰ驟榊ｯｹ ID 遘ｻ髯､
                     local pairedID = RA.KNOWN_OVERRIDE_PAIRS and RA.KNOWN_OVERRIDE_PAIRS[sid]
                     if pairedID and candidates[pairedID] and pairedID ~= context.defSpell then
                         toRemove[#toRemove + 1] = pairedID
@@ -565,7 +595,7 @@ local function AssembleQueue()
         end
     end
 
-    -- 过滤被动技能（不可施放的技能不应成为推荐候选）
+    -- 霑・ｻ､陲ｫ蜉ｨ謚閭ｽ・井ｸ榊庄譁ｽ謾ｾ逧・橿閭ｽ荳榊ｺ疲・荳ｺ謗ｨ闕仙咎会ｼ・
     -- Filter passive spells (non-castable spells must not appear as candidates)
     do
         wipe(passiveRemove_reuse)
@@ -581,7 +611,7 @@ local function AssembleQueue()
         end
     end
 
-    -- 软屏蔽：施放后 SOFT_BLOCK_DURATION 秒内，临时阻止刚施放技能被推荐
+    -- 霓ｯ螻剰反・壽命謾ｾ蜷・SOFT_BLOCK_DURATION 遘貞・・御ｸｴ譌ｶ髦ｻ豁｢蛻壽命謾ｾ謚閭ｽ陲ｫ謗ｨ闕・
     -- Soft-block filter: suppress recently-cast spells until real CD data arrives.
     -- Exempts Blizzard rec and defensive spell in case of charges / procs.
     do
@@ -601,7 +631,7 @@ local function AssembleQueue()
         end
     end
 
-    -- 过滤未学习的技能：动态检查玩家当前天赋，只推荐已学技能
+    -- 霑・ｻ､譛ｪ蟄ｦ荵逧・橿閭ｽ・壼勘諤∵｣譟･邇ｩ螳ｶ蠖灘燕螟ｩ襍具ｼ悟宵謗ｨ闕仙ｷｲ蟄ｦ謚閭ｽ
     -- Filter unlearned spells: dynamically check current talents, only recommend known spells
     do
         wipe(unlearnedRemove_reuse)
@@ -638,9 +668,9 @@ local function AssembleQueue()
     end
     table.sort(scored, function(a, b) return a.score > b.score end)
 
-    -- 【新增】最终安全网：对 scored 列表做 IsSpellRecommendable 验证
+    -- 縲先眠蠅槭第怙扈亥ｮ牙・鄂托ｼ壼ｯｹ scored 蛻苓｡ｨ蛛・IsSpellRecommendable 鬪瑚ｯ・
     -- Final safety net: validate scored entries with RA:IsSpellRecommendable
-    -- 倒序遍历以安全移除不通过的条目
+    -- 蛟貞ｺ城″蜴・ｻ･螳牙・遘ｻ髯､荳埼夊ｿ・噪譚｡逶ｮ
     for i = #scored, 1, -1 do
         if not RA:IsSpellRecommendable(scored[i].spellID) then
             table.remove(scored, i)
@@ -654,7 +684,7 @@ local function AssembleQueue()
 
         -- FIX (Bug2): Save the previous main spell ID BEFORE updating,
         -- so GetLastRecommendedSpellID() can return the pre-cast value.
-        -- 保存旧主推荐，供 AccuracyTracker 在施法成功后比对。
+        -- 菫晏ｭ俶立荳ｻ謗ｨ闕撰ｼ御ｾ・AccuracyTracker 蝨ｨ譁ｽ豕墓・蜉溷錘豈泌ｯｹ縲・
         lastRecommendedSpellID = finalQueue.main and finalQueue.main.spellID or nil
 
         finalQueue.main = {
@@ -663,7 +693,7 @@ local function AssembleQueue()
             confidence = topConf
         }
 
-        -- 追踪主推荐是否变化（供其他系统使用）
+        -- 霑ｽ雕ｪ荳ｻ謗ｨ闕先弍蜷ｦ蜿伜喧・井ｾ帛・莉也ｳｻ扈滉ｽｿ逕ｨ・・
         -- Track main spell change for other systems.
         local newMainID = finalQueue.main and finalQueue.main.spellID or nil
         if prevMainSpellID ~= newMainID then
@@ -672,7 +702,7 @@ local function AssembleQueue()
 
         -- FIX (Bug1): Populate next[] using APL predictions (steps 2+) first,
         -- then fill remaining slots from scored candidates (rank 2+).
-        -- 修复：优先用 APL 预测第 2、3步 填充 next[]，再补充 scored 排名第 2+ 的候选。
+        -- 菫ｮ螟搾ｼ壻ｼ伜・逕ｨ APL 鬚・ｵ狗ｬｬ 2縲・豁･ 蝪ｫ蜈・next[]・悟・陦･蜈・scored 謗貞錐隨ｬ 2+ 逧・咎峨・
         local nIdx = 1
 
         -- Priority 1: APL predictions (steps 1 to 3)
@@ -690,7 +720,7 @@ local function AssembleQueue()
         end
 
         -- Priority 2: scored candidates rank 2+ (deduplicate against next[] internal entries)
-        -- 去重逻辑：仅针对 next[] 内部去重，允许与 main 相同
+        -- 蜴ｻ驥埼ｻ霎托ｼ壻ｻ・宙蟇ｹ next[] 蜀・Κ蜴ｻ驥搾ｼ悟・隶ｸ荳・main 逶ｸ蜷・
         for i = 2, math.min(#scored, 6) do
             if nIdx > 5 then break end
             local sid = scored[i].spellID
@@ -711,12 +741,12 @@ local function AssembleQueue()
             end
         end
 
-        -- Priority 3: NeuralPredictor 补充预测（当 APL + scored 不足时）
-        -- NeuralPredictor 融合了决策树、Markov链和 Blizzard 推荐，作为兜底预测源
+        -- Priority 3: NeuralPredictor 陦･蜈・｢・ｵ具ｼ亥ｽ・APL + scored 荳崎ｶｳ譌ｶ・・
+        -- NeuralPredictor 陞榊粋莠・・遲匁代｀arkov體ｾ蜥・Blizzard 謗ｨ闕撰ｼ御ｽ應ｸｺ蜈懷ｺ暮｢・ｵ区ｺ・
         if nIdx <= 3 and mNeuralPredictor then
             local npOk, npResult = pcall(mNeuralPredictor.GetCombinedPrediction, mNeuralPredictor)
             if npOk and npResult then
-                -- 先尝试 primary（如果不在队列中）
+                -- 蜈亥ｰ晁ｯ・primary・亥ｦよ棡荳榊惠髦溷・荳ｭ・・
                 local npPrimary = npResult.primary
                 if npPrimary and npPrimary.spellID and npPrimary.spellID ~= 0 then
                     if IsSpellCastable(npPrimary.spellID) then
@@ -737,7 +767,7 @@ local function AssembleQueue()
                         end
                     end
                 end
-                -- 再添加 alternatives
+                -- 蜀肴ｷｻ蜉 alternatives
                 if npResult.alternatives then
                     for _, alt in ipairs(npResult.alternatives) do
                         if nIdx > 5 then break end
@@ -764,7 +794,7 @@ local function AssembleQueue()
         end
 
         -- 5. Anti-Flicker Logic for next[]
-        -- 抗抖动处理：只有当预测变化持续两帧以上时才更新 UI
+        -- 謚玲竃蜉ｨ螟・炊・壼宵譛牙ｽ馴｢・ｵ句序蛹匁戟扈ｭ荳､蟶ｧ莉･荳頑慮謇肴峩譁ｰ UI
         for i = 1, 5 do
             local proposed = finalQueue.next[i] and finalQueue.next[i].spellID or 0
             local previous = previousNextSpells[i] or 0
@@ -794,7 +824,7 @@ local function AssembleQueue()
             finalQueue.next[i] = nil
         end
 
-        -- 每次 AssembleQueue 都通知 UI 更新（放在填充 next[] 之后）
+        -- 豈乗ｬ｡ AssembleQueue 驛ｽ騾夂衍 UI 譖ｴ譁ｰ・域叛蝨ｨ蝪ｫ蜈・next[] 荵句錘・・
         -- Always fire AFTER filling next[] so the UI sees the complete data.
         local eh = RA:GetModule("EventHandler")
         if eh then eh:Fire("ROTAASSIST_QUEUE_UPDATED", finalQueue.main) end
@@ -805,7 +835,7 @@ local function AssembleQueue()
         for i = 1, #finalQueue.next do finalQueue.next[i] = nil end
         wipe(previousNextSpells)
         wipe(flickerCounters)
-        -- 队列清空：更新追踪值并无条件通知 UI
+        -- 髦溷・貂・ｩｺ・壽峩譁ｰ霑ｽ雕ｪ蛟ｼ蟷ｶ譌譚｡莉ｶ騾夂衍 UI
         -- Queue cleared: update tracking and always notify UI.
         if prevMainSpellID ~= nil then
             prevMainSpellID = nil
@@ -828,7 +858,7 @@ end
 ------------------------------------------------------------------------
 
 ---Get the finalized, prioritized prediction queue.
----获取最终优先排序的预测队列。
+---闔ｷ蜿匁怙扈井ｼ伜・謗貞ｺ冗噪鬚・ｵ矩弌蛻励・
 ---@return table
 function SmartQueueManager:GetFinalQueue()
     return finalQueue
@@ -836,14 +866,14 @@ end
 
 ---Get the main spell ID that was recommended in the *previous* frame.
 ---Returns nil if there was no prior recommendation or the queue was empty.
----获取上一帧的主推荐技能 ID，用于施法成功后比对准确度。
+---闔ｷ蜿紋ｸ贋ｸ蟶ｧ逧・ｸｻ謗ｨ闕先橿閭ｽ ID・檎畑莠取命豕墓・蜉溷錘豈泌ｯｹ蜃・｡ｮ蠎ｦ縲・
 ---@return number|nil spellID
 function SmartQueueManager:GetLastRecommendedSpellID()
     return lastRecommendedSpellID
 end
 
 ---Backward compatible wrapper for existing UI modules expecting RecommendationManager:GetDisplayData()
----为期望从 RecommendationManager 拿到类似格式数据的旧 UI 模块提供兼容。
+---荳ｺ譛滓悍莉・RecommendationManager 諡ｿ蛻ｰ邀ｻ莨ｼ譬ｼ蠑乗焚謐ｮ逧・立 UI 讓｡蝮玲署萓帛・螳ｹ縲・
 ---@return table
 function SmartQueueManager:GetDisplayData()
     local data = {
@@ -894,7 +924,7 @@ function SmartQueueManager:OnEnable()
 
     -- Drive APLEngine meta-state from actual spell casts; also apply soft-block and
     -- force-refresh recommendation cache so the UI never lags behind a cast.
-    -- 施法成功后：更新变身状态、软屏蔽、失效 Bridge 缓存、重建队列
+    -- 譁ｽ豕墓・蜉溷錘・壽峩譁ｰ蜿倩ｺｫ迥ｶ諤√∬ｽｯ螻剰反縲∝､ｱ謨・Bridge 郛灘ｭ倥・㍾蟒ｺ髦溷・
     local eh = RA:GetModule("EventHandler")
     if eh then
         eh:Subscribe("ROTAASSIST_SPELLCAST_SUCCEEDED", "SmartQueueManager", function(_, unit, _, spellID)
@@ -907,9 +937,9 @@ function SmartQueueManager:OnEnable()
 
             -- 2. Soft-block: suppress just-cast spell until SPELL_UPDATE_COOLDOWN confirms real CD.
             --    Only block spells with a meaningful CD (>= 3s) listed in WhitelistSpells.
-            --    仅对 WhitelistSpells 中 cdSeconds >= 3 的技能启用软屏蔽
+            --    莉・ｯｹ WhitelistSpells 荳ｭ cdSeconds >= 3 逧・橿閭ｽ蜷ｯ逕ｨ霓ｯ螻剰反
             -- FIX (OverridePair): Also soft-block the paired override ID.
-            -- 同时对覆盖对技能施加软屏蔽（如施放 Death Sweep 后同时屏蔽 Blade Dance）。
+            -- 蜷梧慮蟇ｹ隕・尠蟇ｹ謚閭ｽ譁ｽ蜉霓ｯ螻剰反・亥ｦよ命謾ｾ Death Sweep 蜷主酔譌ｶ螻剰反 Blade Dance・峨・
             local wsInfo = RA.WhitelistSpells and RA.WhitelistSpells[spellID]
             if wsInfo and wsInfo.cdSeconds and wsInfo.cdSeconds >= 3 then
                 local blockExpiry = GetTime() + SOFT_BLOCK_DURATION
@@ -922,17 +952,17 @@ function SmartQueueManager:OnEnable()
 
             -- 3. Invalidate the Bridge recommendation cache so the next call to
             --    GetCurrentRecommendation() fetches a fresh Blizzard spell.
-            --    失效 Bridge 缓存，下次立刻拿到最新推荐
+            --    螟ｱ謨・Bridge 郛灘ｭ假ｼ御ｸ区ｬ｡遶句綾諡ｿ蛻ｰ譛譁ｰ謗ｨ闕・
             if mBridge and mBridge.InvalidateCache then
                 mBridge:InvalidateCache()
             end
 
-            -- 4. Clear sticky Blizzard spell if we just cast it — unless it's a channeled
+            -- 4. Clear sticky Blizzard spell if we just cast it 窶・unless it's a channeled
             --    spell. During a channel the sticky should keep showing what comes AFTER.
-            --    引导技能施法后不清除 sticky，让引导期间继续显示下一步技能
+            --    蠑募ｯｼ謚閭ｽ譁ｽ豕募錘荳肴ｸ・勁 sticky・瑚ｮｩ蠑募ｯｼ譛滄龍扈ｧ扈ｭ譏ｾ遉ｺ荳倶ｸ豁･謚閭ｽ
             -- FIX (OverridePair): Also clear when paired ID matches (e.g. cast Death Sweep
             -- while sticky is Blade Dance).
-            -- 覆盖对也清除 sticky（如 sticky 为 Blade Dance 但施放了 Death Sweep）。
+            -- 隕・尠蟇ｹ荵滓ｸ・勁 sticky・亥ｦ・sticky 荳ｺ Blade Dance 菴・命謾ｾ莠・Death Sweep・峨・
             if lastKnownBlizzSpell then
                 local shouldClear = (lastKnownBlizzSpell == spellID)
                 if not shouldClear then
@@ -947,12 +977,12 @@ function SmartQueueManager:OnEnable()
             end
 
             -- 5. Trigger an immediate queue rebuild.
-            --    立刻重建队列
+            --    遶句綾驥榊ｻｺ髦溷・
             lastUpdate = THROTTLE_UPDATE
             AssembleQueue()
         end)
 
-        -- 当 SPELL_UPDATE_COOLDOWN 触发时，真实 CD 数据已就绪：清除软屏蔽并立刻重建队列
+        -- 蠖・SPELL_UPDATE_COOLDOWN 隗ｦ蜿第慮・檎悄螳・CD 謨ｰ謐ｮ蟾ｲ蟆ｱ扈ｪ・壽ｸ・勁霓ｯ螻剰反蟷ｶ遶句綾驥榊ｻｺ髦溷・
         -- When real CD data arrives, clear soft-blocks and rebuild to reflect true CD state.
         eh:Subscribe("ROTAASSIST_CD_UPDATED", "SmartQueueManager", function()
             if next(softBlockedSpells) then
@@ -962,7 +992,7 @@ function SmartQueueManager:OnEnable()
             end
         end)
 
-        -- 引导开始：快照当前 APL 预测 step-1 的 spellID，作为引导期 sticky fallback
+        -- 蠑募ｯｼ蠑蟋具ｼ壼ｿｫ辣ｧ蠖灘燕 APL 鬚・ｵ・step-1 逧・spellID・御ｽ應ｸｺ蠑募ｯｼ譛・sticky fallback
         -- Channel start: capture APL step-1 spellID so UI shows next-spell during channel.
         eh:Subscribe("ROTAASSIST_CHANNEL_START", "SmartQueueManager", function(_, unit)
             if unit ~= "player" then return end
@@ -970,7 +1000,7 @@ function SmartQueueManager:OnEnable()
                 and aplPredictions[1].spellID or nil
         end)
 
-        -- 引导结束或被打断时清除 channelNextSpell，恢复常规推荐逻辑
+        -- 蠑募ｯｼ扈捺據謌冶｢ｫ謇捺妙譌ｶ貂・勁 channelNextSpell・梧△螟榊ｸｸ隗・耳闕宣ｻ霎・
         -- Clear channelNextSpell on channel end or interrupt to resume normal logic.
         local function onChannelEnd()
             channelNextSpell = nil

@@ -19,7 +19,9 @@ describe("AssistedCombatBridge", function()
             GetRotationSpells = function()
                 return _G._testRotationSpells or {}
             end,
-            GetActionSpell = function() return nil end,
+            GetActionSpell = function()
+                return _G._testActionSpell
+            end,
         }
         _G.C_Spell.GetSpellTexture = function(id) return 134400 end
         _G.GetCVar = function(name) return "0.1" end
@@ -30,6 +32,7 @@ describe("AssistedCombatBridge", function()
 
     before_each(function()
         _G._testBlizzSpell = nil
+        _G._testActionSpell = nil
         _G._testRotationSpells = {}
         Bridge:InvalidateCache()
     end)
@@ -75,6 +78,34 @@ describe("AssistedCombatBridge", function()
             _G._testBlizzSpell = 203555 -- Demon Blades (passive)
             local rec = Bridge:GetCurrentRecommendation()
             assert.is_nil(rec)
+        end)
+
+        it("falls back to action spell when next-cast spell is missing", function()
+            _G._testBlizzSpell = nil
+            _G._testActionSpell = 188499
+
+            local rec = Bridge:GetCurrentRecommendation()
+            assert.is_not_nil(rec)
+            assert.equals(188499, rec.spellID)
+        end)
+
+        it("falls back to action spell when next-cast spell is not recommendable", function()
+            _G._testBlizzSpell = 203555 -- passive
+            _G._testActionSpell = 162794
+
+            local rec = Bridge:GetCurrentRecommendation()
+            assert.is_not_nil(rec)
+            assert.equals(162794, rec.spellID)
+        end)
+
+        it("falls back to first recommendable rotation spell", function()
+            _G._testBlizzSpell = nil
+            _G._testActionSpell = nil
+            _G._testRotationSpells = { 203555, 188499, 162794 }
+
+            local rec = Bridge:GetCurrentRecommendation()
+            assert.is_not_nil(rec)
+            assert.equals(188499, rec.spellID)
         end)
     end)
 

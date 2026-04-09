@@ -194,6 +194,24 @@ local function UpdateDisplay()
     
     local data = smartQ:GetFinalQueue()
     if not data then return end
+    local showKeybinds = RA.db and RA.db.profile.display and RA.db.profile.display.showKeybinds ~= false
+    local showCooldownSwirl = RA.db and RA.db.profile.display and RA.db.profile.display.showCooldownSwirl ~= false
+
+    local function updateWidgetCooldown(widget, spellID)
+        if not widget then return end
+        if not showCooldownSwirl or not spellID then
+            widget:SetCooldown(nil, nil)
+            return
+        end
+
+        local remaining, ready, startTime, duration = RA:GetSpellCooldownSafe(spellID)
+        if remaining == nil or ready or not startTime or not duration or duration <= 1.5 then
+            widget:SetCooldown(nil, nil)
+            return
+        end
+
+        widget:SetCooldown(startTime, duration)
+    end
 
     -- 【新增】UI 安全网：过滤被动技能，防止被动技能显示在推荐栏中
     -- UI safety net: filter passive spells before display
@@ -223,8 +241,9 @@ local function UpdateDisplay()
             elements.mainIcon:SetGlow(false)
         end
         
-        local mainKey = FindKeybindForSpell(data.main.spellID)
+        local mainKey = showKeybinds and FindKeybindForSpell(data.main.spellID) or ""
         elements.mainIcon:SetKeybind(mainKey or "")
+        updateWidgetCooldown(elements.mainIcon, data.main.spellID)
         
         -- 盲区技能标识：显示来源标签
         if data.main.source == "APL_BLINDSPOT" then
@@ -237,6 +256,7 @@ local function UpdateDisplay()
     else
         elements.mainIcon:Clear()
         elements.mainIcon:SetKeybind("")
+        elements.mainIcon:SetCooldown(nil, nil)
         elements.mainIcon.frame:Hide()
         lastDisplayed.mainSpell = nil
     end
@@ -255,13 +275,15 @@ local function UpdateDisplay()
             end
             widget:SetConfidence(predData.confidence or 1.0)
             
-            local predKey = FindKeybindForSpell(predData.spellID)
+            local predKey = showKeybinds and FindKeybindForSpell(predData.spellID) or ""
             widget:SetKeybind(predKey or "")
+            updateWidgetCooldown(widget, predData.spellID)
             
             widget.frame:Show()
         else
             widget:Clear()
             widget:SetKeybind("")
+            widget:SetCooldown(nil, nil)
             widget.frame:Hide()
             lastDisplayed.predSpells[i] = nil
         end
@@ -366,14 +388,17 @@ local function UpdateInterrupt(_, active, data)
             elements.interruptAlert.frame:SetAlpha(0.6)
             elements.interruptAlert:SetDesaturated(true)
             elements.interruptAlert:SetAlert(false)
-            if data.startTime and data.duration then
-                elements.interruptAlert.cooldown:SetCooldown(data.startTime, data.duration)
+            if RA.db and RA.db.profile.display and RA.db.profile.display.showCooldownSwirl ~= false
+               and data.startTime and data.duration then
+                elements.interruptAlert:SetCooldown(data.startTime, data.duration)
+            else
+                elements.interruptAlert:SetCooldown(nil, nil)
             end
         else
             elements.interruptAlert.frame:SetAlpha(1.0)
             elements.interruptAlert:SetDesaturated(false)
             elements.interruptAlert:SetAlert(true)
-            elements.interruptAlert.cooldown:Clear()
+            elements.interruptAlert:SetCooldown(nil, nil)
         end
         
         elements.interruptAlert.frame:Show()
@@ -390,10 +415,30 @@ end
 
 local function checkVisibility()
     if not mainFrame then return end
-    
-    local combatOnly = RA.db and RA.db.profile.display.combatOnly or false
-    
-    if combatOnly and not inCombat then
+
+    local generalEnabled = RA.db and RA.db.profile.general and RA.db.profile.general.enabled
+    local display = RA.db and RA.db.profile.display or {}
+    local combatOnly = display.combatOnly or false
+    local showOutOfCombat = display.showOutOfCombat ~= false
+    local baseAlpha = display.alpha or 1.0
+    local effectiveAlpha = baseAlpha
+
+    if not generalEnabled then
+        if outOfCombatTimer then
+            outOfCombatTimer:Cancel()
+            outOfCombatTimer = nil
+        end
+        mainFrame:Hide()
+        elements.prePull:Hide()
+        return
+    end
+
+    if not inCombat and display.fadeOutOfCombat and showOutOfCombat and not combatOnly then
+        effectiveAlpha = math.max(0.1, math.min(baseAlpha, display.fadeAlpha or 0.3))
+    end
+    mainFrame:SetAlpha(effectiveAlpha)
+
+    if (combatOnly or not showOutOfCombat) and not inCombat then
         if not outOfCombatTimer then
             outOfCombatTimer = C_Timer.NewTimer(3.0, function()
                 if not inCombat then
@@ -464,7 +509,7 @@ local function applySettings()
         mainFrame:SetBackdropBorderColor(0.5, 0.5, 0.5, math.min(1.0, alpha + 0.3))
     end
     
-    UpdateDisplay()
+    checkVisibility()
 end
 
 local function buildMenu(ownerFrame, rootDescription)
@@ -591,8 +636,14 @@ end
 ---Public API
 function MainDisplay:Toggle()
     if RA.db then
-        RA.db.profile.display.combatOnly = not RA.db.profile.display.combatOnly
+        local current = RA.db.profile.general.enabled ~= false
+        RA.db.profile.general.enabled = not current
         checkVisibility()
+        if RA.db.profile.general.enabled then
+            RA:Print(RA.L and RA.L["DISPLAY_ENABLED"] or "Display enabled.")
+        else
+            RA:Print(RA.L and RA.L["DISPLAY_DISABLED"] or "Display hidden.")
+        end
     end
 end
 
@@ -600,5 +651,10 @@ function MainDisplay:ToggleLock()
     if RA.db then
         RA.db.profile.display.locked = not RA.db.profile.display.locked
         applySettings()
+        if RA.db.profile.display.locked then
+            RA:Print(RA.L and RA.L["DISPLAY_LOCKED"] or "Display locked.")
+        else
+            RA:Print(RA.L and RA.L["DISPLAY_UNLOCKED"] or "Display unlocked.")
+        end
     end
 end
