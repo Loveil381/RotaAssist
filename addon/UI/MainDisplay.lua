@@ -197,6 +197,17 @@ local function UpdateDisplay()
     local showKeybinds = RA.db and RA.db.profile.display and RA.db.profile.display.showKeybinds ~= false
     local showCooldownSwirl = RA.db and RA.db.profile.display and RA.db.profile.display.showCooldownSwirl ~= false
 
+    local function resolveDisplaySpellID(spellID)
+        if not spellID then return nil end
+        if RA.ResolveSpellOverride then
+            local resolvedID = RA:ResolveSpellOverride(spellID)
+            if resolvedID and resolvedID ~= 0 then
+                return resolvedID
+            end
+        end
+        return spellID
+    end
+
     local function updateWidgetCooldown(widget, spellID)
         if not widget then return end
         if not showCooldownSwirl or not spellID then
@@ -228,11 +239,12 @@ local function UpdateDisplay()
     
     -- 1. Main Icon
     if data.main then
-        if lastDisplayed.mainSpell ~= data.main.spellID then
-            local ok, info = pcall(C_Spell.GetSpellInfo, data.main.spellID)
+        local mainDisplaySpellID = resolveDisplaySpellID(data.main.spellID)
+        if lastDisplayed.mainSpell ~= mainDisplaySpellID then
+            local ok, info = pcall(C_Spell.GetSpellInfo, mainDisplaySpellID)
             local tex = ok and info and info.iconID or 134400
-            elements.mainIcon:SetSpell(data.main.spellID, tex)
-            lastDisplayed.mainSpell = data.main.spellID
+            elements.mainIcon:SetSpell(mainDisplaySpellID, tex)
+            lastDisplayed.mainSpell = mainDisplaySpellID
         end
         -- 如果正在显示中断提醒，不覆盖其视觉效果
         if not elements.interruptAlert.frame:IsShown() then
@@ -241,9 +253,9 @@ local function UpdateDisplay()
             elements.mainIcon:SetGlow(false)
         end
         
-        local mainKey = showKeybinds and FindKeybindForSpell(data.main.spellID) or ""
+        local mainKey = showKeybinds and FindKeybindForSpell(mainDisplaySpellID) or ""
         elements.mainIcon:SetKeybind(mainKey or "")
-        updateWidgetCooldown(elements.mainIcon, data.main.spellID)
+        updateWidgetCooldown(elements.mainIcon, mainDisplaySpellID)
         
         -- 盲区技能标识：显示来源标签
         if data.main.source == "APL_BLINDSPOT" then
@@ -267,17 +279,18 @@ local function UpdateDisplay()
         local widget = elements.predictions[i]
         
         if predData then
-            if lastDisplayed.predSpells[i] ~= predData.spellID then
-                local ok, info = pcall(C_Spell.GetSpellInfo, predData.spellID)
+            local predDisplaySpellID = resolveDisplaySpellID(predData.spellID)
+            if lastDisplayed.predSpells[i] ~= predDisplaySpellID then
+                local ok, info = pcall(C_Spell.GetSpellInfo, predDisplaySpellID)
                 local tex = ok and info and info.iconID or 134400
-                widget:SetSpell(predData.spellID, tex)
-                lastDisplayed.predSpells[i] = predData.spellID
+                widget:SetSpell(predDisplaySpellID, tex)
+                lastDisplayed.predSpells[i] = predDisplaySpellID
             end
             widget:SetConfidence(predData.confidence or 1.0)
             
-            local predKey = showKeybinds and FindKeybindForSpell(predData.spellID) or ""
+            local predKey = showKeybinds and FindKeybindForSpell(predDisplaySpellID) or ""
             widget:SetKeybind(predKey or "")
-            updateWidgetCooldown(widget, predData.spellID)
+            updateWidgetCooldown(widget, predDisplaySpellID)
             
             widget.frame:Show()
         else
@@ -303,9 +316,10 @@ local function UpdateDisplay()
     
     -- 4. Defensive Alert
     if data.defensive then
-        local ok, info = pcall(C_Spell.GetSpellInfo, data.defensive.spellID)
+        local defensiveDisplaySpellID = resolveDisplaySpellID(data.defensive.spellID)
+        local ok, info = pcall(C_Spell.GetSpellInfo, defensiveDisplaySpellID)
         local tex = ok and info and info.iconID or 134400
-        elements.defensive:Trigger(data.defensive.spellID, tex, data.defensive.name)
+        elements.defensive:Trigger(defensiveDisplaySpellID, tex, data.defensive.name)
     else
         elements.defensive:Dismiss()
     end
@@ -380,9 +394,16 @@ local function UpdateInterrupt(_, active, data)
             end)
         end
         
-        local ok, info = pcall(C_Spell.GetSpellInfo, data.spellID)
+        local interruptDisplaySpellID = data.spellID
+        if RA.ResolveSpellOverride then
+            local resolvedID = RA:ResolveSpellOverride(data.spellID)
+            if resolvedID and resolvedID ~= 0 then
+                interruptDisplaySpellID = resolvedID
+            end
+        end
+        local ok, info = pcall(C_Spell.GetSpellInfo, interruptDisplaySpellID)
         local tex = ok and info and info.iconID or 134400
-        elements.interruptAlert:SetSpell(data.spellID, tex)
+        elements.interruptAlert:SetSpell(interruptDisplaySpellID, tex)
         
         if data.onCooldown then
             elements.interruptAlert.frame:SetAlpha(0.6)

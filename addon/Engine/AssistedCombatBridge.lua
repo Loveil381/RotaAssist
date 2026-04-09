@@ -39,35 +39,20 @@ local function ResolveRecommendableSpellID()
         return nil
     end
 
-    local spellID = nil
-
     if C_AssistedCombat.GetNextCastSpell then
         local okNext, nextSpellID = pcall(C_AssistedCombat.GetNextCastSpell, true)
         if okNext and RA:IsSpellRecommendable(nextSpellID) then
-            spellID = nextSpellID
-        end
-    end
-
-    if not spellID and C_AssistedCombat.GetActionSpell then
-        local okAction, actionSpellID = pcall(C_AssistedCombat.GetActionSpell)
-        if okAction and RA:IsSpellRecommendable(actionSpellID) then
-            spellID = actionSpellID
-        end
-    end
-
-    if not spellID and C_AssistedCombat.GetRotationSpells then
-        local okRotation, rotationSpells = pcall(C_AssistedCombat.GetRotationSpells)
-        if okRotation and type(rotationSpells) == "table" then
-            for _, rotationSpellID in ipairs(rotationSpells) do
-                if RA:IsSpellRecommendable(rotationSpellID) then
-                    spellID = rotationSpellID
-                    break
-                end
+            local resolvedID = nextSpellID
+            if RA.ResolveSpellOverride then
+                resolvedID = RA:ResolveSpellOverride(nextSpellID)
             end
+            if RA:IsSpellRecommendable(resolvedID) then
+                return resolvedID
+            end
+            return nextSpellID
         end
     end
-
-    return spellID
+    return nil
 end
 
 ------------------------------------------------------------------------
