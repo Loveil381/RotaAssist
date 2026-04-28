@@ -24,7 +24,7 @@ RA.SpecEnhancements[70] = {
         { spellID = 85673, hpThreshold = 0.40, name = "Word of Glory" },
         { spellID = 184662, hpThreshold = 0.50, name = "Shield of Vengeance" },
     },
-    resource = { type = 9, maxBase = 5, spellCosts = {} },  -- Holy Power
+    resource = { powerType = 9, maxBase = 5, spellCosts = {} },  -- Holy Power
     burstWindows = {
         avengingWrath = { trigger = 31884, duration = 20, label = "Avenging Wrath" }
     },
