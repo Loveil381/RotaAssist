@@ -42,3 +42,9 @@ dist/
 
 # === Logs ===
 *.log
+
+# === Local debug artifacts (CTO Round 15 cleanup) ===
+/ci_failures*.log
+/commits*.txt
+/logs*.json
+/run_log*.txt
