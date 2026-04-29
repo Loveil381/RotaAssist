@@ -13,7 +13,7 @@ local DT = {
     lastUpdated = "2026-02-26"
 }
 
-function DT:Evaluate(features)
+function DT.Evaluate(features)
     local bestSpell = 55090 -- Fallback: Scourge Strike
     local confidence = 0.80
 

@@ -23,7 +23,7 @@ RA.SpecEnhancements[251] = {
         { spellID = 49998, hpThreshold = 0.40, name = "Death Strike" },
         { spellID = 48707, hpThreshold = 0.60, name = "Anti-Magic Shell" },
     },
-    resource = { type = 6, maxBase = 100, spellCosts = {} },  -- Runic Power
+    resource = { powerType = 6, maxBase = 100, spellCosts = {} },  -- Runic Power
     burstWindows = {
         pillar = { trigger = 51271, duration = 12, label = "Pillar of Frost" }
     },
@@ -63,16 +63,18 @@ RA.SpecEnhancements[252] = {
         { spellID = 49039,  name = "Lichborne",           hpThreshold = 0.40 },
     },
     resource = {
-        type = 6,   -- Runic Power
+        powerType = 6,   -- Runic Power
         maxBase  = 100,
         runes = { max = 6, simultaneous_recharge = 3 },
         spellCosts = {
-            [47541] = 30,
-            [207317] = 30,
-            [85948] = "2 Runes",
-            [460461] = "1 Rune",
-            [55090] = "1 Rune",
-            [460463] = "1 Rune",
+            -- Runic Power costs
+            [47541]  = { cost = 30 },  -- Death Coil
+            [207317] = { cost = 30 },  -- Epidemic
+            -- Rune-cost spells (tracked separately via secondaryPowerType)
+            [85948]  = { cost = 0 },   -- Festering Strike (2 Runes; cost=0 for RP planner)
+            [460461] = { cost = 0 },   -- Festering Scythe (1 Rune)
+            [55090]  = { cost = 0 },   -- Scourge Strike (1 Rune)
+            [460463] = { cost = 0 },   -- Putrefy (1 Rune)
         },
     },
     burstWindows = {
