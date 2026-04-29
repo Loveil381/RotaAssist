@@ -80,32 +80,36 @@ describe("AssistedCombatBridge", function()
             assert.is_nil(rec)
         end)
 
-        it("falls back to action spell when next-cast spell is missing", function()
+        it("returns nil when next-cast spell is missing (no action fallback)", function()
+            -- Contract change in 1c04669 (icon-leak fix): no fallback to
+            -- GetActionSpell when GetNextCastSpell yields nothing.
             _G._testBlizzSpell = nil
             _G._testActionSpell = 188499
 
             local rec = Bridge:GetCurrentRecommendation()
-            assert.is_not_nil(rec)
-            assert.equals(188499, rec.spellID)
+            assert.is_nil(rec)
         end)
 
-        it("falls back to action spell when next-cast spell is not recommendable", function()
+        it("returns nil when next-cast spell is passive (no action/rotation fallback)", function()
+            -- Contract change in 1c04669 (icon-leak fix): we no longer fall back
+            -- to GetActionSpell or GetRotationSpells when GetNextCastSpell is
+            -- unrecommendable; helper-API spells should not leak into the main
+            -- recommendation display.
             _G._testBlizzSpell = 203555 -- passive
             _G._testActionSpell = 162794
 
             local rec = Bridge:GetCurrentRecommendation()
-            assert.is_not_nil(rec)
-            assert.equals(162794, rec.spellID)
+            assert.is_nil(rec)
         end)
 
-        it("falls back to first recommendable rotation spell", function()
+        it("returns nil when there is no next-cast spell (no rotation fallback)", function()
+            -- Same contract change (1c04669): no fallback to GetRotationSpells.
             _G._testBlizzSpell = nil
             _G._testActionSpell = nil
             _G._testRotationSpells = { 203555, 188499, 162794 }
 
             local rec = Bridge:GetCurrentRecommendation()
-            assert.is_not_nil(rec)
-            assert.equals(188499, rec.spellID)
+            assert.is_nil(rec)
         end)
     end)
 
