@@ -97,6 +97,17 @@ SPELL_MAP: Dict[str, int] = {
     "recklessness":       1719,
     "onslaught":          315720,
     "thunder_clap":       6343,
+    # ---- Mage: Fire ----
+    "combustion":         190319,
+    "phoenix_flames":     257541,
+    "pyroblast":          11366,
+    "fire_blast":         108853,
+    "fireball":           133,
+    "scorch":             2948,
+    "meteor":             153561,
+    "living_bomb":        44457,
+    "flamestrike":        2120,
+    "shifting_power":     382440,
 }
 
 SPEC_IDS = {
@@ -108,6 +119,7 @@ SPEC_IDS = {
     "preservation": 1468,
     "arms": 71,
     "fury": 72,
+    "mage_fire": 63,
 }
 
 SPEC_SPELLS: Dict[str, List[str]] = {
@@ -144,6 +156,11 @@ SPEC_SPELLS: Dict[str, List[str]] = {
     "fury": [
         "rampage", "raging_blow", "bloodthirst", "whirlwind", "execute_fury",
         "ravager", "recklessness", "avatar", "onslaught", "thunder_clap",
+    ],
+    "mage_fire": [
+        "combustion", "phoenix_flames", "pyroblast", "fire_blast",
+        "fireball", "scorch", "meteor", "flamestrike", "living_bomb",
+        "shifting_power",
     ],
 }
 
@@ -235,6 +252,19 @@ actions+=/execute_fury,if=target.health.pct<20
 actions+=/bloodthirst
 actions+=/raging_blow
 actions+=/whirlwind
+""",
+    "mage_fire": """
+actions+=/combustion,if=!buff.combustion.up
+actions+=/meteor,if=buff.combustion.up|cooldown.combustion.remains>40
+actions+=/flamestrike,if=active_enemies>=4&buff.hot_streak.up
+actions+=/pyroblast,if=buff.hot_streak.up
+actions+=/phoenix_flames,if=buff.heating_up.up
+actions+=/fire_blast,if=buff.heating_up.up
+actions+=/pyroblast,if=buff.combustion.up
+actions+=/shifting_power,if=cooldown.combustion.remains>20
+actions+=/scorch,if=target.health.pct<30
+actions+=/fireball
+actions+=/scorch
 """,
 }
 

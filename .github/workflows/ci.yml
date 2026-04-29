@@ -51,6 +51,10 @@ jobs:
         run: |
           python training/simc_apl_to_dataset.py --spec fury --output /tmp/test_fury.csv --samples 10
           test -f /tmp/test_fury.csv
+      - name: Test simc_apl_to_dataset (mage_fire)
+        run: |
+          python training/simc_apl_to_dataset.py --spec mage_fire --output /tmp/test_mage_fire.csv --samples 10
+          test -f /tmp/test_mage_fire.csv
       - name: Run Python unit tests
         run: python -m pytest training/test_apl_parser.py -v
       - name: Train Arms DT+TM (validation)

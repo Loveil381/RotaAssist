@@ -71,6 +71,7 @@ Data\DecisionTrees\DH_Devourer_DT.lua
 Data\DecisionTrees\DK_Frost_DT.lua
 Data\DecisionTrees\DK_Unholy_DT.lua
 Data\DecisionTrees\Mage_Arcane_DT.lua
+Data\DecisionTrees\Mage_Fire_DT.lua
 Data\DecisionTrees\Mage_Frost_DT.lua
 Data\DecisionTrees\Paladin_Ret_DT.lua
 Data\DecisionTrees\Priest_Shadow_DT.lua
@@ -91,6 +92,7 @@ Data\TransitionMatrix\DH_Devourer_TM.lua
 Data\TransitionMatrix\DK_Frost_TM.lua
 Data\TransitionMatrix\DK_Unholy_TM.lua
 Data\TransitionMatrix\Mage_Arcane_TM.lua
+Data\TransitionMatrix\Mage_Fire_TM.lua
 Data\TransitionMatrix\Mage_Frost_TM.lua
 Data\TransitionMatrix\Paladin_Ret_TM.lua
 Data\TransitionMatrix\Priest_Shadow_TM.lua
