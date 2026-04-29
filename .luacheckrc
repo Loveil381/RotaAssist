@@ -34,6 +34,7 @@ read_globals = {
 
     -- Spec / talent
     "GetSpecialization", "GetSpecializationInfo",
+    "C_ClassTalents", "C_Traits",
 
     -- Spell API
     "IsPlayerSpell", "IsSpellKnown", "IsPassiveSpell",

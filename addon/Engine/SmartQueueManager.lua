@@ -183,7 +183,12 @@ local CHANNELED_SPELL_IDS = {
 -- Captured next-spell spellID during a channel, used as sticky fallback.
 local channelNextSpell = nil
 
-local context_reuse = { blizzSpell=nil, aplPred=nil, aplState=nil, cdReadyList={}, blindSpotCandidates={}, defSpell=nil, defUrgency=0, aiPhase="NORMAL", aiTip=nil }
+local context_reuse = {
+    blizzSpell=nil, aplPred=nil, aplState=nil,
+    cdReadyList={}, blindSpotCandidates={},
+    defSpell=nil, defUrgency=0,
+    aiPhase="NORMAL", aiTip=nil,
+}
 local candidates_reuse = {}
 local scored_reuse = {}
 local toRemove_reuse = {}
