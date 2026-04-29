@@ -30,6 +30,14 @@ local elapsed   = 0
 local updateFrame = nil
 local isTracking  = false
 
+--- Advisory set of spellIDs that Blizzard's EssentialCooldownViewer is
+--- currently displaying. Populated by CDMHook via ROTAASSIST_CDM_UPDATE.
+--- Read-only hint used by downstream consumers; existing scan/alert
+--- logic does NOT depend on it.
+--- ECV 当前正在显示的技能 ID 集合（建议性，不影响主逻辑）
+---@type table<number, boolean>
+local cdmVisibleSet = {}
+
 ------------------------------------------------------------------------
 -- Scan Logic
 ------------------------------------------------------------------------
@@ -215,6 +223,17 @@ function CooldownOverlay:OnEnable()
             cdEventThrottle = now
             scanCooldowns()
         end)
+
+        -- Mirror Blizzard's EssentialCooldownViewer visible set.
+        -- Stored as advisory data only; existing scan/alert paths are unchanged.
+        -- 镜像 ECV 当前可见技能集合，仅作建议性数据存储。
+        eh:Subscribe("ROTAASSIST_CDM_UPDATE", "CooldownOverlay", function(_, payload)
+            if type(payload) == "table" and type(payload.visibleSpellIDs) == "table" then
+                cdmVisibleSet = payload.visibleSpellIDs
+            else
+                cdmVisibleSet = {}
+            end
+        end)
     end
 
     -- Try loading immediately if spec is already known
@@ -367,6 +386,15 @@ function CooldownOverlay:RefreshSpellCooldown(spellID)
             pairedState.duration  = state.duration
         end
     end
+end
+
+---Get the advisory set of spellIDs currently shown by Blizzard's
+---EssentialCooldownViewer. Empty when ECV is absent or has emitted
+---no update yet. Read-only hint for downstream consumers.
+---返回 ECV 当前显示的技能 ID 集合（建议性，可能为空）。
+---@return table<number, boolean>
+function CooldownOverlay:GetCDMVisibleSet()
+    return cdmVisibleSet
 end
 
 ---Get an array of CDs that are currently ready.

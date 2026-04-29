@@ -111,6 +111,7 @@ Engine\AssistedCombatBridge.lua
 Engine\AccuracyTracker.lua
 Engine\AIInference.lua
 Engine\CastHistoryRecorder.lua
+Engine\CDMHook.lua
 Engine\PatternDetector.lua
 Engine\NeuralPredictor.lua
 Engine\APLEngine.lua

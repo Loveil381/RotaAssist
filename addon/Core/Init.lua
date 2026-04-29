@@ -50,6 +50,7 @@ local MODULE_ORDER = {
     "APLEngine",
     "SmartQueueManager",
     "CooldownOverlay",
+    "CDMHook",
     "DefensiveAdvisor",
     "PrePullChecker",
     -- UI (depends on everything above)

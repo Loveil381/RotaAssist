@@ -493,3 +493,31 @@ _G.UnitHealthPercent = _G.UnitHealthPercent or function() return nil end
 
 -- GetSpecialization for multi-spec mock support
 _G.GetNumSpecializations = _G.GetNumSpecializations or function() return 2 end
+
+-- ============================================================
+-- hooksecurefunc mock (for CDMHook tests)
+-- 模拟 Blizzard 安全钩子函数；测试中替换为简单包装。
+-- ============================================================
+_G.hooksecurefunc = _G.hooksecurefunc or function(arg1, arg2, arg3)
+    -- Two-arg form: hooksecurefunc(name, post)
+    -- Three-arg form: hooksecurefunc(table, name, post)
+    if type(arg1) == "table" and type(arg2) == "string" and type(arg3) == "function" then
+        local tbl, methodName, post = arg1, arg2, arg3
+        local orig = tbl[methodName]
+        tbl[methodName] = function(...)
+            local r1, r2, r3 = nil, nil, nil
+            if type(orig) == "function" then
+                r1, r2, r3 = orig(...)
+            end
+            local ok, err = pcall(post, ...)
+            if not ok then
+                -- swallow; matches Blizzard taint-safe behavior in tests
+            end
+            return r1, r2, r3
+        end
+    end
+end
+
+-- NOTE: do NOT define _G.EssentialCooldownViewer here. The CDMHook
+-- graceful-degradation tests rely on its absence; tests that need it
+-- install a synthetic table locally and clean it up afterwards.
